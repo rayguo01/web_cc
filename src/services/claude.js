@@ -386,10 +386,12 @@ const processManager = new ClaudeProcessManager();
 // 优雅退出时清理
 process.on('SIGINT', () => {
     processManager.shutdown();
+    process.exit(0);
 });
 
 process.on('SIGTERM', () => {
     processManager.shutdown();
+    process.exit(0);
 });
 
 module.exports = {
