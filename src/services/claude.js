@@ -26,7 +26,8 @@ class ClaudeProcess extends EventEmitter {
             const args = [
                 '-p',
                 '--input-format', 'stream-json',
-                '--output-format', 'stream-json'
+                '--output-format', 'stream-json',
+                '--verbose'
             ];
 
             // 如果有会话ID，添加 --resume 参数
