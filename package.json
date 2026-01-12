@@ -1,18 +1,29 @@
 {
   "name": "web-cc",
-  "version": "1.0.0",
+  "version": "1.7.3",
   "description": "Web interface for Claude Code CLI",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
-    "dev": "node --watch src/server.js"
+    "dev": "node --watch src/server.js",
+    "skill:x-trends": "npx ts-node .claude/x-trends/x-trends.ts",
+    "skill:tophub": "npx ts-node .claude/tophub-trends/tophub.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.32.1",
     "bcryptjs": "^2.4.3",
+    "cheerio": "^1.0.0",
     "dotenv": "^16.4.5",
     "express": "^4.21.0",
     "jsonwebtoken": "^9.0.2",
+    "node-cron": "^4.2.1",
+    "node-fetch": "^2.7.0",
     "pg": "^8.13.0",
     "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.3"
   }
 }
