@@ -1,8 +1,32 @@
 # Web Claude Code 项目概要
 
-## 版本: v2.6.0
+## 版本: v2.6.1
 
 ## 完成的工作
+
+### 3.14 编辑框自动高度调整 (v2.6.1)
+
+**功能概述**：编辑推文的 textarea 自动调整高度以适应内容长度，用户无需滚动即可看到全文。
+
+**修改的页面**：
+- `content.js` - 创作素材编辑框、生成结果编辑框
+- `optimize.js` - 优化后版本编辑框
+
+**技术实现**：
+
+| 文件 | 修改内容 |
+|------|----------|
+| `public/js/generator/pages/content.js` | 添加 `autoResizeTextarea()` 方法，绑定到 `#input-text` 和 `#content-input` |
+| `public/js/generator/pages/optimize.js` | 添加 `autoResizeTextarea()` 方法，绑定到 `#optimized-input`，Tab 切换时重新调整 |
+| `public/css/generator.css` | `.content-textarea` 设置 `resize: none` 和 `overflow: hidden` |
+
+**工作原理**：
+1. textarea 加载时自动调整高度
+2. 用户输入时实时调整高度
+3. 最小高度：创作素材 300px，其他 200px
+4. 禁用手动拖拽调整和滚动条
+
+---
 
 ### 3.13 图片生成流程拆分 (v2.6.0)
 

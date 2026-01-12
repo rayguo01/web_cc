@@ -470,7 +470,8 @@
     border-radius: var(--radius-lg);
     font-size: 15px;
     line-height: 1.8;
-    resize: vertical;
+    resize: none;
+    overflow: hidden;
     transition: var(--transition-normal);
     font-family: inherit;
     background: var(--bg-base);

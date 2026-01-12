@@ -255,13 +255,36 @@ class ContentPage {
             });
         }
 
-        // 监听输入框变化，保存输入文本
+        // 监听输入框变化，保存输入文本，并自动调整高度
         const inputText = container.querySelector('#input-text');
         if (inputText) {
+            this.autoResizeTextarea(inputText);
             inputText.addEventListener('input', (e) => {
                 this.inputText = e.target.value;
+                this.autoResizeTextarea(e.target);
             });
         }
+
+        // 生成结果编辑框自动调整高度
+        const contentInput = container.querySelector('#content-input');
+        if (contentInput) {
+            this.autoResizeTextarea(contentInput);
+            contentInput.addEventListener('input', (e) => {
+                this.autoResizeTextarea(e.target);
+            });
+        }
+    }
+
+    /**
+     * 自动调整 textarea 高度以适应内容
+     */
+    autoResizeTextarea(textarea) {
+        if (!textarea) return;
+        // 重置高度以获取正确的 scrollHeight
+        textarea.style.height = 'auto';
+        // 设置高度为内容高度，最小 200px
+        const minHeight = textarea.classList.contains('input-textarea') ? 300 : 200;
+        textarea.style.height = Math.max(textarea.scrollHeight, minHeight) + 'px';
     }
 
     async generateContent() {

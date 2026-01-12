@@ -373,8 +373,36 @@ class OptimizePage {
                 container.querySelectorAll('.version-pane').forEach(pane => {
                     pane.classList.toggle('active', pane.id === `pane-${targetTab}`);
                 });
+
+                // 切换到优化版本 tab 时重新调整高度
+                if (targetTab === 'optimized') {
+                    const optimizedInput = container.querySelector('#optimized-input');
+                    if (optimizedInput) {
+                        this.autoResizeTextarea(optimizedInput);
+                    }
+                }
             });
         });
+
+        // 优化版本编辑框自动调整高度
+        const optimizedInput = container.querySelector('#optimized-input');
+        if (optimizedInput) {
+            this.autoResizeTextarea(optimizedInput);
+            optimizedInput.addEventListener('input', (e) => {
+                this.autoResizeTextarea(e.target);
+            });
+        }
+    }
+
+    /**
+     * 自动调整 textarea 高度以适应内容
+     */
+    autoResizeTextarea(textarea) {
+        if (!textarea) return;
+        // 重置高度以获取正确的 scrollHeight
+        textarea.style.height = 'auto';
+        // 设置高度为内容高度，最小 200px
+        textarea.style.height = Math.max(textarea.scrollHeight, 200) + 'px';
     }
 
     async startVerification() {
