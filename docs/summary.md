@@ -1,8 +1,63 @@
 # Web Claude Code 项目概要
 
-## 版本: v2.4.0
+## 版本: v2.6.0
 
 ## 完成的工作
+
+### 3.13 图片生成流程拆分 (v2.6.0)
+
+**功能概述**：将原来的"生成图片"步骤拆分为两个独立步骤，让用户可以先预览和编辑 Prompt，再决定是否生成图片。
+
+**新工作流程**：
+```
+热帖抓取 → 生成内容 → 优化内容 → 图片描述 → 生成图片 → 提交发布
+(必选)     (必选)     (可跳过)   (可跳过)   (可跳过)   (展示)
+```
+
+**新增步骤**：
+| 步骤 | 名称 | 功能 |
+|------|------|------|
+| prompt | 图片描述 | 生成和编辑图片 Prompt，显示风格/氛围/色调/元素等详情 |
+| image | 生成图片 | 使用 Prompt 生成实际图片，支持重新生成 |
+
+**技术实现**：
+
+| 文件 | 修改内容 |
+|------|----------|
+| `public/js/generator/state.js` | workflowSteps 添加 prompt 步骤 |
+| `public/js/generator/pages/prompt.js` | 新增 Prompt 页面组件 |
+| `public/js/generator/pages/image.js` | 简化为纯图片生成，从 prompt_data 获取描述 |
+| `public/js/generator/index.js` | 注册 PromptPage |
+| `public/index.html` | 添加 prompt.js 脚本引用 |
+| `src/routes/tasks.js` | 添加 prompt 步骤支持、savePrompt/updatePromptData action |
+| `src/config/database.js` | 添加 prompt_data JSONB 列 |
+
+**Prompt 页面功能**：
+- 自动从优化内容生成图片描述 Prompt
+- 显示生成的 Prompt 详情（风格、氛围、色调、视觉元素）
+- 支持手动编辑 Prompt
+- 支持重新生成
+- 自动保存到数据库
+
+**Image 页面简化**：
+- 只负责图片生成，不再生成 Prompt
+- 从 task.prompt_data 读取 Prompt
+- 返回上一步跳转到 prompt 而非 optimize
+
+---
+
+### 3.12 创作方向多条显示修复 (v2.5.0)
+
+**问题**：选题建议中的"创作方向"只显示一条，应该显示多条。
+
+**原因**：JSON Schema 中 `direction` 定义为单个字符串，应改为数组。
+
+**修复**：
+- 修改 `.claude/x-trends/x-trends.ts` 和 `.claude/tophub-trends/tophub.ts`
+- 将 `direction` 改为 `directions` 数组格式
+- 前端 `trends.js` 和 `content.js` 支持新的数组格式，同时兼容旧格式
+
+---
 
 ### 3.11 双主题系统 - 可切换 Light/Dark 主题 (v2.4.0)
 
@@ -355,8 +410,8 @@ POST /api/skills/:skillId/execute?refresh=true  # 强制刷新
 
 **工作流程**：
 ```
-热帖抓取 → 生成内容 → 优化内容 → 生成图片 → 提交发布
-(必选)     (必选)     (可跳过)   (可跳过)   (展示)
+热帖抓取 → 生成内容 → 优化内容 → 图片描述 → 生成图片 → 提交发布
+(必选)     (必选)     (可跳过)   (可跳过)   (可跳过)   (展示)
 ```
 
 **核心功能**：
@@ -437,6 +492,7 @@ CREATE TABLE post_history (
 #/trends     → 热帖抓取页
 #/content    → 生成内容页
 #/optimize   → 优化内容页
+#/prompt     → 图片描述页
 #/image      → 生成图片页
 #/submit     → 提交页面
 #/history    → 历史列表
@@ -917,6 +973,7 @@ web-cc/
 │               ├── trends.js
 │               ├── content.js
 │               ├── optimize.js
+│               ├── prompt.js    # 图片描述页
 │               ├── image.js
 │               ├── submit.js
 │               └── history.js
