@@ -127,14 +127,9 @@ class SubmitPage {
                     </button>
                 </div>
                 <div class="twitter-publish">
-                    <button class="btn btn-twitter" id="publish-twitter-btn" ${finalContent.length > 280 ? 'disabled' : ''}>
+                    <button class="btn btn-twitter" id="publish-twitter-btn">
                         <span class="twitter-icon">𝕏</span> 发布到 X
                     </button>
-                    ${finalContent.length > 280 ? `
-                        <div class="twitter-warning">
-                            ⚠️ 内容超过 280 字符限制，请先编辑缩短
-                        </div>
-                    ` : ''}
                 </div>
             `;
 
@@ -212,11 +207,6 @@ class SubmitPage {
 
         const task = this.state.task;
         const finalContent = task?.optimize_data?.optimizedVersion || task?.content_data?.versionC || '';
-
-        if (finalContent.length > 280) {
-            this.generator.showToast('内容超过 280 字符限制', 'error');
-            return;
-        }
 
         const confirmed = await this.generator.showConfirm(
             `确定要发布到 X 吗？\n\n内容预览：\n${finalContent.substring(0, 100)}${finalContent.length > 100 ? '...' : ''}`
