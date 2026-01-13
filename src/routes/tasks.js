@@ -519,7 +519,14 @@ router.post('/:id/execute-step', authenticate, async (req, res) => {
 
             case 'optimize':
                 skillId = 'viral-verification';
-                userInput = input?.content || task.content_data?.versionC;
+                // 组合内容和用户优化意见
+                const contentToOptimize = input?.content || task.content_data?.versionC;
+                const userSuggestion = input?.userSuggestion || '';
+                if (userSuggestion) {
+                    userInput = `${contentToOptimize}\n\n===用户优化意见===\n${userSuggestion}`;
+                } else {
+                    userInput = contentToOptimize;
+                }
                 outputDir = path.join(__dirname, '../../outputs/viral-verified');
                 prefix = 'verified_';
                 break;
@@ -536,6 +543,13 @@ router.post('/:id/execute-step', authenticate, async (req, res) => {
                 userInput = `${input?.prompt || ''} [ratio:${input?.ratio || '16:9'}]`;
                 outputDir = path.join(__dirname, '../../outputs/images');
                 prefix = 'report_';
+                break;
+
+            case 'image-search':
+                skillId = 'image-search';
+                userInput = input?.query || '';
+                outputDir = path.join(__dirname, '../../outputs/image-search');
+                prefix = 'search_';
                 break;
         }
 

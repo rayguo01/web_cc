@@ -62,6 +62,12 @@ Role: 爆款内容验证专家
 5. **叙事/节奏 (Storytelling/Pacing)**：节奏是否吸引人？短句？留白？"滑梯效应"？
 6. **反直觉/新颖性 (Counter-Intuitive/Novelty)**：是否挑战了现状或提供了全新的视角？
 
+**用户优化意见处理**：
+- 如果用户在"===用户优化意见==="标记后提供了优化建议，你必须优先考虑这些意见
+- 将用户的优化意见作为额外的优化方向融入到你的优化策略中
+- 在 strategies 中反映用户的具体需求
+- 确保最终的 optimizedVersion 充分体现用户的优化意见
+
 ====================
 输出格式要求（极其重要）
 ====================
@@ -93,7 +99,8 @@ ${userInput}
 请对以上内容进行爆款要素优化，严格按照 JSON 格式输出验证报告和优化版本。只输出 JSON，不要任何其他内容。`;
 
     const child = spawn('claude', [
-      '--output-format', 'text'
+      '--output-format', 'text',
+      '--allowedTools', 'WebSearch,WebFetch'
     ], {
       cwd: projectRoot,
       stdio: ['pipe', 'pipe', 'pipe'],

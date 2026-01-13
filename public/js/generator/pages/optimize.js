@@ -11,6 +11,7 @@ class OptimizePage {
         this.originalVersion = ''; // 原始版本
         this.viralScore = null;
         this.activeTab = 'optimized'; // 当前 tab: 'optimized' | 'original'
+        this.userSuggestion = ''; // 用户的优化意见
         // 解析后的报告数据
         this.parsedReport = {
             scoreCard: [],      // 六维评分
@@ -93,6 +94,20 @@ class OptimizePage {
                     <div class="preview-label">待验证内容：</div>
                     <div class="preview-text">${this.escapeHtml(preview)}</div>
                 </div>
+
+                <div class="user-suggestion-section">
+                    <div class="editor-label">
+                        <span>💡</span> 优化意见（可选）
+                    </div>
+                    <textarea
+                        class="content-textarea suggestion-input"
+                        id="user-suggestion"
+                        rows="3"
+                        placeholder="输入你的优化建议，例如：&#10;• 语气更加犀利一些&#10;• 加入更多数据支撑&#10;• 结尾需要更有力的金句"
+                    >${this.escapeHtml(this.userSuggestion)}</textarea>
+                    <div class="suggestion-hint">AI 会根据你的意见进行针对性优化</div>
+                </div>
+
                 <div style="text-align: center; margin-top: 24px;">
                     <button class="btn btn-primary" id="verify-btn">
                         🧪 开始爆款验证
@@ -335,6 +350,14 @@ class OptimizePage {
         const container = document.getElementById('optimize-area');
         if (!container) return;
 
+        // 用户优化意见输入
+        const suggestionInput = container.querySelector('#user-suggestion');
+        if (suggestionInput) {
+            suggestionInput.addEventListener('input', (e) => {
+                this.userSuggestion = e.target.value;
+            });
+        }
+
         // 开始验证按钮
         const verifyBtn = container.querySelector('#verify-btn');
         if (verifyBtn) {
@@ -418,7 +441,7 @@ class OptimizePage {
         this.updateOptimizeArea();
 
         try {
-            await this.generator.executeStep('optimize', { content }, {
+            await this.generator.executeStep('optimize', { content, userSuggestion: this.userSuggestion }, {
                 start: () => {
                     // 开始
                 },
