@@ -209,7 +209,8 @@ class SkillCache {
     /**
      * 获取所有可用的小时列表（按时间倒序）
      * - 普通趋势：返回过去12个小时
-     * - domain-trends：返回过去3个8小时时间点（0:00, 8:00, 16:00）
+     * - domain-trends 轮换模式：返回过去12个2小时时间点
+     * - domain-trends 传统模式：返回过去3个8小时时间点
      * @param {string} skillId
      * @returns {Array<{hourKey: string, generatedAt: number, displayTime: string}>}
      */
@@ -218,7 +219,12 @@ class SkillCache {
         const now = new Date();
         const currentHour = now.getHours();
 
-        // domain-trends 使用8小时间隔
+        // domain-trends 轮换模式（包含 :group）使用 2 小时间隔
+        if (skillId.includes(':group')) {
+            return this.getDomainTrendsRotationHours(hourlyData, currentHour);
+        }
+
+        // domain-trends 传统模式使用 8 小时间隔
         if (skillId.startsWith('domain-trends:')) {
             return this.getDomainTrendsHours(hourlyData, currentHour);
         }
@@ -244,7 +250,39 @@ class SkillCache {
     }
 
     /**
-     * 获取 domain-trends 的8小时间隔时间点
+     * 获取 domain-trends 轮换模式的2小时间隔时间点
+     * 时间点：0:00, 2:00, 4:00, 6:00, 8:00, 10:00, 12:00, 14:00, 16:00, 18:00, 20:00, 22:00
+     * @param {Map} hourlyData
+     * @param {number} currentHour
+     * @returns {Array}
+     */
+    getDomainTrendsRotationHours(hourlyData, currentHour) {
+        const hours = [];
+
+        // 找到当前或最近的2小时窗口起点
+        let currentWindow = Math.floor(currentHour / 2) * 2;
+
+        // 返回最近12个时间点（覆盖24小时）
+        for (let i = 0; i < 12; i++) {
+            let hour = currentWindow - (i * 2);
+            if (hour < 0) hour += 24;
+            const hourKey = String(hour).padStart(2, '0');
+
+            const cached = hourlyData.get(hourKey);
+            hours.push({
+                hourKey,
+                displayTime: `${hourKey}:00`,
+                hasData: !!cached,
+                generatedAt: cached?.generatedAt || null,
+                isCurrent: i === 0
+            });
+        }
+
+        return hours;
+    }
+
+    /**
+     * 获取 domain-trends 传统模式的8小时间隔时间点
      * 固定时间点：0:00, 8:00, 16:00
      * @param {Map} hourlyData
      * @param {number} currentHour
@@ -252,7 +290,6 @@ class SkillCache {
      */
     getDomainTrendsHours(hourlyData, currentHour) {
         const hours = [];
-        const fixedHours = [0, 8, 16];
 
         // 找到当前或最近的8小时窗口起点
         let currentWindow = Math.floor(currentHour / 8) * 8;
@@ -279,15 +316,21 @@ class SkillCache {
     /**
      * 设置缓存
      * - 普通趋势：存储到当前小时
-     * - domain-trends：存储到当前8小时窗口起点 (00, 08, 16)
+     * - domain-trends 轮换模式：存储到当前2小时窗口起点 (00, 02, 04, ...)
+     * - domain-trends 传统模式：存储到当前8小时窗口起点 (00, 08, 16)
      * @param {string} skillId
      * @param {string} content
      */
     set(skillId, content) {
         let hourKey;
-        if (skillId.startsWith('domain-trends:')) {
-            // domain-trends 存储到固定的 8 小时窗口起点
-            const currentHour = new Date().getHours();
+        const currentHour = new Date().getHours();
+
+        if (skillId.includes(':group')) {
+            // domain-trends 轮换模式存储到 2 小时窗口起点
+            const windowStart = Math.floor(currentHour / 2) * 2;
+            hourKey = String(windowStart).padStart(2, '0');
+        } else if (skillId.startsWith('domain-trends:')) {
+            // domain-trends 传统模式存储到 8 小时窗口起点
             const windowStart = Math.floor(currentHour / 8) * 8;
             hourKey = String(windowStart).padStart(2, '0');
         } else {
