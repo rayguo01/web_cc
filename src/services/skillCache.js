@@ -86,7 +86,23 @@ class SkillCache {
      * 从磁盘恢复缓存
      */
     loadFromDisk() {
+        // 基础趋势
         const skillIds = ['x-trends', 'tophub-trends'];
+
+        // 加载 domain-trends 预设
+        const presetsDir = path.join(__dirname, '../../.claude/domain-trends/presets');
+        if (fs.existsSync(presetsDir)) {
+            try {
+                const files = fs.readdirSync(presetsDir).filter(f => f.endsWith('.json'));
+                for (const file of files) {
+                    const content = fs.readFileSync(path.join(presetsDir, file), 'utf-8');
+                    const config = JSON.parse(content);
+                    skillIds.push(`domain-trends:${config.id}`);
+                }
+            } catch (err) {
+                console.error('[缓存] 读取 domain-trends 预设失败:', err.message);
+            }
+        }
 
         for (const skillId of skillIds) {
             const filePath = this.getCacheFilePath(skillId);
@@ -106,7 +122,7 @@ class SkillCache {
                 this.hourlyCache.set(skillId, hourlyData);
                 console.log(`[缓存] 从磁盘恢复 ${skillId}，共 ${hourlyData.size} 个小时的数据`);
 
-                // 清理超过12小时的数据
+                // 清理超期数据
                 this.cleanupOldData(skillId);
             } catch (err) {
                 console.error(`[缓存] 恢复 ${skillId} 失败:`, err.message);
@@ -115,23 +131,31 @@ class SkillCache {
     }
 
     /**
-     * 清理超过12小时的旧数据
+     * 清理过期的旧数据
+     * - 普通趋势：清理超过12小时的数据
+     * - domain-trends：只保留 0, 8, 16 三个时间点的数据
      * @param {string} skillId
      */
     cleanupOldData(skillId) {
         const hourlyData = this.hourlyCache.get(skillId);
         if (!hourlyData) return;
 
-        // 获取当前小时
         const now = new Date();
         const currentHour = now.getHours();
-
-        // 计算有效的小时范围（过去12个小时）
         const validHours = new Set();
-        for (let i = 0; i < this.maxHours; i++) {
-            let hour = currentHour - i;
-            if (hour < 0) hour += 24;
-            validHours.add(String(hour).padStart(2, '0'));
+
+        if (skillId.startsWith('domain-trends:')) {
+            // domain-trends: 只保留 0, 8, 16 三个固定时间点
+            validHours.add('00');
+            validHours.add('08');
+            validHours.add('16');
+        } else {
+            // 普通趋势：保留过去12个小时
+            for (let i = 0; i < this.maxHours; i++) {
+                let hour = currentHour - i;
+                if (hour < 0) hour += 24;
+                validHours.add(String(hour).padStart(2, '0'));
+            }
         }
 
         // 删除不在有效范围内的数据
@@ -182,20 +206,58 @@ class SkillCache {
 
     /**
      * 获取所有可用的小时列表（按时间倒序）
-     * 始终返回12个小时，即使没有数据
+     * - 普通趋势：返回过去12个小时
+     * - domain-trends：返回过去3个8小时时间点（0:00, 8:00, 16:00）
      * @param {string} skillId
      * @returns {Array<{hourKey: string, generatedAt: number, displayTime: string}>}
      */
     getAvailableHours(skillId) {
         const hourlyData = this.hourlyCache.get(skillId) || new Map();
-
         const now = new Date();
         const currentHour = now.getHours();
 
-        // 生成过去12个小时的列表
+        // domain-trends 使用8小时间隔
+        if (skillId.startsWith('domain-trends:')) {
+            return this.getDomainTrendsHours(hourlyData, currentHour);
+        }
+
+        // 普通趋势：生成过去12个小时的列表
         const hours = [];
         for (let i = 0; i < this.maxHours; i++) {
             let hour = currentHour - i;
+            if (hour < 0) hour += 24;
+            const hourKey = String(hour).padStart(2, '0');
+
+            const cached = hourlyData.get(hourKey);
+            hours.push({
+                hourKey,
+                displayTime: `${hourKey}:00`,
+                hasData: !!cached,
+                generatedAt: cached?.generatedAt || null,
+                isCurrent: i === 0
+            });
+        }
+
+        return hours;
+    }
+
+    /**
+     * 获取 domain-trends 的8小时间隔时间点
+     * 固定时间点：0:00, 8:00, 16:00
+     * @param {Map} hourlyData
+     * @param {number} currentHour
+     * @returns {Array}
+     */
+    getDomainTrendsHours(hourlyData, currentHour) {
+        const hours = [];
+        const fixedHours = [0, 8, 16];
+
+        // 找到当前或最近的8小时窗口起点
+        let currentWindow = Math.floor(currentHour / 8) * 8;
+
+        // 返回最近3个时间点（覆盖24小时）
+        for (let i = 0; i < 3; i++) {
+            let hour = currentWindow - (i * 8);
             if (hour < 0) hour += 24;
             const hourKey = String(hour).padStart(2, '0');
 

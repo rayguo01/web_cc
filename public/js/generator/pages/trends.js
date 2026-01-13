@@ -10,17 +10,23 @@ class TrendsPage {
         // 按小时存储数据: { 'x-trends': { '14': report, '13': report }, ... }
         this.hourlyReports = {
             'x-trends': {},
-            'tophub-trends': {}
+            'tophub-trends': {},
+            'domain-trends': {}  // domain-trends:preset 格式
         };
         // 可用小时列表
         this.availableHours = {
             'x-trends': [],
-            'tophub-trends': []
+            'tophub-trends': [],
+            'domain-trends': []
         };
         // 当前选中的小时
         this.selectedHour = null;
         this.selectedTopic = null;
         this.isLoading = false;
+
+        // domain-trends 相关
+        this.domainPresets = [];       // 预设列表
+        this.selectedPreset = 'web3';  // 当前选中的预设
     }
 
     render(container) {
@@ -37,6 +43,17 @@ class TrendsPage {
                     <button class="tab ${this.activeTab === 'tophub-trends' ? 'active' : ''}" data-tab="tophub-trends">
                         🔥 TopHub 热榜
                     </button>
+                    <button class="tab ${this.activeTab === 'domain-trends' ? 'active' : ''}" data-tab="domain-trends">
+                        🎯 领域趋势
+                    </button>
+                </div>
+
+                <!-- 领域预设选择器（仅 domain-trends Tab 显示） -->
+                <div class="preset-selector" id="preset-selector" style="display: ${this.activeTab === 'domain-trends' ? 'flex' : 'none'}">
+                    <span class="preset-label">选择领域：</span>
+                    <div class="preset-buttons" id="preset-buttons">
+                        <!-- 预设按钮动态生成 -->
+                    </div>
                 </div>
 
                 <!-- 小时时间轴 -->
@@ -67,6 +84,7 @@ class TrendsPage {
         `;
 
         this.bindEvents(container);
+        this.loadDomainPresets();  // 加载预设列表
         this.loadAvailableHours();
     }
 
@@ -79,6 +97,13 @@ class TrendsPage {
                 container.querySelectorAll('.tab').forEach(t => {
                     t.classList.toggle('active', t.dataset.tab === this.activeTab);
                 });
+
+                // 显示/隐藏预设选择器
+                const presetSelector = document.getElementById('preset-selector');
+                if (presetSelector) {
+                    presetSelector.style.display = this.activeTab === 'domain-trends' ? 'flex' : 'none';
+                }
+
                 this.loadAvailableHours();
             });
         });
@@ -103,17 +128,100 @@ class TrendsPage {
     }
 
     /**
+     * 加载 domain-trends 预设列表
+     */
+    async loadDomainPresets() {
+        try {
+            const response = await fetch('/api/skills/domain-trends/presets', {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+            });
+            const data = await response.json();
+
+            if (data.success && data.presets) {
+                this.domainPresets = data.presets;
+                this.renderPresetButtons();
+            }
+        } catch (error) {
+            console.error('加载预设列表失败:', error);
+        }
+    }
+
+    /**
+     * 渲染预设按钮
+     */
+    renderPresetButtons() {
+        const container = document.getElementById('preset-buttons');
+        if (!container) return;
+
+        // 预设图标映射
+        const presetIcons = {
+            'web3': '🌐',
+            'ai': '🤖',
+            'gaming': '🎮'
+        };
+
+        container.innerHTML = this.domainPresets.map(preset => `
+            <button class="preset-btn ${this.selectedPreset === preset.id ? 'active' : ''}"
+                    data-preset="${preset.id}"
+                    title="${preset.description || preset.name}">
+                ${presetIcons[preset.id] || '📊'} ${preset.name}
+            </button>
+        `).join('');
+
+        // 绑定预设按钮事件
+        container.querySelectorAll('.preset-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                this.selectedPreset = btn.dataset.preset;
+                this.selectedHour = null;
+                // 更新按钮状态
+                container.querySelectorAll('.preset-btn').forEach(b => {
+                    b.classList.toggle('active', b.dataset.preset === this.selectedPreset);
+                });
+                // 重新加载数据
+                this.loadAvailableHours();
+            });
+        });
+    }
+
+    /**
+     * 获取当前 skill ID（domain-trends 需要加上预设）
+     */
+    getCurrentSkillId() {
+        if (this.activeTab === 'domain-trends') {
+            return `domain-trends:${this.selectedPreset}`;
+        }
+        return this.activeTab;
+    }
+
+    /**
+     * 获取缓存 key（用于本地 hourlyReports）
+     */
+    getCacheKey() {
+        if (this.activeTab === 'domain-trends') {
+            return `domain-trends:${this.selectedPreset}`;
+        }
+        return this.activeTab;
+    }
+
+    /**
      * 加载可用小时列表
      */
     async loadAvailableHours() {
+        const skillId = this.getCurrentSkillId();
+        const cacheKey = this.getCacheKey();
+
         try {
-            const response = await fetch(`/api/skills/${this.activeTab}/hours`, {
+            const response = await fetch(`/api/skills/${skillId}/hours`, {
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
             });
             const data = await response.json();
 
             if (data.success) {
-                this.availableHours[this.activeTab] = data.hours;
+                // 使用 cacheKey 存储，domain-trends 不同预设分开存储
+                if (!this.availableHours[cacheKey]) {
+                    this.availableHours[cacheKey] = [];
+                }
+                this.availableHours[cacheKey] = data.hours;
                 this.renderHourTimeline();
 
                 // 自动加载最新有数据的小时
@@ -121,17 +229,37 @@ class TrendsPage {
                 if (firstWithData) {
                     this.loadTrendsByHour(firstWithData.hourKey);
                 } else {
-                    // 没有任何历史数据，触发抓取当前小时
-                    this.loadTrends();
+                    // 没有任何历史数据，显示等待提示
+                    this.showWaitingMessage();
                 }
             } else {
-                // 如果没有小时数据，先触发抓取
-                this.loadTrends();
+                // 如果没有小时数据，显示等待提示
+                this.showWaitingMessage();
             }
         } catch (error) {
             console.error('加载小时列表失败:', error);
-            this.loadTrends();
+            this.showWaitingMessage();
         }
+    }
+
+    /**
+     * 显示等待抓取的提示
+     */
+    showWaitingMessage() {
+        const content = document.getElementById('trends-content');
+        if (!content) return;
+
+        // domain-trends 每8小时抓取一次
+        const scheduleText = this.activeTab === 'domain-trends'
+            ? '每8小时（0:01, 8:01, 16:01）'
+            : '每小时第1分钟';
+
+        content.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">⏳</div>
+                <div class="empty-state-text">暂无缓存数据，请等待系统定时抓取（${scheduleText}）</div>
+            </div>
+        `;
     }
 
     /**
@@ -141,7 +269,8 @@ class TrendsPage {
         const timeline = document.getElementById('hour-timeline');
         if (!timeline) return;
 
-        const hours = this.availableHours[this.activeTab] || [];
+        const cacheKey = this.getCacheKey();
+        const hours = this.availableHours[cacheKey] || [];
 
         if (hours.length === 0) {
             timeline.innerHTML = '<div class="timeline-empty">暂无历史数据</div>';
@@ -174,8 +303,16 @@ class TrendsPage {
      * 加载指定小时的数据
      */
     async loadTrendsByHour(hourKey) {
+        const skillId = this.getCurrentSkillId();
+        const cacheKey = this.getCacheKey();
+
+        // 确保缓存对象存在
+        if (!this.hourlyReports[cacheKey]) {
+            this.hourlyReports[cacheKey] = {};
+        }
+
         // 检查是否已缓存
-        const cached = this.hourlyReports[this.activeTab][hourKey];
+        const cached = this.hourlyReports[cacheKey][hourKey];
         if (cached) {
             this.selectedHour = hourKey;
             this.renderHourTimeline();
@@ -189,18 +326,18 @@ class TrendsPage {
         this.renderContent();
 
         try {
-            const response = await fetch(`/api/skills/${this.activeTab}/cached/${hourKey}`, {
+            const response = await fetch(`/api/skills/${skillId}/cached/${hourKey}`, {
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
             });
             const data = await response.json();
 
             if (data.success) {
-                this.hourlyReports[this.activeTab][hourKey] = data.content;
+                this.hourlyReports[cacheKey][hourKey] = data.content;
             } else {
-                this.hourlyReports[this.activeTab][hourKey] = `${hourKey}:00 暂无数据`;
+                this.hourlyReports[cacheKey][hourKey] = `${hourKey}:00 暂无数据`;
             }
         } catch (error) {
-            this.hourlyReports[this.activeTab][hourKey] = `加载失败: ${error.message}`;
+            this.hourlyReports[cacheKey][hourKey] = `加载失败: ${error.message}`;
         }
 
         this.isLoading = false;
@@ -267,7 +404,10 @@ class TrendsPage {
             return;
         }
 
-        const report = this.selectedHour ? this.hourlyReports[this.activeTab][this.selectedHour] : null;
+        const cacheKey = this.getCacheKey();
+        const hourlyData = this.hourlyReports[cacheKey] || {};
+        const report = this.selectedHour ? hourlyData[this.selectedHour] : null;
+
         if (!report) {
             content.innerHTML = `
                 <div class="empty-state">
@@ -279,7 +419,8 @@ class TrendsPage {
         }
 
         // 根据 Tab 类型使用不同的渲染方式
-        if (this.activeTab === 'x-trends') {
+        if (this.activeTab === 'x-trends' || this.activeTab === 'domain-trends') {
+            // domain-trends 使用和 x-trends 相同的格式
             this.renderXTrendsContent(content, report);
         } else {
             this.renderTophubContent(content, report);

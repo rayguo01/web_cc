@@ -1,0 +1,29 @@
+{
+  "id": "web3",
+  "name": "Web3 趋势",
+  "description": "追踪 Web3、加密货币、DeFi 领域热点",
+  "hoursAgo": 24,
+  "query": {
+    "keywords": ["web3", "crypto", "DeFi", "blockchain","polymarket"],
+    "hashtags": ["web3", "crypto", "DeFi", "ethereum", "bitcoin","polymarket"],
+    "minLikes": 100,
+    "minRetweets": 10,
+    "languages": ["en"],
+    "excludeRetweets": true
+  },
+  "kols": {
+    "enabled": true,
+    "accounts": [
+      "VitalikButerin",
+      "punk6529",
+      "cdixon",
+      "CryptoHayes",
+      "jessepollak",
+      "balaboris",
+      "sassal0x"
+    ],
+    "minLikes": 100,
+    "tweetsPerKol": 5
+  },
+  "fetchCount": 200
+}

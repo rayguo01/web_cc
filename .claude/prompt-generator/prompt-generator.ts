@@ -7,6 +7,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { spawn } from 'child_process';
+import { parseRobustJSON } from '../utils/json-parser';
 
 // JSON Schema 定义
 const JSON_SCHEMA = `
@@ -33,50 +34,54 @@ Requirements:
 ====================
 Output Format (CRITICAL)
 ====================
-You must strictly follow this JSON format, output nothing else:
 
+**You MUST use XML tags to separate your thinking from the JSON result**
+
+## Format
+
+<reasoning>
+Your analysis process...
+- Identify key themes and emotions from the post
+- Decide on visual style and composition
+</reasoning>
+
+<result>
 ${JSON_SCHEMA}
+</result>
 
-Important:
-1. Output must be valid JSON
-2. The "prompt" field is the most important - write 2-4 detailed sentences describing the complete scene
+## Important Notes
+1. The content inside <result> tag MUST be valid JSON
+2. The "prompt" field is the most important - write 2-4 detailed sentences
 3. ALL text must be in ENGLISH
-4. Do not add any explanation before or after the JSON
-5. Do not wrap in markdown code blocks`;
+4. Do not wrap JSON in markdown code blocks inside <result>
+5. Use half-width punctuation only (no full-width characters like：，。)`;
 
 /**
  * 解析并验证 JSON 输出
+ * 使用健壮的 JSON 解析器，支持多层回退
  */
 function parseAndValidateJSON(output: string): any {
-  // 尝试提取 JSON（处理可能的 markdown 代码块包裹）
-  let jsonStr = output.trim();
-
-  // 移除可能的 markdown 代码块
-  const jsonMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-  if (jsonMatch) {
-    jsonStr = jsonMatch[1].trim();
-  }
-
-  // 尝试找到 JSON 对象的开始和结束
-  const startIndex = jsonStr.indexOf('{');
-  const endIndex = jsonStr.lastIndexOf('}');
-  if (startIndex !== -1 && endIndex !== -1) {
-    jsonStr = jsonStr.substring(startIndex, endIndex + 1);
-  }
-
-  try {
-    const parsed = JSON.parse(jsonStr);
-
+  // 使用健壮的 JSON 解析器
+  const result = parseRobustJSON(output, (data) => {
     // 验证必要字段
-    if (!parsed.prompt) {
-      throw new Error('缺少 prompt 字段');
+    if (!data.prompt) {
+      return { valid: false, error: '缺少 prompt 字段' };
     }
+    return { valid: true };
+  });
 
-    return parsed;
-  } catch (e) {
-    console.error('JSON 解析失败，原始输出:', output.substring(0, 500));
-    throw new Error(`JSON 解析失败: ${e.message}`);
+  if (!result.success) {
+    console.error('JSON 解析失败:', result.error);
+    if (result.rawOutput) {
+      console.error('原始输出预览:', result.rawOutput);
+    }
+    if (result.reasoning) {
+      console.log('思维链:', result.reasoning.substring(0, 200));
+    }
+    throw new Error(result.error || 'JSON 解析失败');
   }
+
+  return result.data;
 }
 
 async function main() {

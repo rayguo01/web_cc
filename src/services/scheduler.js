@@ -2,9 +2,10 @@
  * 定时任务调度服务
  *
  * 功能：
- * 1. 每小时1分钟自动抓取 x-trends 和 tophub-trends
- * 2. 抓取结果保存到 skillCache
- * 3. 服务启动时立即执行一次抓取
+ * 1. 每小时1分钟自动抓取 x-trends、tophub-trends
+ * 2. 每8小时（0:01, 8:01, 16:01）抓取 domain-trends
+ * 3. 抓取结果保存到 skillCache
+ * 4. 服务启动时检查并执行必要的抓取
  */
 
 const cron = require('node-cron');
@@ -54,24 +55,57 @@ class Scheduler {
     }
 
     /**
+     * 获取 domain-trends 的所有预设
+     * @returns {Array<{id: string, name: string}>}
+     */
+    getDomainPresets() {
+        const presetsDir = path.join(__dirname, '../../.claude/domain-trends/presets');
+        if (!fs.existsSync(presetsDir)) {
+            return [];
+        }
+
+        try {
+            const files = fs.readdirSync(presetsDir).filter(f => f.endsWith('.json'));
+            return files.map(file => {
+                const content = fs.readFileSync(path.join(presetsDir, file), 'utf-8');
+                const config = JSON.parse(content);
+                return { id: config.id, name: config.name };
+            });
+        } catch (err) {
+            console.error('[调度器] 读取 domain-trends 预设失败:', err.message);
+            return [];
+        }
+    }
+
+    /**
      * 执行单个 skill 抓取
-     * @param {string} skillId - x-trends 或 tophub-trends
+     * @param {string} skillId - x-trends、tophub-trends 或 domain-trends:preset
      * @returns {Promise<string>} 抓取结果
      */
     async executeSkill(skillId) {
         console.log(`[调度器] 开始抓取 ${skillId}...`);
 
+        // 解析 skillId，支持 domain-trends:preset 格式
+        let baseSkillId = skillId;
+        let preset = null;
+
+        if (skillId.startsWith('domain-trends:')) {
+            baseSkillId = 'domain-trends';
+            preset = skillId.split(':')[1];
+        }
+
         const scriptMap = {
             'x-trends': 'x-trends.ts',
-            'tophub-trends': 'tophub.ts'
+            'tophub-trends': 'tophub.ts',
+            'domain-trends': 'domain-trends.ts'
         };
 
-        const scriptName = scriptMap[skillId];
+        const scriptName = scriptMap[baseSkillId];
         if (!scriptName) {
             throw new Error(`未知的 skill: ${skillId}`);
         }
 
-        const skillDir = path.join(__dirname, '../../.claude', skillId);
+        const skillDir = path.join(__dirname, '../../.claude', baseSkillId);
         const scriptPath = path.join(skillDir, scriptName);
 
         if (!fs.existsSync(scriptPath)) {
@@ -79,7 +113,13 @@ class Scheduler {
         }
 
         return new Promise((resolve, reject) => {
-            const child = spawn('npx', ['ts-node', scriptPath], {
+            // 构建命令参数
+            const args = ['ts-node', scriptPath];
+            if (preset) {
+                args.push(preset);
+            }
+
+            const child = spawn('npx', args, {
                 cwd: path.join(__dirname, '../..'),
                 env: { ...process.env },
                 shell: true
@@ -104,8 +144,15 @@ class Scheduler {
                 if (code === 0) {
                     // 读取生成的报告
                     try {
-                        const outputDir = path.join(__dirname, '../../outputs/trends');
-                        const prefix = skillId === 'x-trends' ? 'x_trends_analysis' : 'tophub_analysis';
+                        let outputDir, prefix, fileExt = '.json';
+
+                        if (baseSkillId === 'domain-trends') {
+                            outputDir = path.join(__dirname, '../../outputs/trends/domain');
+                            prefix = `${preset}_analysis`;
+                        } else {
+                            outputDir = path.join(__dirname, '../../outputs/trends');
+                            prefix = skillId === 'x-trends' ? 'x_trends_analysis' : 'tophub_analysis';
+                        }
 
                         // 优先查找 JSON 文件
                         let files = fs.readdirSync(outputDir)
@@ -143,8 +190,9 @@ class Scheduler {
 
     /**
      * 执行所有趋势抓取任务
+     * @param {boolean} forceDomainTrends - 强制抓取 domain-trends（用于启动时）
      */
-    async fetchAllTrends() {
+    async fetchAllTrends(forceDomainTrends = false) {
         if (this.isRunning) {
             console.log('[调度器] 上一次抓取仍在进行中，跳过本次');
             return;
@@ -153,7 +201,20 @@ class Scheduler {
         this.isRunning = true;
         console.log(`[调度器] ========== 开始定时抓取 ${new Date().toLocaleString('zh-CN')} ==========`);
 
+        // 基础趋势 skills（每小时抓取）
         const skills = ['x-trends', 'tophub-trends'];
+
+        // domain-trends 每8小时抓取（0点、8点、16点）
+        const shouldFetchDomain = forceDomainTrends || this.isDomainTrendsFetchHour();
+        if (shouldFetchDomain) {
+            const domainPresets = this.getDomainPresets();
+            for (const preset of domainPresets) {
+                skills.push(`domain-trends:${preset.id}`);
+            }
+            console.log(`[调度器] 当前是 domain-trends 抓取时间（每8小时）`);
+        }
+
+        console.log(`[调度器] 待抓取: ${skills.join(', ')}`);
 
         for (const skillId of skills) {
             try {
@@ -192,6 +253,40 @@ class Scheduler {
     }
 
     /**
+     * 检查 domain-trends 缓存是否在当前8小时窗口内
+     * 8小时窗口: 0-7点, 8-15点, 16-23点
+     * @param {string} skillId
+     * @returns {boolean}
+     */
+    isDomainCacheValid(skillId) {
+        const cached = skillCache.get(skillId);
+        if (!cached || !cached.generatedAt) {
+            return false;
+        }
+
+        const now = new Date();
+        const cacheTime = new Date(cached.generatedAt);
+
+        // 计算当前8小时窗口的开始时间
+        const currentWindowStart = Math.floor(now.getHours() / 8) * 8;
+        const windowStartTime = new Date(now);
+        windowStartTime.setHours(currentWindowStart, 0, 0, 0);
+
+        // 缓存必须在当前窗口开始之后生成
+        return cacheTime >= windowStartTime;
+    }
+
+    /**
+     * 检查当前是否是 domain-trends 抓取时间
+     * domain-trends 每8小时抓取：0点、8点、16点
+     * @returns {boolean}
+     */
+    isDomainTrendsFetchHour() {
+        const hour = new Date().getHours();
+        return hour === 0 || hour === 8 || hour === 16;
+    }
+
+    /**
      * 启动定时任务
      * cron 格式: 分 时 日 月 星期
      * "1 * * * *" = 每小时的第1分钟
@@ -206,20 +301,34 @@ class Scheduler {
         });
 
         this.jobs.set('trends', job);
-        console.log('[调度器] 定时任务已启动：每小时1分钟抓取趋势数据');
+        console.log('[调度器] 定时任务已启动：');
+        console.log('  - x-trends/tophub-trends: 每小时1分钟');
+        console.log('  - domain-trends: 每8小时（0:01, 8:01, 16:01）');
 
         // 启动时检查是否需要抓取
-        const xTrendsCached = this.isCacheFromCurrentHour('x-trends');
-        const tophubCached = this.isCacheFromCurrentHour('tophub-trends');
+        const needFetchHourly = [];
+        let needFetchDomain = false;
 
-        if (xTrendsCached && tophubCached) {
-            console.log('[调度器] 当前小时已有缓存，跳过首次抓取');
+        // 检查基础趋势（每小时）
+        if (!this.isCacheFromCurrentHour('x-trends')) needFetchHourly.push('x-trends');
+        if (!this.isCacheFromCurrentHour('tophub-trends')) needFetchHourly.push('tophub-trends');
+
+        // 检查 domain-trends 各预设（8小时窗口）
+        const domainPresets = this.getDomainPresets();
+        for (const preset of domainPresets) {
+            const cacheKey = `domain-trends:${preset.id}`;
+            if (!this.isDomainCacheValid(cacheKey)) {
+                needFetchDomain = true;
+                needFetchHourly.push(cacheKey);
+            }
+        }
+
+        if (needFetchHourly.length === 0) {
+            console.log('[调度器] 所有缓存有效，跳过首次抓取');
         } else {
-            const needFetch = [];
-            if (!xTrendsCached) needFetch.push('x-trends');
-            if (!tophubCached) needFetch.push('tophub-trends');
-            console.log(`[调度器] 需要抓取: ${needFetch.join(', ')}`);
-            this.fetchAllTrends();
+            console.log(`[调度器] 需要抓取: ${needFetchHourly.join(', ')}`);
+            // 如果需要抓取 domain-trends，强制执行
+            this.fetchAllTrends(needFetchDomain);
         }
     }
 

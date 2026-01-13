@@ -1,0 +1,27 @@
+{
+  "id": "gaming",
+  "name": "游戏趋势",
+  "description": "追踪游戏、电竞、游戏开发领域热点",
+  "hoursAgo": 24,
+  "query": {
+    "keywords": ["gaming", "esports", "gamedev", "indie game"],
+    "hashtags": ["gaming", "esports", "gamedev", "indiegame", "PS5", "Xbox"],
+    "minLikes": 50,
+    "languages": ["en"],
+    "excludeRetweets": true
+  },
+  "kols": {
+    "enabled": true,
+    "accounts": [
+      "Xbox",
+      "PlayStation",
+      "NintendoAmerica",
+      "geoffkeighley",
+      "TimSweeneyEpic",
+      "Naughty_Dog"
+    ],
+    "minLikes": 100,
+    "tweetsPerKol": 5
+  },
+  "fetchCount": 200
+}

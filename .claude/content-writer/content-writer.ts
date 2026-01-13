@@ -1,6 +1,7 @@
 import { spawn } from 'child_process';
 import fs from 'fs';
 import path from 'path';
+import { parseRobustJSON, generateXMLOutputInstructions } from '../utils/json-parser';
 
 // Define Output Paths
 const projectRoot = path.resolve(__dirname, '../../');
@@ -100,16 +101,27 @@ IP 人格规范
 ====================
 输出格式要求（极其重要）
 ====================
-你必须严格按照以下 JSON 格式输出，不要输出任何其他内容：
 
+**必须使用 XML 标签分隔思维过程和 JSON 结果，避免解析错误**
+
+## 格式要求
+
+<reasoning>
+你的创作思路分析...
+- 简洁分析素材的核心价值
+- 确定目标受众和情绪基调
+</reasoning>
+
+<result>
 ${JSON_SCHEMA}
+</result>
 
-注意事项：
-1. 输出必须是合法的 JSON 格式
+## 注意事项
+1. <result> 标签内必须是合法的 JSON 格式
 2. 内容中的换行使用 \\n 表示
 3. 内容中的双引号使用 \\" 转义
-4. 不要在 JSON 前后添加任何说明文字
-5. 不要使用 markdown 代码块包裹
+4. 不要在 <result> 标签内添加 markdown 代码块
+5. 所有标点符号必须使用英文半角字符（不要使用中文全角标点如：，。；等）
 `;
 
 /**
@@ -194,37 +206,30 @@ ${userInput}
 
 /**
  * 解析并验证 JSON 输出
+ * 使用健壮的 JSON 解析器，支持多层回退
  */
 function parseAndValidateJSON(output: string): any {
-  // 尝试提取 JSON（处理可能的 markdown 代码块包裹）
-  let jsonStr = output.trim();
-
-  // 移除可能的 markdown 代码块
-  const jsonMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-  if (jsonMatch) {
-    jsonStr = jsonMatch[1].trim();
-  }
-
-  // 尝试找到 JSON 对象的开始和结束
-  const startIndex = jsonStr.indexOf('{');
-  const endIndex = jsonStr.lastIndexOf('}');
-  if (startIndex !== -1 && endIndex !== -1) {
-    jsonStr = jsonStr.substring(startIndex, endIndex + 1);
-  }
-
-  try {
-    const parsed = JSON.parse(jsonStr);
-
+  // 使用健壮的 JSON 解析器
+  const result = parseRobustJSON(output, (data) => {
     // 验证必要字段
-    if (!parsed.versionC || !parsed.versionC.content) {
-      throw new Error('缺少 versionC.content 字段');
+    if (!data.versionC || !data.versionC.content) {
+      return { valid: false, error: '缺少 versionC.content 字段' };
     }
+    return { valid: true };
+  });
 
-    return parsed;
-  } catch (e) {
-    console.error('JSON 解析失败，原始输出:', output.substring(0, 500));
-    throw new Error(`JSON 解析失败: ${e.message}`);
+  if (!result.success) {
+    console.error('JSON 解析失败:', result.error);
+    if (result.rawOutput) {
+      console.error('原始输出预览:', result.rawOutput);
+    }
+    if (result.reasoning) {
+      console.log('思维链:', result.reasoning.substring(0, 200));
+    }
+    throw new Error(result.error || 'JSON 解析失败');
   }
+
+  return result.data;
 }
 
 /**

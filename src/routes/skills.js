@@ -82,13 +82,41 @@ function getNextFetchTime() {
     return next.toLocaleString('zh-CN');
 }
 
+// 获取 domain-trends 预设列表
+router.get('/domain-trends/presets', authenticate, async (req, res) => {
+    try {
+        const presetsDir = path.join(__dirname, '../../.claude/domain-trends/presets');
+        if (!fs.existsSync(presetsDir)) {
+            return res.json({ success: true, presets: [] });
+        }
+
+        const files = fs.readdirSync(presetsDir).filter(f => f.endsWith('.json'));
+        const presets = files.map(file => {
+            const content = fs.readFileSync(path.join(presetsDir, file), 'utf-8');
+            const config = JSON.parse(content);
+            return {
+                id: config.id,
+                name: config.name,
+                description: config.description
+            };
+        });
+
+        res.json({ success: true, presets });
+    } catch (error) {
+        console.error('获取预设列表失败:', error);
+        res.status(500).json({ error: '获取预设列表失败' });
+    }
+});
+
 // 获取指定 skill 的可用小时列表
 router.get('/:skillId/hours', authenticate, async (req, res) => {
     const { skillId } = req.params;
 
-    // 只支持趋势类 skill
-    const trendSkills = ['x-trends', 'tophub-trends'];
-    if (!trendSkills.includes(skillId)) {
+    // 支持趋势类 skill（包括 domain-trends:preset 格式）
+    const isTrendSkill = ['x-trends', 'tophub-trends'].includes(skillId) ||
+                         skillId.startsWith('domain-trends:');
+
+    if (!isTrendSkill) {
         return res.status(400).json({ error: '此 skill 不支持历史数据' });
     }
 
@@ -103,9 +131,11 @@ router.get('/:skillId/hours', authenticate, async (req, res) => {
 router.get('/:skillId/cached/:hourKey', authenticate, async (req, res) => {
     const { skillId, hourKey } = req.params;
 
-    // 只支持趋势类 skill
-    const trendSkills = ['x-trends', 'tophub-trends'];
-    if (!trendSkills.includes(skillId)) {
+    // 支持趋势类 skill（包括 domain-trends:preset 格式）
+    const isTrendSkill = ['x-trends', 'tophub-trends'].includes(skillId) ||
+                         skillId.startsWith('domain-trends:');
+
+    if (!isTrendSkill) {
         return res.status(400).json({ error: '此 skill 不支持缓存读取' });
     }
 
@@ -134,9 +164,11 @@ router.get('/:skillId/cached/:hourKey', authenticate, async (req, res) => {
 router.get('/:skillId/cached', authenticate, async (req, res) => {
     const { skillId } = req.params;
 
-    // 只支持趋势类 skill
-    const trendSkills = ['x-trends', 'tophub-trends'];
-    if (!trendSkills.includes(skillId)) {
+    // 支持趋势类 skill（包括 domain-trends:preset 格式）
+    const isTrendSkill = ['x-trends', 'tophub-trends'].includes(skillId) ||
+                         skillId.startsWith('domain-trends:');
+
+    if (!isTrendSkill) {
         return res.status(400).json({ error: '此 skill 不支持缓存读取' });
     }
 
@@ -165,11 +197,17 @@ router.get('/:skillId/cached', authenticate, async (req, res) => {
 router.post('/:skillId/execute', authenticate, async (req, res) => {
     const { skillId } = req.params;
     const forceRefresh = req.query.refresh === 'true';
+    const preset = req.body?.preset || req.query.preset; // domain-trends 预设
 
-    // 验证 skill ID
-    const allowedSkills = ['x-trends', 'tophub-trends', 'content-writer', 'viral-verification', 'gemini-image-gen', 'prompt-generator'];
+    // 验证 skill ID（支持 domain-trends）
+    const allowedSkills = ['x-trends', 'tophub-trends', 'domain-trends', 'content-writer', 'viral-verification', 'gemini-image-gen', 'prompt-generator'];
     if (!allowedSkills.includes(skillId)) {
         return res.status(400).json({ error: '无效的 skill ID' });
+    }
+
+    // domain-trends 必须指定预设
+    if (skillId === 'domain-trends' && !preset) {
+        return res.status(400).json({ error: '请指定预设 (preset)' });
     }
 
     // 需要用户输入的 skills
@@ -198,9 +236,12 @@ router.post('/:skillId/execute', authenticate, async (req, res) => {
     const inputSkills = ['content-writer', 'viral-verification', 'gemini-image-gen', 'prompt-generator'];
     const useCache = !inputSkills.includes(skillId);
 
+    // 缓存 key：domain-trends 使用 `domain-trends:preset` 格式
+    const cacheKey = skillId === 'domain-trends' ? `domain-trends:${preset}` : skillId;
+
     // 1. 检查缓存（除非强制刷新或不支持缓存）
     if (useCache && !forceRefresh) {
-        const cached = skillCache.get(skillId);
+        const cached = skillCache.get(cacheKey);
         if (cached) {
             res.write(`data: ${JSON.stringify({
                 type: 'start',
@@ -226,7 +267,7 @@ router.post('/:skillId/execute', authenticate, async (req, res) => {
     }
 
     // 2. 检查是否有其他请求正在执行（仅对支持缓存的 skill）
-    if (useCache && skillCache.isLocked(skillId)) {
+    if (useCache && skillCache.isLocked(cacheKey)) {
         res.write(`data: ${JSON.stringify({
             type: 'start',
             message: '其他用户正在生成内容，等待中...',
@@ -235,7 +276,7 @@ router.post('/:skillId/execute', authenticate, async (req, res) => {
 
         try {
             // 等待执行完成
-            const content = await skillCache.addWaiter(skillId);
+            const content = await skillCache.addWaiter(cacheKey);
 
             res.write(`data: ${JSON.stringify({
                 type: 'report',
@@ -260,7 +301,7 @@ router.post('/:skillId/execute', authenticate, async (req, res) => {
     }
 
     // 3. 获取锁并执行（仅对支持缓存的 skill）
-    if (useCache && !skillCache.acquireLock(skillId)) {
+    if (useCache && !skillCache.acquireLock(cacheKey)) {
         // 极端情况：获取锁失败，可能刚好有其他请求抢到了
         res.write(`data: ${JSON.stringify({
             type: 'error',
@@ -311,6 +352,7 @@ router.post('/:skillId/execute', authenticate, async (req, res) => {
         switch (skillId) {
             case 'x-trends': scriptName = 'x-trends.ts'; break;
             case 'tophub-trends': scriptName = 'tophub.ts'; break;
+            case 'domain-trends': scriptName = 'domain-trends.ts'; break;
             case 'content-writer': scriptName = 'content-writer.ts'; break;
             case 'viral-verification': scriptName = 'viral-verification.ts'; break;
             case 'gemini-image-gen': scriptName = 'gemini-image-gen.ts'; break;
@@ -321,7 +363,7 @@ router.post('/:skillId/execute', authenticate, async (req, res) => {
 
         if (!fs.existsSync(scriptPath)) {
             cleanup();
-            if (useCache) skillCache.releaseLock(skillId, null, new Error('Skill 脚本不存在'));
+            if (useCache) skillCache.releaseLock(cacheKey, null, new Error('Skill 脚本不存在'));
             res.write(`data: ${JSON.stringify({ type: 'error', message: 'Skill 脚本不存在' })}\n\n`);
             return res.end();
         }
@@ -339,6 +381,11 @@ router.post('/:skillId/execute', authenticate, async (req, res) => {
 
         // 构建命令参数
         const args = ['ts-node', scriptPath];
+
+        // domain-trends 需要传递 preset 参数
+        if (skillId === 'domain-trends' && preset) {
+            args.push(preset);
+        }
 
         // content-writer 和 viral-verification 使用临时文件传递输入（避免 shell 特殊字符问题）
         let inputTmpFile = null;
@@ -412,7 +459,7 @@ router.post('/:skillId/execute', authenticate, async (req, res) => {
                 // 读取生成的报告
                 try {
                     // 根据 skill 类型确定输出目录和文件前缀
-                    let outputDir, prefix;
+                    let outputDir, prefix, fileExt = '.md';
                     if (skillId === 'content-writer') {
                         outputDir = path.join(__dirname, '../../outputs/content');
                         prefix = 'content_';
@@ -425,17 +472,21 @@ router.post('/:skillId/execute', authenticate, async (req, res) => {
                     } else if (skillId === 'prompt-generator') {
                         outputDir = path.join(__dirname, '../../outputs/prompts');
                         prefix = 'prompt_';
+                    } else if (skillId === 'domain-trends') {
+                        outputDir = path.join(__dirname, '../../outputs/trends/domain');
+                        prefix = preset ? `${preset}_analysis` : 'web3_analysis';
+                        fileExt = '.json'; // domain-trends 输出 JSON 格式
                     } else {
                         outputDir = path.join(__dirname, '../../outputs/trends');
                         prefix = skillId === 'x-trends' ? 'x_trends_analysis' : 'tophub_analysis';
                     }
 
                     const files = fs.readdirSync(outputDir)
-                        .filter(f => f.startsWith(prefix) && f.endsWith('.md'))
+                        .filter(f => f.startsWith(prefix) && f.endsWith(fileExt))
                         .sort()
                         .reverse();
 
-                    console.log(`[${skillId}] 在 ${outputDir} 中查找 ${prefix}*.md 文件`);
+                    console.log(`[${skillId}] 在 ${outputDir} 中查找 ${prefix}*${fileExt} 文件`);
                     console.log(`[${skillId}] 找到 ${files.length} 个文件:`, files.slice(0, 3));
 
                     if (files.length > 0) {
@@ -445,9 +496,9 @@ router.post('/:skillId/execute', authenticate, async (req, res) => {
 
                         // 设置缓存（仅对支持缓存的 skill）
                         if (useCache) {
-                            skillCache.set(skillId, latestReport);
+                            skillCache.set(cacheKey, latestReport);
                             // 释放锁并通知等待者
-                            skillCache.releaseLock(skillId, latestReport);
+                            skillCache.releaseLock(cacheKey, latestReport);
                         }
 
                         // 检查客户端是否仍连接
@@ -466,7 +517,7 @@ router.post('/:skillId/execute', authenticate, async (req, res) => {
                             type: 'error',
                             message: '未找到报告文件，请检查输出目录'
                         })}\n\n`);
-                        if (useCache) skillCache.releaseLock(skillId, null, new Error('未找到报告文件'));
+                        if (useCache) skillCache.releaseLock(cacheKey, null, new Error('未找到报告文件'));
                     }
                 } catch (readError) {
                     console.error(`[${skillId}] 读取报告失败:`, readError);
@@ -474,7 +525,7 @@ router.post('/:skillId/execute', authenticate, async (req, res) => {
                         type: 'error',
                         message: `读取报告失败: ${readError.message}`
                     })}\n\n`);
-                    if (useCache) skillCache.releaseLock(skillId, null, readError);
+                    if (useCache) skillCache.releaseLock(cacheKey, null, readError);
                 }
 
                 safeWrite(`data: ${JSON.stringify({
@@ -484,7 +535,7 @@ router.post('/:skillId/execute', authenticate, async (req, res) => {
                 })}\n\n`);
             } else {
                 const error = new Error(`执行失败，退出码: ${code}`);
-                if (useCache) skillCache.releaseLock(skillId, null, error);
+                if (useCache) skillCache.releaseLock(cacheKey, null, error);
                 safeWrite(`data: ${JSON.stringify({
                     type: 'error',
                     message: error.message
@@ -499,7 +550,7 @@ router.post('/:skillId/execute', authenticate, async (req, res) => {
 
         child.on('error', (error) => {
             cleanup();
-            if (useCache) skillCache.releaseLock(skillId, null, error);
+            if (useCache) skillCache.releaseLock(cacheKey, null, error);
             safeWrite(`data: ${JSON.stringify({ type: 'error', message: error.message })}\n\n`);
             if (!res.destroyed && !res.writableEnded) {
                 res.end();
@@ -517,7 +568,7 @@ router.post('/:skillId/execute', authenticate, async (req, res) => {
     } catch (error) {
         cleanup();
         console.error('执行 skill 失败:', error);
-        if (useCache) skillCache.releaseLock(skillId, null, error);
+        if (useCache) skillCache.releaseLock(cacheKey, null, error);
         safeWrite(`data: ${JSON.stringify({ type: 'error', message: error.message })}\n\n`);
         if (!res.destroyed && !res.writableEnded) {
             res.end();

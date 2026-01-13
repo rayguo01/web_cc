@@ -1,6 +1,7 @@
 import { spawn } from 'child_process';
 import fs from 'fs';
 import path from 'path';
+import { parseRobustJSON } from '../utils/json-parser';
 
 // Define Output Paths
 const projectRoot = path.resolve(__dirname, '../../');
@@ -76,16 +77,28 @@ Role: 图片搜索专家
 ====================
 输出格式要求（极其重要）
 ====================
-你必须严格按照以下 JSON 格式输出，不要输出任何其他内容：
 
+**必须使用 XML 标签分隔思维过程和 JSON 结果，避免解析错误**
+
+## 格式要求
+
+<reasoning>
+你的搜索过程...
+- 分析用户的图片需求
+- 构建搜索关键词
+- 描述找到的图片来源
+</reasoning>
+
+<result>
 ${JSON_SCHEMA}
+</result>
 
-注意事项：
-1. 输出必须是合法的 JSON 格式
+## 注意事项
+1. <result> 标签内必须是合法的 JSON 格式
 2. 每张图片必须有可直接访问的 url
 3. images 数组应包含 6-8 张图片
-4. 不要在 JSON 前后添加任何说明文字
-5. 不要使用 markdown 代码块包裹
+4. 不要在 <result> 标签内添加 markdown 代码块
+5. 所有标点符号必须使用英文半角字符（不要使用中文全角标点如：，。；等）
 6. 如果找不到合适的图片，images 可以是空数组，但要在 searchSummary 中说明原因
 `;
 
@@ -169,40 +182,40 @@ ${userInput}
 
 /**
  * 解析并验证 JSON 输出
+ * 使用健壮的 JSON 解析器，支持多层回退
  */
 function parseAndValidateJSON(output: string): any {
-  // 尝试提取 JSON（处理可能的 markdown 代码块包裹）
-  let jsonStr = output.trim();
-
-  // 移除可能的 markdown 代码块
-  const jsonMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-  if (jsonMatch) {
-    jsonStr = jsonMatch[1].trim();
-  }
-
-  // 尝试找到 JSON 对象的开始和结束
-  const startIndex = jsonStr.indexOf('{');
-  const endIndex = jsonStr.lastIndexOf('}');
-  if (startIndex !== -1 && endIndex !== -1) {
-    jsonStr = jsonStr.substring(startIndex, endIndex + 1);
-  }
-
-  try {
-    const parsed = JSON.parse(jsonStr);
-
-    // 验证必要字段
-    if (!parsed.images || !Array.isArray(parsed.images)) {
-      parsed.images = [];
+  // 使用健壮的 JSON 解析器
+  const result = parseRobustJSON(output, (data) => {
+    // images 字段不是必须的，可以是空数组
+    if (data.images && !Array.isArray(data.images)) {
+      return { valid: false, error: 'images 字段必须是数组' };
     }
+    return { valid: true };
+  });
 
-    // 过滤无效图片
-    parsed.images = parsed.images.filter((img: any) => img && img.url);
-
-    return parsed;
-  } catch (e) {
-    console.error('JSON 解析失败，原始输出:', output.substring(0, 500));
-    throw new Error(`JSON 解析失败: ${e.message}`);
+  if (!result.success) {
+    console.error('JSON 解析失败:', result.error);
+    if (result.rawOutput) {
+      console.error('原始输出预览:', result.rawOutput);
+    }
+    if (result.reasoning) {
+      console.log('思维链:', result.reasoning.substring(0, 200));
+    }
+    throw new Error(result.error || 'JSON 解析失败');
   }
+
+  const data = result.data;
+
+  // 确保 images 是数组
+  if (!data.images || !Array.isArray(data.images)) {
+    data.images = [];
+  }
+
+  // 过滤无效图片
+  data.images = data.images.filter((img: any) => img && img.url);
+
+  return data;
 }
 
 /**
