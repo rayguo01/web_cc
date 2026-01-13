@@ -73,18 +73,29 @@ export async function fetchTweets(config: DomainConfig): Promise<DomainTweet[]> 
 
   const searchTweets = await client.search(
     query,
-    config.fetchCount,
+    config.fetchCount * 2,  // 多获取一些，因为要过滤
     config.kols.enabled ? config.kols.accounts : []
   );
 
+  // 在代码中过滤 minLikes 和 minRetweets (API 不支持这些查询参数)
+  const minLikes = config.query.minLikes || 0;
+  const minRetweets = config.query.minRetweets || 0;
+  let filteredCount = 0;
+
   for (const tweet of searchTweets) {
     if (!seenIds.has(tweet.id)) {
-      seenIds.add(tweet.id);
-      allTweets.push(tweet);
+      // 过滤低互动推文
+      if (tweet.likes >= minLikes && tweet.retweets >= minRetweets) {
+        seenIds.add(tweet.id);
+        allTweets.push(tweet);
+        if (allTweets.length >= config.fetchCount) break;
+      } else {
+        filteredCount++;
+      }
     }
   }
 
-  console.log(`✅ 关键词搜索: ${searchTweets.length} 条推文`);
+  console.log(`✅ 关键词搜索: ${searchTweets.length} 条 → 过滤后 ${allTweets.length} 条 (过滤 ${filteredCount} 条低互动)`);
 
   // 2. KOL 推文抓取
   if (config.kols.enabled && config.kols.accounts.length > 0) {
@@ -110,9 +121,10 @@ export async function fetchTweets(config: DomainConfig): Promise<DomainTweet[]> 
 
 /**
  * 聚合推文数据，生成趋势列表
+ * 优先按 hashtag 聚合，如果没有 hashtag 则按 KOL 作者聚合
  */
 export function aggregateTweets(tweets: DomainTweet[]): DomainTrendItem[] {
-  // 按 hashtag 聚合
+  // 先尝试按 hashtag 聚合
   const hashtagMap = new Map<string, DomainTweet[]>();
 
   for (const tweet of tweets) {
@@ -122,6 +134,44 @@ export function aggregateTweets(tweets: DomainTweet[]): DomainTrendItem[] {
         hashtagMap.set(key, []);
       }
       hashtagMap.get(key)!.push(tweet);
+    }
+  }
+
+  // 如果没有 hashtag，按 KOL 作者聚合
+  if (hashtagMap.size === 0) {
+    console.log('⚠️ 推文没有 hashtag，按 KOL 作者聚合');
+    const authorMap = new Map<string, DomainTweet[]>();
+
+    for (const tweet of tweets) {
+      if (tweet.isKol && tweet.author) {
+        if (!authorMap.has(tweet.author)) {
+          authorMap.set(tweet.author, []);
+        }
+        authorMap.get(tweet.author)!.push(tweet);
+      }
+    }
+
+    // 如果还是没有，直接用全部推文
+    if (authorMap.size === 0 && tweets.length > 0) {
+      console.log('⚠️ 没有 KOL 推文，使用全部推文');
+      // 按互动量排序，取前 15 条作为独立话题
+      const sortedTweets = [...tweets].sort((a, b) =>
+        (b.likes + b.retweets * 2) - (a.likes + a.retweets * 2)
+      ).slice(0, 15);
+
+      return sortedTweets.map((tweet, index) => ({
+        rank: index + 1,
+        topic: `@${tweet.author}`,
+        engagement: tweet.likes + tweet.retweets * 2,
+        tweetCount: 1,
+        topTweet: tweet,
+        url: tweet.url
+      }));
+    }
+
+    // 用作者聚合
+    for (const [author, authorTweets] of authorMap) {
+      hashtagMap.set(`@${author}`, authorTweets);
     }
   }
 
@@ -136,7 +186,7 @@ export function aggregateTweets(tweets: DomainTweet[]): DomainTrendItem[] {
     const kolBonus = topicTweets.filter(t => t.isKol).length * 500;
 
     topics.push({
-      topic: `#${topic}`,
+      topic,
       tweets: topicTweets,
       totalLikes,
       totalRetweets,
@@ -154,7 +204,9 @@ export function aggregateTweets(tweets: DomainTweet[]): DomainTrendItem[] {
       engagement: t.engagement,
       tweetCount: t.tweets.length,
       topTweet: t.tweets.sort((a, b) => b.likes - a.likes)[0],
-      url: `https://x.com/search?q=${encodeURIComponent(t.topic)}`
+      url: t.topic.startsWith('@')
+        ? `https://x.com/${t.topic.slice(1)}`
+        : `https://x.com/search?q=${encodeURIComponent(t.topic)}`
     }));
 }
 

@@ -65,8 +65,8 @@ export class TwitterApiClient {
       if (!data.has_next_page) break;
       cursor = data.next_cursor;
 
-      // 添加延迟避免速率限制 (429 错误)
-      await this.delay(1000);
+      // 添加延迟避免速率限制 (免费用户限制: 5秒/请求)
+      await this.delay(5500);
     }
 
     return tweets;
@@ -95,8 +95,10 @@ export class TwitterApiClient {
         return [];
       }
 
-      const data = await response.json() as { tweets?: RawTweet[] };
-      const tweets = (data.tweets || []).map((t: RawTweet) =>
+      const data = await response.json() as { data?: { tweets?: RawTweet[] }; tweets?: RawTweet[] };
+      // API 返回格式: { data: { tweets: [...] } } 或 { tweets: [...] }
+      const rawTweets = data.data?.tweets || data.tweets || [];
+      const tweets = rawTweets.map((t: RawTweet) =>
         this.transformTweet(t, 'kol', [username])
       );
 
@@ -129,8 +131,8 @@ export class TwitterApiClient {
         const filtered = tweets.filter(t => t.likes >= minLikes);
         allTweets.push(...filtered.slice(0, tweetsPerKol));
 
-        // 添加延迟避免速率限制 (429 错误)
-        await this.delay(1500);
+        // 添加延迟避免速率限制 (免费用户限制: 5秒/请求)
+        await this.delay(5500);
       } catch (error) {
         console.warn(`[TwitterAPI] @${username} 出错:`, error);
       }
@@ -175,6 +177,7 @@ export class TwitterApiClient {
 
 /**
  * 构建搜索查询字符串
+ * 注意: min_faves/min_retweets 在 twitterapi.io 不支持，需要在代码中过滤
  */
 export function buildSearchQuery(config: {
   keywords: string[];
@@ -195,13 +198,8 @@ export function buildSearchQuery(config: {
     parts.push(`(${terms.join(' OR ')})`);
   }
 
-  // 最低互动量
-  if (config.minLikes) {
-    parts.push(`min_faves:${config.minLikes}`);
-  }
-  if (config.minRetweets) {
-    parts.push(`min_retweets:${config.minRetweets}`);
-  }
+  // 注意: min_faves/min_retweets 在 twitterapi.io 不支持
+  // 需要在代码中过滤，而不是在查询中
 
   // 语言过滤（只支持单语言）
   if (config.languages?.length === 1) {

@@ -6,7 +6,7 @@
   "query": {
     "keywords": ["gaming", "esports", "gamedev", "indie game"],
     "hashtags": ["gaming", "esports", "gamedev", "indiegame", "PS5", "Xbox"],
-    "minLikes": 50,
+    "minLikes": 20,
     "languages": ["en"],
     "excludeRetweets": true
   },
@@ -20,7 +20,7 @@
       "TimSweeneyEpic",
       "Naughty_Dog"
     ],
-    "minLikes": 100,
+    "minLikes": 20,
     "tweetsPerKol": 5
   },
   "fetchCount": 50

@@ -6,7 +6,7 @@
   "query": {
     "keywords": ["AI", "GPT", "LLM", "machine learning", "ChatGPT", "Claude"],
     "hashtags": ["AI", "MachineLearning", "GPT", "LLM", "OpenAI", "Anthropic"],
-    "minLikes": 100,
+    "minLikes": 20,
     "languages": ["en"],
     "excludeRetweets": true
   },
@@ -21,7 +21,7 @@
       "kaboris",
       "swyx"
     ],
-    "minLikes": 200,
+    "minLikes": 20,
     "tweetsPerKol": 5
   },
   "fetchCount": 50

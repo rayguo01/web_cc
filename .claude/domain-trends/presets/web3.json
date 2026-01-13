@@ -6,8 +6,8 @@
   "query": {
     "keywords": ["web3", "crypto", "DeFi", "blockchain","polymarket"],
     "hashtags": ["web3", "crypto", "DeFi", "ethereum", "bitcoin","polymarket"],
-    "minLikes": 100,
-    "minRetweets": 10,
+    "minLikes": 20,
+    "minRetweets": 2,
     "languages": ["en"],
     "excludeRetweets": true
   },
@@ -22,7 +22,7 @@
       "balaboris",
       "sassal0x"
     ],
-    "minLikes": 100,
+    "minLikes": 20,
     "tweetsPerKol": 5
   },
   "fetchCount": 50
