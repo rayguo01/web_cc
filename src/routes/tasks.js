@@ -585,16 +585,39 @@ router.post('/:id/execute-step', authenticate, async (req, res) => {
             shell: true
         });
 
+        // 设置超时（5分钟）
+        const SKILL_TIMEOUT = 5 * 60 * 1000;
+        let killed = false;
+        const timeout = setTimeout(() => {
+            killed = true;
+            console.error(`[Skill ${skillId}] 执行超时（${SKILL_TIMEOUT / 1000}秒），强制终止`);
+            child.kill('SIGTERM');
+        }, SKILL_TIMEOUT);
+
+        // 收集错误输出
+        let stderrBuffer = '';
+
         child.stdout.on('data', (data) => {
-            safeWrite(`data: ${JSON.stringify({ type: 'log', message: data.toString() })}\n\n`);
+            const text = data.toString();
+            console.log(`[Skill ${skillId}] stdout:`, text.trim());
+            safeWrite(`data: ${JSON.stringify({ type: 'log', message: text })}\n\n`);
         });
 
         child.stderr.on('data', (data) => {
-            safeWrite(`data: ${JSON.stringify({ type: 'log', message: data.toString() })}\n\n`);
+            const text = data.toString();
+            stderrBuffer += text;
+            // 过滤掉 ts-node 编译信息
+            if (!text.includes('Compiling') && !text.includes('Using TypeScript')) {
+                console.error(`[Skill ${skillId}] stderr:`, text.trim());
+            }
+            safeWrite(`data: ${JSON.stringify({ type: 'log', message: text })}\n\n`);
         });
 
         child.on('close', async (code) => {
+            clearTimeout(timeout);
             cleanup();
+
+            console.log(`[Skill ${skillId}] 进程结束，退出码: ${code}${killed ? ' (超时终止)' : ''}`);
 
             if (code === 0) {
                 try {
@@ -650,9 +673,17 @@ router.post('/:id/execute-step', authenticate, async (req, res) => {
                     })}\n\n`);
                 }
             } else {
+                // 提取最后几行错误信息
+                const errorLines = stderrBuffer.trim().split('\n').slice(-10).join('\n');
+                const errorMessage = killed
+                    ? `执行超时（超过 ${SKILL_TIMEOUT / 1000} 秒）`
+                    : `执行失败，退出码: ${code}${errorLines ? '\n' + errorLines : ''}`;
+
+                console.error(`[Skill ${skillId}] 错误详情:`, errorLines || '无');
+
                 safeWrite(`data: ${JSON.stringify({
                     type: 'error',
-                    message: `执行失败，退出码: ${code}`
+                    message: errorMessage
                 })}\n\n`);
             }
 

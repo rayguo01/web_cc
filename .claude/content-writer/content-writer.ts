@@ -126,6 +126,10 @@ ${userInput}
 
 请基于以上素材，严格按照 JSON 格式输出三个版本的内容。只输出 JSON，不要任何其他内容。`;
 
+    // 设置超时（3分钟）
+    const TIMEOUT = 3 * 60 * 1000;
+    let killed = false;
+
     const child = spawn('claude', [
       '--output-format', 'text',
       '--allowedTools', 'WebSearch,WebFetch'
@@ -136,11 +140,22 @@ ${userInput}
       env: process.env
     });
 
+    const timeout = setTimeout(() => {
+      killed = true;
+      console.error(`⏰ Claude CLI 执行超时（${TIMEOUT / 1000}秒），强制终止`);
+      child.kill('SIGTERM');
+    }, TIMEOUT);
+
     let stdout = '';
     let stderr = '';
 
     child.stdout.on('data', (data) => {
-      stdout += data.toString();
+      const text = data.toString();
+      stdout += text;
+      // 实时输出进度
+      if (text.includes('{') || text.includes('"version')) {
+        console.log('📝 正在生成内容...');
+      }
     });
 
     child.stderr.on('data', (data) => {
@@ -148,14 +163,27 @@ ${userInput}
     });
 
     child.on('close', (code) => {
+      clearTimeout(timeout);
+
+      if (killed) {
+        reject(new Error(`Claude CLI 执行超时（超过 ${TIMEOUT / 1000} 秒）`));
+        return;
+      }
+
       if (code === 0) {
+        console.log(`✅ Claude CLI 返回，输出长度: ${stdout.length}`);
         resolve(stdout.trim());
       } else {
-        reject(new Error(`Claude CLI 退出码: ${code}, stderr: ${stderr}`));
+        console.error(`❌ Claude CLI 错误，退出码: ${code}`);
+        console.error(`stderr: ${stderr.substring(0, 500)}`);
+        console.error(`stdout (最后500字符): ${stdout.substring(stdout.length - 500)}`);
+        reject(new Error(`Claude CLI 退出码: ${code}, stderr: ${stderr.substring(0, 200)}`));
       }
     });
 
     child.on('error', (error) => {
+      clearTimeout(timeout);
+      console.error(`❌ Claude CLI spawn 错误:`, error);
       reject(error);
     });
 
