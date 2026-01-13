@@ -176,12 +176,30 @@ class SkillCache {
     }
 
     /**
-     * 获取当前小时的缓存
+     * 获取当前时间窗口的缓存
+     * - 普通趋势：当前小时
+     * - domain-trends 轮换模式：当前 2 小时窗口
+     * - domain-trends 传统模式：当前 8 小时窗口
      * @param {string} skillId
      * @returns {object|null} 缓存内容或 null
      */
     get(skillId) {
-        const hourKey = this.getHourKey();
+        const currentHour = new Date().getHours();
+        let hourKey;
+
+        if (skillId.includes(':group')) {
+            // 轮换模式：2 小时窗口
+            const windowStart = Math.floor(currentHour / 2) * 2;
+            hourKey = String(windowStart).padStart(2, '0');
+        } else if (skillId.startsWith('domain-trends:')) {
+            // 传统模式：8 小时窗口
+            const windowStart = Math.floor(currentHour / 8) * 8;
+            hourKey = String(windowStart).padStart(2, '0');
+        } else {
+            // 普通趋势：当前小时
+            hourKey = this.getHourKey();
+        }
+
         return this.getByHour(skillId, hourKey);
     }
 
