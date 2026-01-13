@@ -1,8 +1,42 @@
 # Web Claude Code 项目概要
 
-## 版本: v2.9.14
+## 版本: v2.9.15
 
 ## 完成的工作
+
+### 3.35 修复 domain-trends 缓存查询和时间轴 (v2.9.15)
+
+**问题**：X领域趋势页面显示 8 小时时间轴，已抓取内容不显示。
+
+**根本原因**：
+- 调度器存储数据用 `domain-trends:ai:group0` 格式
+- 前端查询用 `domain-trends:ai` 格式
+- `skillCache` 的判断逻辑用 `skillId.includes(':group')` 导致不匹配
+
+**修复**（`src/services/skillCache.js`）：
+
+1. **新增 `isDomainTrends()` 方法**：统一判断是否为 domain-trends 类型
+2. **新增 `getAggregatedRotationData()` 方法**：聚合所有轮换组的缓存数据
+3. **更新 `getAvailableHours()`**：domain-trends 统一使用 2 小时时间轴
+4. **更新 `get()` / `getByHour()`**：支持从聚合数据中查询
+5. **更新 `cleanupOldData()` / `set()`**：统一使用 `isDomainTrends()` 判断
+
+**数据查询流程**：
+```
+前端请求 domain-trends:ai/hours
+    ↓
+getAvailableHours('domain-trends:ai')
+    ↓
+isDomainTrends() = true, 不含 :group
+    ↓
+getAggregatedRotationData('domain-trends:ai')
+    ↓
+聚合 domain-trends:ai:group0~9 的所有缓存
+    ↓
+返回 2 小时间隔时间轴
+```
+
+---
 
 ### 3.34 前端清理和预设显示修复 (v2.9.14)
 

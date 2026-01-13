@@ -48,6 +48,55 @@ class SkillCache {
     }
 
     /**
+     * 检查是否是 domain-trends 类型的 skillId
+     * 支持格式：domain-trends:preset 或 domain-trends:preset:groupN
+     * @param {string} skillId
+     * @returns {boolean}
+     */
+    isDomainTrends(skillId) {
+        return skillId.startsWith('domain-trends:');
+    }
+
+    /**
+     * 从 domain-trends:preset 格式获取当前轮换组的 skillId
+     * @param {string} skillId - 格式如 domain-trends:ai
+     * @returns {string} - 格式如 domain-trends:ai:group0
+     */
+    getRotationSkillId(skillId) {
+        if (skillId.includes(':group')) {
+            return skillId; // 已经是完整格式
+        }
+        const currentHour = new Date().getHours();
+        const groupId = Math.floor(currentHour / 2) % 10;
+        return `${skillId}:group${groupId}`;
+    }
+
+    /**
+     * 查找所有属于指定 preset 的轮换组缓存
+     * @param {string} presetSkillId - 格式如 domain-trends:ai
+     * @returns {Map} 聚合的 hourlyData
+     */
+    getAggregatedRotationData(presetSkillId) {
+        const aggregated = new Map();
+        const prefix = presetSkillId + ':group';
+
+        // 遍历所有缓存，找到匹配的轮换组数据
+        for (const [skillId, hourlyData] of this.hourlyCache.entries()) {
+            if (skillId.startsWith(prefix)) {
+                for (const [hourKey, cached] of hourlyData.entries()) {
+                    // 如果同一小时有多个组的数据，使用最新的
+                    const existing = aggregated.get(hourKey);
+                    if (!existing || cached.generatedAt > existing.generatedAt) {
+                        aggregated.set(hourKey, cached);
+                    }
+                }
+            }
+        }
+
+        return aggregated;
+    }
+
+    /**
      * 获取缓存文件路径
      * @param {string} skillId
      * @returns {string}
@@ -129,7 +178,7 @@ class SkillCache {
     /**
      * 清理过期的旧数据
      * - 普通趋势：清理超过12小时的数据
-     * - domain-trends 轮换模式：保留所有 2 小时窗口点
+     * - domain-trends：保留所有 2 小时窗口点
      * @param {string} skillId
      */
     cleanupOldData(skillId) {
@@ -140,8 +189,8 @@ class SkillCache {
         const currentHour = now.getHours();
         const validHours = new Set();
 
-        if (skillId.includes(':group')) {
-            // domain-trends 轮换模式：保留所有 2 小时窗口点（00, 02, 04, ...）
+        if (this.isDomainTrends(skillId)) {
+            // domain-trends：保留所有 2 小时窗口点（00, 02, 04, ...）
             for (let h = 0; h < 24; h += 2) {
                 validHours.add(String(h).padStart(2, '0'));
             }
@@ -172,7 +221,7 @@ class SkillCache {
     /**
      * 获取当前时间窗口的缓存
      * - 普通趋势：当前小时
-     * - domain-trends 轮换模式：当前 2 小时窗口
+     * - domain-trends：当前 2 小时窗口（支持聚合查询）
      * @param {string} skillId
      * @returns {object|null} 缓存内容或 null
      */
@@ -180,8 +229,8 @@ class SkillCache {
         const currentHour = new Date().getHours();
         let hourKey;
 
-        if (skillId.includes(':group')) {
-            // 轮换模式：2 小时窗口
+        if (this.isDomainTrends(skillId)) {
+            // domain-trends：2 小时窗口
             const windowStart = Math.floor(currentHour / 2) * 2;
             hourKey = String(windowStart).padStart(2, '0');
         } else {
@@ -199,7 +248,15 @@ class SkillCache {
      * @returns {object|null}
      */
     getByHour(skillId, hourKey) {
-        const hourlyData = this.hourlyCache.get(skillId);
+        let hourlyData;
+
+        // domain-trends:preset 格式需要聚合查询
+        if (this.isDomainTrends(skillId) && !skillId.includes(':group')) {
+            hourlyData = this.getAggregatedRotationData(skillId);
+        } else {
+            hourlyData = this.hourlyCache.get(skillId);
+        }
+
         if (!hourlyData) return null;
 
         const cached = hourlyData.get(hourKey);
@@ -216,21 +273,25 @@ class SkillCache {
     /**
      * 获取所有可用的小时列表（按时间倒序）
      * - 普通趋势：返回过去12个小时
-     * - domain-trends 轮换模式：返回过去12个2小时时间点
+     * - domain-trends：返回过去12个2小时时间点（聚合所有轮换组数据）
      * @param {string} skillId
      * @returns {Array<{hourKey: string, generatedAt: number, displayTime: string}>}
      */
     getAvailableHours(skillId) {
-        const hourlyData = this.hourlyCache.get(skillId) || new Map();
         const now = new Date();
         const currentHour = now.getHours();
 
-        // domain-trends 轮换模式（包含 :group）使用 2 小时间隔
-        if (skillId.includes(':group')) {
+        // domain-trends 使用 2 小时间隔（无论是否包含 :group）
+        if (this.isDomainTrends(skillId)) {
+            // 如果是 domain-trends:preset 格式，聚合所有轮换组数据
+            const hourlyData = skillId.includes(':group')
+                ? (this.hourlyCache.get(skillId) || new Map())
+                : this.getAggregatedRotationData(skillId);
             return this.getDomainTrendsRotationHours(hourlyData, currentHour);
         }
 
         // 普通趋势：生成过去12个小时的列表
+        const hourlyData = this.hourlyCache.get(skillId) || new Map();
         const hours = [];
         for (let i = 0; i < this.maxHours; i++) {
             let hour = currentHour - i;
@@ -285,7 +346,7 @@ class SkillCache {
     /**
      * 设置缓存
      * - 普通趋势：存储到当前小时
-     * - domain-trends 轮换模式：存储到当前2小时窗口起点 (00, 02, 04, ...)
+     * - domain-trends：存储到当前2小时窗口起点 (00, 02, 04, ...)
      * @param {string} skillId
      * @param {string} content
      */
@@ -293,8 +354,8 @@ class SkillCache {
         let hourKey;
         const currentHour = new Date().getHours();
 
-        if (skillId.includes(':group')) {
-            // domain-trends 轮换模式存储到 2 小时窗口起点
+        if (this.isDomainTrends(skillId)) {
+            // domain-trends 存储到 2 小时窗口起点
             const windowStart = Math.floor(currentHour / 2) * 2;
             hourKey = String(windowStart).padStart(2, '0');
         } else {
