@@ -62,7 +62,7 @@ class OptimizePage {
                             跳过图片
                         </button>
                         <button class="btn btn-primary" id="next-btn" ${!this.optimizedVersion ? 'disabled' : ''}>
-                            下一步: 生成图片 →
+                            下一步: 图片描述 →
                         </button>
                     </div>
                 </div>
@@ -325,7 +325,7 @@ class OptimizePage {
         // 下一步
         container.querySelector('#next-btn').addEventListener('click', async () => {
             await this.saveOptimize();
-            this.generator.navigate('image');
+            this.generator.navigate('prompt');
         });
 
         this.bindOptimizeEvents();
