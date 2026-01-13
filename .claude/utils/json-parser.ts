@@ -60,6 +60,20 @@ export function fixFullWidthChars(jsonStr: string): string {
 }
 
 /**
+ * 修复 JSON 中的千位分隔符（如 98,000 → 98000）
+ * 只处理 JSON 值中的数字，不影响字符串内容
+ */
+export function fixThousandSeparators(jsonStr: string): string {
+  // 匹配 JSON 中的数字值（非字符串内的数字）
+  // 模式：冒号后面的数字，或数组中的数字
+  // 例如: "count": 98,000 或 [98,000, 12,345]
+  return jsonStr.replace(
+    /(?<=:\s*|,\s*|\[\s*)(\d{1,3}(?:,\d{3})+)(?=\s*[,\}\]\n])/g,
+    (match) => match.replace(/,/g, '')
+  );
+}
+
+/**
  * 验证 JSON 格式，检测常见错误
  */
 export function validateJSONFormat(jsonStr: string): { valid: boolean; error?: string } {
@@ -78,15 +92,6 @@ export function validateJSONFormat(jsonStr: string): { valid: boolean; error?: s
     return {
       valid: false,
       error: 'JSON 中不可包含范围符号 ~，所有数字必须是精确的单一值'
-    };
-  }
-
-  // 检查是否包含千位分隔符（如 98,000）
-  const thousandSepPattern = /\d,\d{3}(?=\D|$)/;
-  if (thousandSepPattern.test(trimmed)) {
-    return {
-      valid: false,
-      error: 'JSON 数字不可包含千位分隔符逗号'
     };
   }
 
@@ -138,9 +143,10 @@ export function extractReasoning(response: string): string {
  * 多层回退的 JSON 提取
  */
 export function extractJSON(response: string): string | null {
-  // 预清洗：去零宽/BOM 和修复全角字符
+  // 预清洗：去零宽/BOM、修复全角字符、修复千位分隔符
   let s = removeInvisibleRunes(response);
   s = fixFullWidthChars(s);
+  s = fixThousandSeparators(s);
   s = s.trim();
 
   // 层级1: 尝试从 <result> 标签中提取
@@ -148,6 +154,7 @@ export function extractJSON(response: string): string | null {
   if (jsonPart) {
     console.log('✓ 使用 <result> 标签提取 JSON');
     jsonPart = fixFullWidthChars(jsonPart);
+    jsonPart = fixThousandSeparators(jsonPart);
   }
 
   // 层级2: 尝试从 <json> 标签中提取
@@ -156,6 +163,7 @@ export function extractJSON(response: string): string | null {
     if (jsonPart) {
       console.log('✓ 使用 <json> 标签提取 JSON');
       jsonPart = fixFullWidthChars(jsonPart);
+      jsonPart = fixThousandSeparators(jsonPart);
     }
   }
 
@@ -165,6 +173,7 @@ export function extractJSON(response: string): string | null {
     if (jsonPart) {
       console.log('✓ 使用 <decision> 标签提取 JSON');
       jsonPart = fixFullWidthChars(jsonPart);
+      jsonPart = fixThousandSeparators(jsonPart);
     }
   }
 
@@ -177,23 +186,28 @@ export function extractJSON(response: string): string | null {
   // 层级4: 从 ```json 代码块中提取
   const fenceMatch = jsonPart.match(RE_JSON_FENCE);
   if (fenceMatch) {
-    const extracted = fenceMatch[1].trim();
+    let extracted = fenceMatch[1].trim();
     console.log('✓ 从 ```json 代码块提取 JSON');
-    return fixFullWidthChars(extracted);
+    extracted = fixFullWidthChars(extracted);
+    return fixThousandSeparators(extracted);
   }
 
   // 层级5: 尝试提取 JSON 对象
   const objectMatch = jsonPart.match(RE_JSON_OBJECT);
   if (objectMatch) {
+    let extracted = objectMatch[0];
     console.log('✓ 提取 JSON 对象');
-    return fixFullWidthChars(objectMatch[0]);
+    extracted = fixFullWidthChars(extracted);
+    return fixThousandSeparators(extracted);
   }
 
   // 层级6: 尝试提取 JSON 数组
   const arrayMatch = jsonPart.match(RE_JSON_ARRAY);
   if (arrayMatch) {
+    let extracted = arrayMatch[0];
     console.log('✓ 提取 JSON 数组');
-    return fixFullWidthChars(arrayMatch[0]);
+    extracted = fixFullWidthChars(extracted);
+    return fixThousandSeparators(extracted);
   }
 
   return null;

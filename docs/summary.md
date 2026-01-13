@@ -1,8 +1,94 @@
 # Web Claude Code 项目概要
 
-## 版本: v2.9.5
+## 版本: v2.9.6
 
 ## 完成的工作
+
+### 3.26 趋势数据数据库存储 + 分析去重 (v2.9.6)
+
+**功能概述**：将热门趋势的原始数据和分析结果保存到数据库，避免同一时间周期内重复调用 Claude CLI 分析。
+
+**核心改进**：
+
+1. **两阶段执行**：
+   - 抓取阶段：仅获取原始趋势数据（不调用 Claude）
+   - 分析阶段：检查数据库，如已有结果则跳过分析
+
+2. **数据库存储**：
+   - 新增 `trends_data` 表存储原始数据和分析结果
+   - 支持按 hourKey 查询历史数据
+   - 自动清理 24 小时前的过期数据
+
+3. **分析去重**：
+   - 同一小时内多次触发只执行一次 Claude 分析
+   - 支持并发保护，防止重复分析
+
+**新增数据库表**：
+
+```sql
+CREATE TABLE trends_data (
+    id SERIAL PRIMARY KEY,
+    skill_id VARCHAR(100) NOT NULL,      -- 'x-trends', 'tophub-trends'
+    hour_key VARCHAR(20) NOT NULL,        -- '2026-01-14-16'
+    raw_data JSONB,                       -- 原始趋势数据
+    analysis_result JSONB,                -- Claude 分析结果
+    analysis_status VARCHAR(20),          -- 'pending', 'analyzing', 'completed', 'failed'
+    error_message TEXT,
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP,
+    UNIQUE(skill_id, hour_key)
+);
+```
+
+**新增文件**：
+
+| 文件 | 说明 |
+|------|------|
+| `src/services/trendsDb.js` | 趋势数据数据库服务 |
+
+**修改的文件**：
+
+| 文件 | 修改内容 |
+|------|----------|
+| `src/config/database.js` | 添加 `trends_data` 表初始化 |
+| `src/services/scheduler.js` | 添加两阶段执行方法，集成 trendsDb 服务 |
+| `.claude/x-trends/x-trends.ts` | 添加 `fetchOnly()` 和 `analyzeOnly()` 函数，支持 fetch/analyze 命令行参数 |
+| `.claude/tophub-trends/tophub.ts` | 添加 `fetchOnly()` 和 `analyzeOnly()` 函数，支持 fetch/analyze 命令行参数 |
+
+**执行流程**：
+
+```
+调度器触发
+    ↓
+检查数据库 (trendsDb.getByHourKey)
+    ↓
+已有分析结果? → 跳过抓取和分析，直接返回
+    ↓ 否
+已有原始数据? → 跳过抓取，直接分析
+    ↓ 否
+执行 fetchOnly() → 保存原始数据到数据库
+    ↓
+再次检查分析状态（防并发）
+    ↓
+执行 analyzeOnly() → 保存分析结果到数据库
+    ↓
+更新 skillCache
+```
+
+**命令行用法**：
+
+```bash
+# 完整流程
+npx ts-node x-trends.ts
+
+# 仅抓取
+npx ts-node x-trends.ts fetch
+
+# 仅分析（需要JSON数据）
+npx ts-node x-trends.ts analyze '[{"rank":1,"name":"话题1",...}]'
+```
+
+---
 
 ### 3.25 Web3 轮换模式 + AI KOL 优化 (v2.9.5)
 

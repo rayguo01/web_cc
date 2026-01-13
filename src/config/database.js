@@ -125,6 +125,22 @@ async function initDatabase() {
             )
         `);
 
+        // 创建趋势数据表（保存原始数据和分析结果）
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS trends_data (
+                id SERIAL PRIMARY KEY,
+                skill_id VARCHAR(100) NOT NULL,
+                hour_key VARCHAR(20) NOT NULL,
+                raw_data JSONB,
+                analysis_result JSONB,
+                analysis_status VARCHAR(20) DEFAULT 'pending',
+                error_message TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(skill_id, hour_key)
+            )
+        `);
+
         // 创建索引
         await client.query(`
             CREATE INDEX IF NOT EXISTS idx_post_tasks_user_status ON post_tasks(user_id, status)
@@ -134,6 +150,12 @@ async function initDatabase() {
         `);
         await client.query(`
             CREATE INDEX IF NOT EXISTS idx_post_history_user ON post_history(user_id)
+        `);
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_trends_data_skill_hour ON trends_data(skill_id, hour_key)
+        `);
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_trends_data_created ON trends_data(created_at)
         `);
 
         console.log('数据库表初始化完成');

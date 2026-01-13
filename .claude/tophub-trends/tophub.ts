@@ -224,50 +224,68 @@ function parseAndValidateJSON(output: string): any {
 }
 
 /**
+ * 仅抓取数据（不分析）
+ * 用于调度器分离抓取和分析阶段
+ */
+export async function fetchOnly(): Promise<{ items: HotItem[]; rawPath: string }> {
+  const items = await fetchHotList();
+  console.log(`✅ 获取到 ${items.length} 条热榜数据`);
+
+  // Save Raw Data
+  const dateStr = new Date().toISOString().replace(/[:.]/g, '-');
+  const rawFilename = `tophub_hot_${dateStr}.json`;
+  const rawPath = path.join(TRENDS_DIR, rawFilename);
+
+  fs.writeFileSync(rawPath, JSON.stringify(items, null, 2));
+  console.log(`✅ 原始数据已保存到 ${rawPath}`);
+
+  return { items, rawPath };
+}
+
+/**
+ * 仅分析数据（不抓取）
+ * 用于调度器分离抓取和分析阶段
+ */
+export async function analyzeOnly(items: HotItem[]): Promise<{ reportPath: string; report: string; data: any }> {
+  const rawOutput = await analyzeHotList(items);
+
+  console.log('📋 正在解析 JSON 输出...');
+  const data = parseAndValidateJSON(rawOutput);
+
+  // Save JSON Report
+  const dateStr = new Date().toISOString().replace(/[:.]/g, '-');
+  const reportFilename = `tophub_analysis_${dateStr}.json`;
+  const reportPath = path.join(TRENDS_DIR, reportFilename);
+
+  const finalData = {
+    metadata: {
+      generatedAt: new Date().toISOString(),
+      source: 'tophub.today',
+      itemCount: items.length
+    },
+    ...data
+  };
+
+  fs.writeFileSync(reportPath, JSON.stringify(finalData, null, 2), 'utf-8');
+  console.log(`✅ JSON 报告已保存到 ${reportPath}`);
+
+  // 同时保存 .md 文件用于兼容旧代码
+  const mdPath = reportPath.replace('.json', '.md');
+  fs.writeFileSync(mdPath, JSON.stringify(finalData, null, 2), 'utf-8');
+
+  return { reportPath: mdPath, report: JSON.stringify(finalData), data: finalData };
+}
+
+/**
  * Main execution function
  */
 export async function run(): Promise<{ reportPath: string; report: string; data: any }> {
   try {
     // 1. Fetch
-    const items = await fetchHotList();
-    console.log(`✅ 获取到 ${items.length} 条热榜数据`);
+    const { items } = await fetchOnly();
 
-    // 2. Save Raw Data
-    const dateStr = new Date().toISOString().replace(/[:.]/g, '-');
-    const rawFilename = `tophub_hot_${dateStr}.json`;
-    const rawPath = path.join(TRENDS_DIR, rawFilename);
-
-    fs.writeFileSync(rawPath, JSON.stringify(items, null, 2));
-    console.log(`✅ 原始数据已保存到 ${rawPath}`);
-
-    // 3. Analyze
-    const rawOutput = await analyzeHotList(items);
-
-    console.log('📋 正在解析 JSON 输出...');
-    const data = parseAndValidateJSON(rawOutput);
-
-    // 4. Save JSON Report
-    const reportFilename = `tophub_analysis_${dateStr}.json`;
-    const reportPath = path.join(TRENDS_DIR, reportFilename);
-
-    const finalData = {
-      metadata: {
-        generatedAt: new Date().toISOString(),
-        source: 'tophub.today',
-        rawDataFile: rawFilename,
-        itemCount: items.length
-      },
-      ...data
-    };
-
-    fs.writeFileSync(reportPath, JSON.stringify(finalData, null, 2), 'utf-8');
-    console.log(`✅ JSON 报告已保存到 ${reportPath}`);
-
-    // 同时保存 .md 文件用于兼容旧代码
-    const mdPath = reportPath.replace('.json', '.md');
-    fs.writeFileSync(mdPath, JSON.stringify(finalData, null, 2), 'utf-8');
-
-    return { reportPath: mdPath, report: JSON.stringify(finalData), data: finalData };
+    // 2. Analyze
+    return await analyzeOnly(items);
 
   } catch (error) {
     console.error('❌ 执行 TopHub Skill 出错:', error);
@@ -275,7 +293,49 @@ export async function run(): Promise<{ reportPath: string; report: string; data:
   }
 }
 
-// Allow running directly
+// Allow running directly with mode argument
+// Usage:
+//   npx ts-node tophub.ts         # 完整流程（抓取+分析）
+//   npx ts-node tophub.ts fetch   # 仅抓取
+//   npx ts-node tophub.ts analyze <json>  # 仅分析（需要提供JSON数据）
 if (require.main === module) {
-  run();
+  const mode = process.argv[2] || 'full';
+
+  if (mode === 'fetch') {
+    fetchOnly().then(result => {
+      // 输出 JSON 格式供调度器解析
+      console.log('__FETCH_RESULT__');
+      console.log(JSON.stringify(result.items));
+    }).catch(error => {
+      console.error(error);
+      process.exit(1);
+    });
+  } else if (mode === 'analyze') {
+    const jsonData = process.argv[3];
+    if (!jsonData) {
+      console.error('错误: analyze 模式需要提供 JSON 数据');
+      process.exit(1);
+    }
+    try {
+      const items = JSON.parse(jsonData);
+      analyzeOnly(items).then(result => {
+        console.log('\n📊 分析完成！');
+        console.log(`报告已保存到: ${result.reportPath}`);
+      }).catch(error => {
+        console.error(error);
+        process.exit(1);
+      });
+    } catch (e) {
+      console.error('错误: JSON 解析失败');
+      process.exit(1);
+    }
+  } else {
+    // 默认：完整流程
+    run().then(result => {
+      console.log('\n📊 分析完成！');
+      console.log(`报告已保存到: ${result.reportPath}`);
+    }).catch(error => {
+      process.exit(1);
+    });
+  }
 }
