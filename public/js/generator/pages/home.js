@@ -34,6 +34,14 @@ class HomePage {
                             聚合各大平台热门内容榜单
                         </div>
                     </div>
+
+                    <div class="source-card" data-source="domain-trends">
+                        <div class="source-icon">🎯</div>
+                        <div class="source-name">X领域趋势</div>
+                        <div class="source-desc">
+                            追踪 Web3、AI 等特定领域的 X 热点
+                        </div>
+                    </div>
                 </div>
 
                 ${this.state.task ? this.renderActiveTask() : ''}

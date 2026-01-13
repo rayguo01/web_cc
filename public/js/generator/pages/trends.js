@@ -44,7 +44,7 @@ class TrendsPage {
                         🔥 TopHub 热榜
                     </button>
                     <button class="tab ${this.activeTab === 'domain-trends' ? 'active' : ''}" data-tab="domain-trends">
-                        🎯 领域趋势
+                        🎯 X领域趋势
                     </button>
                 </div>
 
