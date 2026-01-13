@@ -1,33 +1,5 @@
 {
   "id": "ai",
   "name": "AI 趋势",
-  "description": "追踪 AI 核心 KOL 动态",
-  "hoursAgo": 24,
-  "query": {
-    "enabled": false,
-    "keywords": [],
-    "hashtags": [],
-    "minLikes": 50,
-    "minRetweets": 5,
-    "languages": ["en"],
-    "excludeRetweets": true
-  },
-  "kols": {
-    "enabled": true,
-    "accounts": [
-      "sama",
-      "karpathy",
-      "ylecun",
-      "AndrewYNg",
-      "fchollet",
-      "demishassabis",
-      "lexfridman",
-      "DrJimFan",
-      "simonw",
-      "AravSrinivas"
-    ],
-    "minLikes": 50,
-    "tweetsPerKol": 5
-  },
-  "fetchCount": 50
+  "description": "追踪人工智能、机器学习领域的 X 热点"
 }

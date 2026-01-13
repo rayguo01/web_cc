@@ -1,33 +1,5 @@
 {
   "id": "web3",
   "name": "Web3 趋势",
-  "description": "追踪 Web3 核心 KOL 动态",
-  "hoursAgo": 24,
-  "query": {
-    "enabled": false,
-    "keywords": [],
-    "hashtags": [],
-    "minLikes": 50,
-    "minRetweets": 5,
-    "languages": ["en"],
-    "excludeRetweets": true
-  },
-  "kols": {
-    "enabled": true,
-    "accounts": [
-      "VitalikButerin",
-      "punk6529",
-      "CryptoHayes",
-      "APompliano",
-      "aantonop",
-      "balajis",
-      "cdixon",
-      "cobie",
-      "lookonchain",
-      "intocryptoverse"
-    ],
-    "minLikes": 50,
-    "tweetsPerKol": 5
-  },
-  "fetchCount": 50
+  "description": "追踪 Web3、DeFi、NFT 等领域的 X 热点"
 }

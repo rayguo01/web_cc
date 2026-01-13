@@ -1,8 +1,23 @@
 # Web Claude Code 项目概要
 
-## 版本: v2.9.8
+## 版本: v2.9.9
 
 ## 完成的工作
+
+### 3.29 修复 domain-trends 预设检测 (v2.9.9)
+
+**问题**：`getDomainPresets()` 过滤掉了所有 `-kol-groups.json` 文件，但缺少主预设文件（`web3.json`、`ai.json`），导致返回空数组，domain-trends 从不执行。
+
+**解决方案**：创建主预设配置文件。
+
+**新增文件**：
+
+| 文件 | 说明 |
+|------|------|
+| `.claude/domain-trends/presets/web3.json` | Web3 预设配置 |
+| `.claude/domain-trends/presets/ai.json` | AI 预设配置 |
+
+---
 
 ### 3.28 修复分析阶段 JSON 传参问题 (v2.9.8)
 
