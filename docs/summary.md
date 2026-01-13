@@ -1,8 +1,39 @@
 # Web Claude Code 项目概要
 
-## 版本: v2.9.1
+## 版本: v2.9.2
 
 ## 完成的工作
+
+### 3.22 domain-trends API 修复和聚合逻辑优化 (v2.9.2)
+
+**功能概述**：修复 domain-trends 的 Twitter API 问题，优化推文聚合逻辑。
+
+**问题与修复**：
+
+| 问题 | 原因 | 修复 |
+|------|------|------|
+| API 405 Method Not Allowed | twitterapi.io 使用 GET 而非 POST | 改为 GET + URLSearchParams |
+| API 429 Too Many Requests | 免费用户限制 5 秒/请求 | 增加延迟到 5500ms |
+| KOL 推文返回 0 条 | API 响应结构不同 `data.data.tweets` | 修复响应解析逻辑 |
+| 搜索推文全被过滤 | minLikes/minRetweets 门槛太高 | 降低门槛 100 → 20 |
+| 聚合话题数为 0 | 推文大多没有 hashtag | 添加 fallback 按 KOL 作者聚合 |
+| 缓存文件名含冒号 | Windows 不支持冒号 | 替换为下划线 |
+
+**修改的文件**：
+
+| 文件 | 修改内容 |
+|------|----------|
+| `.claude/domain-trends/twitter-api-client.ts` | GET 方法、5500ms 延迟、响应结构解析修复 |
+| `.claude/domain-trends/domain-trends.ts` | 聚合逻辑：hashtag → KOL 作者 → 全部推文 |
+| `.claude/domain-trends/presets/*.json` | minLikes: 100 → 20 |
+| `src/services/skillCache.js` | 文件名冒号替换为下划线 |
+
+**聚合逻辑优先级**：
+1. 按 hashtag 聚合（原有逻辑）
+2. 如无 hashtag，按 KOL 作者聚合
+3. 如无 KOL 推文，按互动量排序使用全部推文
+
+---
 
 ### 3.21 domain-trends 抓取频率调整 (v2.9.1)
 
