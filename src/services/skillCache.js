@@ -88,54 +88,49 @@ class SkillCache {
      * 从磁盘恢复缓存
      */
     loadFromDisk() {
-        // 基础趋势
-        const skillIds = ['x-trends', 'tophub-trends'];
+        // 扫描缓存目录中的所有 .hourly.json 文件
+        if (!fs.existsSync(this.cacheDir)) return;
 
-        // 加载 domain-trends 预设
-        const presetsDir = path.join(__dirname, '../../.claude/domain-trends/presets');
-        if (fs.existsSync(presetsDir)) {
-            try {
-                const files = fs.readdirSync(presetsDir).filter(f => f.endsWith('.json'));
-                for (const file of files) {
-                    const content = fs.readFileSync(path.join(presetsDir, file), 'utf-8');
-                    const config = JSON.parse(content);
-                    skillIds.push(`domain-trends:${config.id}`);
+        try {
+            const files = fs.readdirSync(this.cacheDir).filter(f => f.endsWith('.hourly.json'));
+
+            for (const file of files) {
+                // 从文件名还原 skillId（将下划线还原为冒号）
+                const safeId = file.replace('.hourly.json', '');
+                const skillId = safeId.replace(/_/g, ':');
+
+                const filePath = path.join(this.cacheDir, file);
+
+                try {
+                    const data = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+                    const hourlyData = new Map();
+
+                    for (const [hourKey, cached] of Object.entries(data)) {
+                        hourlyData.set(hourKey, {
+                            content: cached.content,
+                            generatedAt: cached.generatedAt
+                        });
+                    }
+
+                    this.hourlyCache.set(skillId, hourlyData);
+                    console.log(`[缓存] 从磁盘恢复 ${skillId}，共 ${hourlyData.size} 个小时的数据`);
+
+                    // 清理超期数据
+                    this.cleanupOldData(skillId);
+                } catch (err) {
+                    console.error(`[缓存] 恢复 ${skillId} 失败:`, err.message);
                 }
-            } catch (err) {
-                console.error('[缓存] 读取 domain-trends 预设失败:', err.message);
             }
-        }
-
-        for (const skillId of skillIds) {
-            const filePath = this.getCacheFilePath(skillId);
-            if (!fs.existsSync(filePath)) continue;
-
-            try {
-                const data = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-                const hourlyData = new Map();
-
-                for (const [hourKey, cached] of Object.entries(data)) {
-                    hourlyData.set(hourKey, {
-                        content: cached.content,
-                        generatedAt: cached.generatedAt
-                    });
-                }
-
-                this.hourlyCache.set(skillId, hourlyData);
-                console.log(`[缓存] 从磁盘恢复 ${skillId}，共 ${hourlyData.size} 个小时的数据`);
-
-                // 清理超期数据
-                this.cleanupOldData(skillId);
-            } catch (err) {
-                console.error(`[缓存] 恢复 ${skillId} 失败:`, err.message);
-            }
+        } catch (err) {
+            console.error('[缓存] 扫描缓存目录失败:', err.message);
         }
     }
 
     /**
      * 清理过期的旧数据
      * - 普通趋势：清理超过12小时的数据
-     * - domain-trends：只保留 0, 8, 16 三个时间点的数据
+     * - domain-trends 轮换模式：保留所有 2 小时窗口点
+     * - domain-trends 传统模式：只保留 0, 8, 16 三个时间点
      * @param {string} skillId
      */
     cleanupOldData(skillId) {
@@ -146,8 +141,13 @@ class SkillCache {
         const currentHour = now.getHours();
         const validHours = new Set();
 
-        if (skillId.startsWith('domain-trends:')) {
-            // domain-trends: 只保留 0, 8, 16 三个固定时间点
+        if (skillId.includes(':group')) {
+            // domain-trends 轮换模式：保留所有 2 小时窗口点（00, 02, 04, ...）
+            for (let h = 0; h < 24; h += 2) {
+                validHours.add(String(h).padStart(2, '0'));
+            }
+        } else if (skillId.startsWith('domain-trends:')) {
+            // domain-trends 传统模式: 只保留 0, 8, 16 三个固定时间点
             validHours.add('00');
             validHours.add('08');
             validHours.add('16');
