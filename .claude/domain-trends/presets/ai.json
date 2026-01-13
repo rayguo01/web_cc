@@ -24,5 +24,5 @@
     "minLikes": 200,
     "tweetsPerKol": 5
   },
-  "fetchCount": 200
+  "fetchCount": 50
 }

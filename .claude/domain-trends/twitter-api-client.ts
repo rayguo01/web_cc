@@ -65,8 +65,8 @@ export class TwitterApiClient {
       if (!data.has_next_page) break;
       cursor = data.next_cursor;
 
-      // 添加小延迟避免速率限制
-      await this.delay(100);
+      // 添加延迟避免速率限制 (429 错误)
+      await this.delay(1000);
     }
 
     return tweets;
@@ -129,8 +129,8 @@ export class TwitterApiClient {
         const filtered = tweets.filter(t => t.likes >= minLikes);
         allTweets.push(...filtered.slice(0, tweetsPerKol));
 
-        // 添加延迟避免速率限制
-        await this.delay(200);
+        // 添加延迟避免速率限制 (429 错误)
+        await this.delay(1500);
       } catch (error) {
         console.warn(`[TwitterAPI] @${username} 出错:`, error);
       }
