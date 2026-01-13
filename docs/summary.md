@@ -1,8 +1,34 @@
 # Web Claude Code 项目概要
 
-## 版本: v2.9.7
+## 版本: v2.9.8
 
 ## 完成的工作
+
+### 3.28 修复分析阶段 JSON 传参问题 (v2.9.8)
+
+**问题**：调度器通过命令行参数传递 JSON 数据给分析脚本，但使用 `shell: true` 时 Shell 会解释特殊字符（如 `#`、`&`），导致 JSON 被破坏，解析失败。
+
+**解决方案**：改用临时文件传递数据，新增 `analyze-file` 模式。
+
+**修改的文件**：
+
+| 文件 | 修改内容 |
+|------|----------|
+| `src/services/scheduler.js` | `analyzeSkillData()` 改用 `analyze-file` 模式传递临时文件路径 |
+| `.claude/x-trends/x-trends.ts` | 新增 `analyze-file` 模式从文件读取 JSON |
+| `.claude/tophub-trends/tophub.ts` | 新增 `analyze-file` 模式从文件读取 JSON |
+
+**命令行用法更新**：
+
+```bash
+# 旧方式（有 shell 转义问题）
+npx ts-node x-trends.ts analyze '{"data": "..."}'
+
+# 新方式（推荐）
+npx ts-node x-trends.ts analyze-file /path/to/data.json
+```
+
+---
 
 ### 3.27 首页添加 X领域趋势入口 (v2.9.7)
 

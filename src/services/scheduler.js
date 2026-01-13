@@ -223,14 +223,13 @@ class Scheduler {
         const skillDir = path.join(__dirname, '../../.claude', skillId);
         const scriptPath = path.join(skillDir, scriptName);
 
-        // 将数据写入临时文件（避免命令行参数过长）
+        // 将数据写入临时文件（避免命令行参数过长和 shell 转义问题）
         const tempFile = path.join(__dirname, '../../outputs/.temp_analyze_data.json');
         fs.writeFileSync(tempFile, JSON.stringify(rawData));
 
         return new Promise((resolve, reject) => {
-            // 读取临时文件并传递给脚本
-            const jsonData = JSON.stringify(rawData);
-            const args = ['ts-node', scriptPath, 'analyze', jsonData];
+            // 传递临时文件路径给脚本（而非 JSON 数据本身）
+            const args = ['ts-node', scriptPath, 'analyze-file', tempFile];
 
             const child = spawn('npx', args, {
                 cwd: path.join(__dirname, '../..'),

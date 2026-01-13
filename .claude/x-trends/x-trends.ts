@@ -335,9 +335,10 @@ export async function run(): Promise<{ reportPath: string; report: string; data:
 
 // Allow running directly with mode argument
 // Usage:
-//   npx ts-node x-trends.ts         # 完整流程（抓取+分析）
-//   npx ts-node x-trends.ts fetch   # 仅抓取
-//   npx ts-node x-trends.ts analyze <json>  # 仅分析（需要提供JSON数据）
+//   npx ts-node x-trends.ts              # 完整流程（抓取+分析）
+//   npx ts-node x-trends.ts fetch        # 仅抓取
+//   npx ts-node x-trends.ts analyze <json>       # 仅分析（JSON 数据）
+//   npx ts-node x-trends.ts analyze-file <path>  # 仅分析（从文件读取）
 if (require.main === module) {
   const mode = process.argv[2] || 'full';
 
@@ -350,6 +351,27 @@ if (require.main === module) {
       console.error(error);
       process.exit(1);
     });
+  } else if (mode === 'analyze-file') {
+    // 从文件读取 JSON 数据（推荐方式，避免 shell 转义问题）
+    const filePath = process.argv[3];
+    if (!filePath) {
+      console.error('错误: analyze-file 模式需要提供文件路径');
+      process.exit(1);
+    }
+    try {
+      const jsonData = fs.readFileSync(filePath, 'utf-8');
+      const items = JSON.parse(jsonData);
+      analyzeOnly(items).then(result => {
+        console.log('\n📊 分析完成！');
+        console.log(`报告已保存到: ${result.reportPath}`);
+      }).catch(error => {
+        console.error(error);
+        process.exit(1);
+      });
+    } catch (e) {
+      console.error('错误: 读取或解析文件失败:', e instanceof Error ? e.message : e);
+      process.exit(1);
+    }
   } else if (mode === 'analyze') {
     const jsonData = process.argv[3];
     if (!jsonData) {
