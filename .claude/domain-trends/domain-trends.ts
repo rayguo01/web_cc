@@ -430,6 +430,7 @@ const JSON_SCHEMA = `
     {
       "rank": 1,
       "topic": "原始话题名称",
+      "tweetUrl": "具体推文链接（从输入的推文链接复制）",
       "url": "X搜索链接",
       "score": "潜力评分（高/中/低）",
       "reason": "为什么这个话题有潜力（简要说明）",
@@ -452,7 +453,8 @@ export async function analyzeTrends(
     const tweet = item.topTweet;
     return `${item.rank}. ${item.topic} (互动: ${item.engagement}, 推文数: ${item.tweetCount})
    代表推文: "${tweet.text.substring(0, 100)}..." by @${tweet.author}
-   链接: ${item.url}`;
+   推文链接: ${tweet.url}
+   搜索链接: ${item.url}`;
   }).join('\n\n');
 
   const prompt = `你是一位内容策略专家。以下是来自 X(Twitter) 的 **${config.name}** 领域热门话题：
@@ -492,11 +494,12 @@ ${JSON_SCHEMA}
 ## 注意事项
 1. <result> 标签内必须是合法的 JSON 格式
 2. suggestions 必须包含 5-8 个高潜力话题，每个都要有完整的选题建议
-3. 每个 suggestion 必须包含: rank, topic, url, score, reason, angle, whyEffective, directions
-4. categories 至少包含 3 个分类
-5. 每个 suggestion 的 directions 必须是包含 2-4 个创作方向的数组
-6. 不要在 <result> 标签内添加 markdown 代码块
-7. 所有标点符号必须使用英文半角字符`;
+3. 每个 suggestion 必须包含: rank, topic, tweetUrl, url, score, reason, angle, whyEffective, directions
+4. **tweetUrl 必须使用输入中的"推文链接"，这是具体推文的 URL**
+5. categories 至少包含 3 个分类
+6. 每个 suggestion 的 directions 必须是包含 2-4 个创作方向的数组
+7. 不要在 <result> 标签内添加 markdown 代码块
+8. 所有标点符号必须使用英文半角字符`;
 
   console.log('🤖 正在使用 Claude CLI 分析趋势...');
   return await callClaudeCLI(prompt);

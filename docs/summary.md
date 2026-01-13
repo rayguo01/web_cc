@@ -1,8 +1,24 @@
 # Web Claude Code 项目概要
 
-## 版本: v2.9.15
+## 版本: v2.9.16
 
 ## 完成的工作
+
+### 3.36 domain-trends 查看原帖指向具体推文 (v2.9.16)
+
+**功能**："查看原帖" 链接现在指向具体推文 URL，而不是 KOL 主页或搜索链接。
+
+**修改**：
+
+1. **`domain-trends.ts`**：
+   - prompt 中添加"推文链接"字段（`tweet.url`）
+   - JSON schema 添加 `tweetUrl` 字段
+   - 注意事项强调必须使用具体推文链接
+
+2. **`trends.js`**：
+   - `parseTopicsFromJSON()` 优先使用 `tweetUrl` 字段
+
+---
 
 ### 3.35 修复 domain-trends 缓存查询和时间轴 (v2.9.15)
 

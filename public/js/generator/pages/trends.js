@@ -821,8 +821,8 @@ class TrendsPage {
                 }
             }
 
-            // 提取链接：tophub 使用 link，x-trends 使用 url
-            const topicLink = s.link || s.url || '';
+            // 提取链接：优先使用 tweetUrl（具体推文），其次 link（tophub），最后 url（搜索链接）
+            const topicLink = s.tweetUrl || s.link || s.url || '';
 
             return {
                 title: s.topic || `建议 ${index + 1}`,
