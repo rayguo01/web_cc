@@ -483,7 +483,7 @@ router.post('/upload', authMiddleware, async (req, res) => {
 
         res.json({
             success: true,
-            mediaId: uploadData.data?.media_id_string || uploadData.media_id_string
+            mediaId: uploadData.data?.id || uploadData.data?.media_id_string
         });
     } catch (err) {
         console.error('媒体上传错误:', err);
