@@ -221,13 +221,13 @@
    =================================== */
 .source-selector {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 20px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
     margin-top: 28px;
 }
 
 .source-card {
-    padding: 32px 28px;
+    padding: 24px 20px;
     background: var(--surface-elevated);
     border: 2px solid var(--border-default);
     border-radius: var(--radius-xl);
@@ -243,8 +243,8 @@
 }
 
 .source-icon {
-    font-size: 48px;
-    margin-bottom: 16px;
+    font-size: 40px;
+    margin-bottom: 12px;
 }
 
 .source-name {
@@ -2367,6 +2367,7 @@
 
     .source-selector {
         grid-template-columns: 1fr;
+        gap: 12px;
     }
 
     .score-card {
