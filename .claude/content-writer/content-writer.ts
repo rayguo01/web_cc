@@ -13,8 +13,8 @@ if (!fs.existsSync(CONTENT_DIR)) {
   fs.mkdirSync(CONTENT_DIR, { recursive: true });
 }
 
-// JSON Schema 定义
-const JSON_SCHEMA = `
+// JSON Schema 定义 - 默认模式（三个版本）
+const JSON_SCHEMA_DEFAULT = `
 {
   "analysis": {
     "topic": "一句话概括核心主题",
@@ -31,6 +31,29 @@ const JSON_SCHEMA = `
   },
   "versionC": {
     "title": "终极融合版 (Defou x Stanley Combo)",
+    "content": "完整内容，使用\\n表示换行"
+  },
+  "evaluation": {
+    "curiosity": { "score": 0-25, "comment": "好奇心评价" },
+    "resonance": { "score": 0-25, "comment": "共鸣度评价" },
+    "clarity": { "score": 0-25, "comment": "清晰度评价" },
+    "shareability": { "score": 0-25, "comment": "传播值评价" },
+    "total": 0-100,
+    "summary": "整体评价"
+  },
+  "suggestions": ["优化建议1", "优化建议2"]
+}`;
+
+// JSON Schema 定义 - 自定义语气模式（单版本，输出到 versionC 保持兼容）
+const JSON_SCHEMA_CUSTOM = `
+{
+  "analysis": {
+    "topic": "一句话概括核心主题",
+    "audience": "目标受众描述",
+    "tone": "情绪基调描述"
+  },
+  "versionC": {
+    "title": "模仿风格版",
     "content": "完整内容，使用\\n表示换行"
   },
   "evaluation": {
@@ -116,15 +139,11 @@ const CUSTOM_VOICE_TASK = `
 3. 参考指南中的 Few-Shot Examples 来把握风格
 4. 让生成的内容看起来像是该作者本人写的
 
-请基于素材创作**三个版本**的内容：
-
-**版本 A**：最能体现该作者风格的版本
-**版本 B**：稍微正式一点的版本，但仍保持作者语气
-**版本 C**：终极版本，完美融合作者风格与传播力
+请基于素材创作**一个版本**的内容，完美模仿该作者的写作风格。
 `;
 
-// 输出格式要求
-const OUTPUT_FORMAT = `
+// 输出格式要求 - 默认模式
+const OUTPUT_FORMAT_DEFAULT = `
 ====================
 输出格式要求（极其重要）
 ====================
@@ -140,7 +159,35 @@ const OUTPUT_FORMAT = `
 </reasoning>
 
 <result>
-${JSON_SCHEMA}
+${JSON_SCHEMA_DEFAULT}
+</result>
+
+## 注意事项
+1. <result> 标签内必须是合法的 JSON 格式
+2. 内容中的换行使用 \\n 表示
+3. 内容中的双引号使用 \\" 转义
+4. 不要在 <result> 标签内添加 markdown 代码块
+5. 所有标点符号必须使用英文半角字符（不要使用中文全角标点如：，。；等）
+`;
+
+// 输出格式要求 - 自定义语气模式（单版本）
+const OUTPUT_FORMAT_CUSTOM = `
+====================
+输出格式要求（极其重要）
+====================
+
+**必须使用 XML 标签分隔思维过程和 JSON 结果，避免解析错误**
+
+## 格式要求
+
+<reasoning>
+你的创作思路分析...
+- 简洁分析素材的核心价值
+- 分析写作风格指南的关键特征
+</reasoning>
+
+<result>
+${JSON_SCHEMA_CUSTOM}
 </result>
 
 ## 注意事项
@@ -152,18 +199,18 @@ ${JSON_SCHEMA}
 `;
 
 /**
- * 构建系统 prompt，根据是否有自定义语气选择不同的人格
+ * 构建系统 prompt，根据是否有自定义语气选择不同的人格和输出格式
  */
 function buildSystemPrompt(userInput: string): string {
   const hasCustomVoice = userInput.includes('===写作风格指南===');
 
   if (hasCustomVoice) {
-    // 使用自定义语气，不包含默认人格
-    console.log('🎭 检测到自定义写作风格，使用用户指定语气');
-    return BASE_RULES + CUSTOM_VOICE_TASK + OUTPUT_FORMAT;
+    // 使用自定义语气，单版本输出
+    console.log('🎭 检测到自定义写作风格，使用用户指定语气（单版本）');
+    return BASE_RULES + CUSTOM_VOICE_TASK + OUTPUT_FORMAT_CUSTOM;
   } else {
-    // 使用默认人格
-    return BASE_RULES + DEFAULT_PERSONA + OUTPUT_FORMAT;
+    // 使用默认人格，三版本输出
+    return BASE_RULES + DEFAULT_PERSONA + OUTPUT_FORMAT_DEFAULT;
   }
 }
 
