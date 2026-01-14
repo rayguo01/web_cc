@@ -55,7 +55,7 @@ class ImagePage {
 
                 <div class="page-actions">
                     <div class="action-left">
-                        <button class="btn btn-secondary" id="back-btn">
+                        <button class="btn btn-primary" id="back-btn">
                             ← 返回描述
                         </button>
                         <button class="btn btn-danger" id="abandon-btn">
@@ -117,13 +117,15 @@ class ImagePage {
 
             <!-- 图片预览 -->
             ${this.imagePath ? `
-                <div class="image-preview">
+                <div class="image-result">
                     <div class="editor-label">
                         <span>🖼️</span> 生成的图片
                     </div>
-                    <img src="${this.imagePath}" alt="Generated Image" />
+                    <div class="image-preview">
+                        <img src="${this.imagePath}" alt="Generated Image" />
+                    </div>
                     <div class="image-actions">
-                        <button class="btn btn-secondary" id="regenerate-btn">
+                        <button class="btn btn-primary" id="regenerate-btn">
                             🔄 重新生成
                         </button>
                         <a class="btn btn-ghost" href="${this.imagePath}" download target="_blank">
@@ -254,13 +256,13 @@ class ImagePage {
             });
         });
 
-        // 返回按钮
+        // 返回按钮 - 仅导航，不清除数据
         container.querySelector('#back-btn').addEventListener('click', async () => {
             try {
-                await this.generator.updateTask('goBack', { toStep: 'prompt' });
+                await this.generator.updateTask('navigateTo', { toStep: 'prompt' });
                 this.generator.navigate('prompt');
             } catch (error) {
-                console.error('回退失败:', error);
+                console.error('导航失败:', error);
             }
         });
 
@@ -373,6 +375,14 @@ class ImagePage {
         if (!this.prompt) {
             this.generator.showToast('请先生成图片描述', 'error');
             return;
+        }
+
+        // 如果已有图片，显示确认弹窗
+        if (this.imagePath) {
+            const confirmed = await this.generator.showConfirm(
+                '重新生成将替换当前图片，确定继续吗？'
+            );
+            if (!confirmed) return;
         }
 
         this.isLoading = true;

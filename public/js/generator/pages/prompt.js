@@ -31,7 +31,7 @@ class PromptPage {
 
                 <div class="page-actions">
                     <div class="action-left">
-                        <button class="btn btn-secondary" id="back-btn">
+                        <button class="btn btn-primary" id="back-btn">
                             ← 返回优化
                         </button>
                         <button class="btn btn-danger" id="abandon-btn">
@@ -113,7 +113,7 @@ class PromptPage {
             ` : ''}
 
             <div class="prompt-actions">
-                <button class="btn btn-secondary" id="regenerate-btn">
+                <button class="btn btn-primary" id="regenerate-btn">
                     🔄 重新生成描述
                 </button>
             </div>
@@ -130,13 +130,13 @@ class PromptPage {
     }
 
     bindEvents(container) {
-        // 返回按钮
+        // 返回按钮 - 仅导航，不清除数据
         container.querySelector('#back-btn').addEventListener('click', async () => {
             try {
-                await this.generator.updateTask('goBack', { toStep: 'optimize' });
+                await this.generator.updateTask('navigateTo', { toStep: 'optimize' });
                 this.generator.navigate('optimize');
             } catch (error) {
-                console.error('回退失败:', error);
+                console.error('导航失败:', error);
             }
         });
 
@@ -195,6 +195,14 @@ class PromptPage {
         if (!content) {
             this.generator.showToast('没有找到内容来生成图片描述', 'error');
             return;
+        }
+
+        // 如果已有 prompt，显示确认弹窗
+        if (this.prompt) {
+            const confirmed = await this.generator.showConfirm(
+                '重新生成将清除当前描述及后续图片数据，确定继续吗？'
+            );
+            if (!confirmed) return;
         }
 
         // 清除后续步骤的缓存数据（image 步骤）

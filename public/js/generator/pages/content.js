@@ -338,7 +338,7 @@ class ContentPage {
                 <button class="btn btn-secondary" id="edit-input-btn">
                     ✏️ 修改输入
                 </button>
-                <button class="btn btn-secondary" id="regenerate-btn">
+                <button class="btn btn-primary" id="regenerate-btn">
                     🔄 重新生成
                 </button>
             </div>
