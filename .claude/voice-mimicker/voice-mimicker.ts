@@ -52,7 +52,7 @@ function delay(ms: number): Promise<void> {
 }
 
 /**
- * 抓取用户推文（支持分页获取更多）
+ * 抓取用户推文（使用 advanced_search 端点，支持分页获取更多）
  */
 async function fetchUserTweets(username: string, minChars: number = 100, targetCount: number = 15): Promise<Tweet[]> {
   const apiKey = process.env.TWITTER_API_IO_KEY;
@@ -61,22 +61,24 @@ async function fetchUserTweets(username: string, minChars: number = 100, targetC
     throw new Error('缺少环境变量 TWITTER_API_IO_KEY');
   }
 
-  console.log(`📡 正在抓取 @${username} 的推文...`);
+  console.log(`📡 正在抓取 @${username} 的推文（使用 advanced_search）...`);
 
   const allTweets: Tweet[] = [];
   let cursor = '';
   let pageCount = 0;
-  const maxPages = 5; // 最多翻5页，避免过多 API 调用
+  const maxPages = 10; // 最多翻10页，获取足够多的推文
 
   while (allTweets.length < targetCount && pageCount < maxPages) {
+    // 使用 advanced_search 端点，通过 from:username 查询用户推文
     const params = new URLSearchParams({
-      userName: username
+      query: `from:${username} -is:retweet`,  // 排除转发
+      queryType: 'Top'  // Top 排序获取高质量推文
     });
     if (cursor) {
       params.append('cursor', cursor);
     }
 
-    const response = await fetch(`https://api.twitterapi.io/twitter/user/last_tweets?${params.toString()}`, {
+    const response = await fetch(`https://api.twitterapi.io/twitter/tweet/advanced_search?${params.toString()}`, {
       method: 'GET',
       headers: {
         'X-API-Key': apiKey
@@ -89,15 +91,13 @@ async function fetchUserTweets(username: string, minChars: number = 100, targetC
     }
 
     const data = await response.json() as {
-      data?: { tweets?: RawTweet[] };
       tweets?: RawTweet[];
       has_next_page?: boolean;
       next_cursor?: string;
     };
 
-    // 推文在 data.tweets 或顶层 tweets
-    const rawTweets = data.data?.tweets || data.tweets || [];
-    // 分页信息在顶层
+    // advanced_search 推文在顶层 tweets
+    const rawTweets = data.tweets || [];
     const hasNextPage = data.has_next_page;
     const nextCursor = data.next_cursor;
 
@@ -108,11 +108,9 @@ async function fetchUserTweets(username: string, minChars: number = 100, targetC
 
     console.log(`📥 第 ${pageCount + 1} 页获取到 ${rawTweets.length} 条推文`);
 
-    // 过滤：只保留字数超过 minChars 的推文，排除纯转发
+    // 过滤：只保留字数超过 minChars 的推文
     for (const t of rawTweets) {
       const text = t.text || '';
-      // 排除纯转发（以 RT @ 开头）
-      if (text.startsWith('RT @')) continue;
       // 过滤字数
       if (text.length < minChars) continue;
 
@@ -130,7 +128,7 @@ async function fetchUserTweets(username: string, minChars: number = 100, targetC
 
     pageCount++;
 
-    // 检查是否有下一页（分页信息在顶层）
+    // 检查是否有下一页
     if (!hasNextPage || !nextCursor) {
       console.log(`📭 没有更多页面`);
       break;

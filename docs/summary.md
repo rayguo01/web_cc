@@ -1,8 +1,26 @@
 # Web Claude Code 项目概要
 
-## 版本: v2.9.18
+## 版本: v2.9.19
 
 ## 完成的工作
+
+### 3.39 语气模仿器改用 advanced_search 端点 (v2.9.19)
+
+**问题**：`last_tweets` API 端点只返回约 10 条推文，对于发推量大的用户无法获取足够多的优质推文进行风格分析。
+
+**解决方案**：改用 `advanced_search` 端点配合 `from:username` 查询，支持分页获取更多推文。
+
+**修改**：
+
+1. **`.claude/voice-mimicker/voice-mimicker.ts`**：
+   - 将 `fetchUserTweets` 函数从 `user/last_tweets` 端点改为 `tweet/advanced_search` 端点
+   - 使用 `from:username -is:retweet` 查询，直接在查询中排除转发
+   - 使用 `Top` 排序获取高互动推文
+   - 提高最大翻页次数从 5 页到 10 页
+
+**效果**：对于发推量大的用户（如 @thankUcrypto 有 6500+ 推文），可以获取更多推文用于风格分析。
+
+---
 
 ### 3.38 domain-trends 两阶段执行 (v2.9.18)
 
