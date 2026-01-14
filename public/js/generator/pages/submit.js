@@ -71,7 +71,7 @@ class SubmitPage {
 
                 <div class="page-actions">
                     <div class="action-left">
-                        <button class="btn btn-secondary" id="back-btn">
+                        <button class="btn btn-primary" id="back-btn">
                             ← 返回编辑
                         </button>
                         <button class="btn btn-danger" id="abandon-btn">
