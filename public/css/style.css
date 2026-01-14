@@ -1,73 +1,91 @@
 /* ===================================
-   双主题系统 - Dark & Light
+   Cinematic Enterprise Luxury Design System
+   电影质感企业奢华设计 - 深邃、精致、专业
+   Inspired by Giga AI
    =================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+/* 字体导入 - Serif + Sans-serif 组合 */
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
 
 /* ===================================
-   Light Theme - Fresh & Clean (默认)
+   Design Tokens - 统一深色主题
    =================================== */
-:root,
-[data-theme="light"] {
-    /* 背景色 */
-    --bg-base: #f8fafc;
-    --bg-subtle: #f1f5f9;
-    --bg-muted: #e2e8f0;
-    --bg-emphasis: #ffffff;
+:root {
+    /* 背景色 - Deep Charcoal Slate */
+    --bg-deep: #141619;           /* 主背景 - 深板岩炭 */
+    --bg-base: #141619;           /* 基础背景 */
+    --bg-subtle: #1a1d21;         /* 微妙层次 */
+    --bg-muted: #22262b;          /* 柔和层次 */
+    --bg-emphasis: #1e2126;       /* 强调背景 */
 
-    /* 主色调 - 清新蓝绿 */
-    --primary: #0ea5e9;
-    --primary-light: #38bdf8;
-    --primary-dark: #0284c7;
-    --accent: #10b981;
-    --accent-light: #34d399;
+    /* 表面色 - Card & Container */
+    --surface-card: rgba(30, 33, 38, 0.9);     /* 卡片背景 */
+    --surface-elevated: rgba(34, 38, 43, 0.95); /* 悬浮层 */
+    --surface-hover: rgba(40, 44, 50, 0.95);    /* 悬停状态 */
+    --surface-active: rgba(50, 55, 62, 0.95);   /* 激活状态 */
+    --surface-glass: rgba(20, 22, 25, 0.85);    /* 玻璃效果 */
+
+    /* 主色调 */
+    --primary: #ffffff;           /* 白色 - 主CTA */
+    --primary-hover: #f0f0f0;     /* 白色悬停 */
+    --secondary: #22262b;         /* 次要色 */
+    --accent: #f05a4a;            /* 珊瑚红强调色 */
+    --accent-light: #ff7a6b;      /* 浅珊瑚 */
+    --accent-dark: #d94a3a;       /* 深珊瑚 */
 
     /* 渐变 */
-    --gradient-primary: linear-gradient(135deg, #0ea5e9 0%, #10b981 100%);
-    --gradient-subtle: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-    --gradient-accent: linear-gradient(135deg, #10b981 0%, #06b6d4 100%);
-
-    /* 表面色 */
-    --surface-card: #ffffff;
-    --surface-elevated: #ffffff;
-    --surface-hover: #f1f5f9;
-    --surface-active: #e2e8f0;
+    --gradient-overlay: linear-gradient(180deg, transparent 0%, #141619 100%);
+    --gradient-subtle: linear-gradient(180deg, rgba(255,255,255,0.02) 0%, transparent 100%);
+    --gradient-accent: linear-gradient(135deg, #f05a4a 0%, #ff7a6b 100%);
+    --gradient-dark: linear-gradient(180deg, #1a1d21 0%, #141619 100%);
 
     /* 边框 */
-    --border-light: #e2e8f0;
-    --border-default: #cbd5e1;
-    --border-focus: #0ea5e9;
+    --border-subtle: rgba(255, 255, 255, 0.06);
+    --border-light: rgba(255, 255, 255, 0.1);
+    --border-default: rgba(255, 255, 255, 0.15);
+    --border-focus: rgba(240, 90, 74, 0.5);
+    --border-card: 1px solid rgba(255, 255, 255, 0.08);
 
     /* 文字 */
-    --text-primary: #0f172a;
-    --text-secondary: #475569;
-    --text-muted: #94a3b8;
-    --text-accent: #0ea5e9;
-    --text-inverse: #ffffff;
+    --text-primary: #ffffff;       /* 纯白 - 标题 */
+    --text-secondary: #a1a1aa;     /* 柔灰 - 正文 */
+    --text-muted: #71717a;         /* 暗灰 - 辅助 */
+    --text-accent: #f05a4a;        /* 珊瑚强调 */
+    --text-inverse: #141619;       /* 反色 - 按钮文字 */
 
-    /* 阴影 */
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
-    --shadow-focus: 0 0 0 3px rgba(14, 165, 233, 0.2);
+    /* 阴影 - Cinematic Depth */
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 20px 50px -15px rgba(0, 0, 0, 0.6);
+    --shadow-xl: 0 30px 60px -20px rgba(0, 0, 0, 0.7);
+    --shadow-focus: 0 0 0 3px rgba(240, 90, 74, 0.3);
+    --shadow-card: 0 10px 40px -15px rgba(0, 0, 0, 0.5);
+    --shadow-lift: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+    --shadow-glow: 0 0 40px rgba(240, 90, 74, 0.15);
 
     /* 状态色 */
-    --success: #10b981;
+    --success: #22c55e;
     --warning: #f59e0b;
     --error: #ef4444;
     --info: #3b82f6;
 
     /* 圆角 */
-    --radius-sm: 6px;
-    --radius-md: 10px;
+    --radius-sm: 8px;
+    --radius-md: 12px;
     --radius-lg: 16px;
-    --radius-xl: 24px;
-    --radius-full: 9999px;
+    --radius-xl: 20px;
+    --radius-2xl: 24px;
+    --radius-full: 9999px;        /* Pill */
 
     /* 过渡 */
     --transition-fast: 0.15s ease;
     --transition-normal: 0.2s ease;
     --transition-smooth: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+    /* 字体 */
+    --font-serif: 'Cormorant Garamond', 'Georgia', 'Times New Roman', serif;
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 
     /* 安全区域 */
     --safe-area-top: env(safe-area-inset-top, 0px);
@@ -77,66 +95,6 @@
 
     --header-height: 64px;
     --touch-target: 44px;
-
-    /* 主题标识 */
-    --theme-icon: "☀️";
-    --theme-bg-pattern: none;
-}
-
-/* ===================================
-   Dark Theme - Cosmic Noir
-   =================================== */
-[data-theme="dark"] {
-    /* 背景色 */
-    --bg-base: #0f172a;
-    --bg-subtle: #1e293b;
-    --bg-muted: #334155;
-    --bg-emphasis: #1e293b;
-
-    /* 主色调 - 霓虹青色 */
-    --primary: #22d3ee;
-    --primary-light: #67e8f9;
-    --primary-dark: #06b6d4;
-    --accent: #a78bfa;
-    --accent-light: #c4b5fd;
-
-    /* 渐变 */
-    --gradient-primary: linear-gradient(135deg, #22d3ee 0%, #a78bfa 100%);
-    --gradient-subtle: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
-    --gradient-accent: linear-gradient(135deg, #a78bfa 0%, #f472b6 100%);
-
-    /* 表面色 */
-    --surface-card: rgba(30, 41, 59, 0.8);
-    --surface-elevated: rgba(51, 65, 85, 0.6);
-    --surface-hover: rgba(51, 65, 85, 0.8);
-    --surface-active: rgba(71, 85, 105, 0.6);
-
-    /* 边框 */
-    --border-light: rgba(255, 255, 255, 0.06);
-    --border-default: rgba(255, 255, 255, 0.1);
-    --border-focus: #22d3ee;
-
-    /* 文字 */
-    --text-primary: #f1f5f9;
-    --text-secondary: #94a3b8;
-    --text-muted: #64748b;
-    --text-accent: #22d3ee;
-    --text-inverse: #0f172a;
-
-    /* 阴影 */
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
-    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
-    --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.5);
-    --shadow-focus: 0 0 0 3px rgba(34, 211, 238, 0.3);
-
-    /* 状态色 */
-    --success: #34d399;
-    --warning: #fbbf24;
-    --error: #f87171;
-    --info: #60a5fa;
-
-    /* 主题标识 */
-    --theme-icon: "🌙";
 }
 
 /* ===================================
@@ -155,21 +113,21 @@ html {
 }
 
 body {
-    font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    background: var(--bg-base);
-    color: var(--text-primary);
+    font-family: var(--font-sans);
+    background: var(--bg-deep);
+    color: var(--text-secondary);
     min-height: 100vh;
     min-height: 100dvh;
     overflow-x: hidden;
-    font-weight: 500;
+    font-weight: 400;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    line-height: 1.6;
-    transition: background-color var(--transition-smooth), color var(--transition-smooth);
+    line-height: 1.7;
+    letter-spacing: -0.01em;
 }
 
-/* Light 主题背景 */
-[data-theme="light"] body::before {
+/* 背景装饰 - Subtle Gradient Atmosphere */
+body::before {
     content: '';
     position: fixed;
     top: 0;
@@ -177,51 +135,27 @@ body {
     right: 0;
     bottom: 0;
     background:
-        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(14, 165, 233, 0.08) 0%, transparent 50%),
-        radial-gradient(ellipse 60% 40% at 100% 100%, rgba(16, 185, 129, 0.06) 0%, transparent 50%);
+        /* 顶部微妙高光 */
+        radial-gradient(ellipse 100% 50% at 50% -20%, rgba(255, 255, 255, 0.03) 0%, transparent 50%),
+        /* 角落暗色强调 */
+        radial-gradient(ellipse 50% 50% at 100% 100%, rgba(240, 90, 74, 0.03) 0%, transparent 50%),
+        radial-gradient(ellipse 50% 50% at 0% 100%, rgba(240, 90, 74, 0.02) 0%, transparent 50%);
     pointer-events: none;
     z-index: 0;
 }
 
-/* Dark 主题背景 */
-[data-theme="dark"] body::before {
+/* 噪点纹理叠加 - Film Grain Effect */
+body::after {
     content: '';
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background:
-        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(34, 211, 238, 0.1) 0%, transparent 50%),
-        radial-gradient(ellipse 60% 40% at 100% 100%, rgba(167, 139, 250, 0.08) 0%, transparent 50%),
-        radial-gradient(ellipse 50% 30% at 0% 80%, rgba(244, 114, 182, 0.06) 0%, transparent 50%);
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    opacity: 0.02;
     pointer-events: none;
     z-index: 0;
-}
-
-/* Dark 主题星尘效果 */
-[data-theme="dark"] body::after {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-image:
-        radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,0.2) 0%, transparent 100%),
-        radial-gradient(1px 1px at 40% 70%, rgba(255,255,255,0.15) 0%, transparent 100%),
-        radial-gradient(1px 1px at 60% 20%, rgba(255,255,255,0.18) 0%, transparent 100%),
-        radial-gradient(1px 1px at 80% 60%, rgba(255,255,255,0.12) 0%, transparent 100%);
-    background-size: 250px 250px;
-    animation: stardust 120s linear infinite;
-    pointer-events: none;
-    z-index: 0;
-    opacity: 0.5;
-}
-
-@keyframes stardust {
-    0% { transform: translateY(0); }
-    100% { transform: translateY(-250px); }
 }
 
 #app {
@@ -241,35 +175,65 @@ body {
 }
 
 /* ===================================
-   主题切换按钮
+   排版系统 - Typography
+   =================================== */
+h1, h2, h3, .heading-serif {
+    font-family: var(--font-serif);
+    color: var(--text-primary);
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+}
+
+h1 {
+    font-size: clamp(2.5rem, 5vw, 4rem);
+}
+
+h2 {
+    font-size: clamp(2rem, 4vw, 3rem);
+}
+
+h3 {
+    font-size: clamp(1.5rem, 3vw, 2rem);
+}
+
+.heading-sans {
+    font-family: var(--font-sans);
+    color: var(--text-primary);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+}
+
+/* ===================================
+   主题切换按钮（隐藏，保留兼容性）
    =================================== */
 .theme-toggle {
     position: fixed;
     top: 20px;
     right: 20px;
     z-index: 1000;
-    width: 48px;
-    height: 48px;
+    width: 44px;
+    height: 44px;
     border-radius: var(--radius-full);
-    border: 1px solid var(--border-default);
+    border: 1px solid var(--border-light);
     background: var(--surface-card);
     color: var(--text-secondary);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 20px;
-    transition: var(--transition-normal);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    font-size: 18px;
+    transition: var(--transition-smooth);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     box-shadow: var(--shadow-md);
 }
 
 .theme-toggle:hover {
     background: var(--surface-hover);
     color: var(--text-primary);
+    border-color: var(--border-default);
     transform: scale(1.05);
-    box-shadow: var(--shadow-lg);
 }
 
 .theme-toggle:active {
@@ -277,7 +241,7 @@ body {
 }
 
 /* ===================================
-   认证页面
+   认证页面 - Cinematic Login
    =================================== */
 #auth-page {
     display: flex;
@@ -288,32 +252,41 @@ body {
     padding: 24px;
     padding-top: calc(24px + var(--safe-area-top));
     padding-bottom: calc(24px + var(--safe-area-bottom));
-}
-
-.auth-container {
-    width: 100%;
-    max-width: 420px;
-    padding: 40px 36px;
-    background: var(--surface-card);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-radius: var(--radius-xl);
-    border: 1px solid var(--border-default);
-    box-shadow: var(--shadow-lg);
-    animation: authEnter 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-    position: relative;
+    position: absolute;
+    inset: 0;
     overflow: hidden;
 }
 
-/* 卡片顶部装饰条 */
-.auth-container::before {
+/* 背景渐变装饰 */
+#auth-page::before {
     content: '';
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
-    height: 3px;
-    background: var(--gradient-primary);
+    bottom: 0;
+    background:
+        /* 中心微妙光晕 */
+        radial-gradient(ellipse 80% 60% at 50% 30%, rgba(240, 90, 74, 0.06) 0%, transparent 50%),
+        /* 底部渐变 */
+        linear-gradient(180deg, transparent 0%, rgba(20, 22, 25, 0.8) 100%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.auth-container {
+    width: 100%;
+    max-width: 420px;
+    padding: 48px 40px;
+    background: var(--surface-card);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--border-subtle);
+    box-shadow: var(--shadow-xl);
+    animation: authEnter 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    z-index: 1;
 }
 
 @keyframes authEnter {
@@ -330,50 +303,53 @@ body {
 .auth-container h1 {
     text-align: center;
     margin-bottom: 8px;
-    font-family: 'Plus Jakarta Sans', sans-serif;
-    font-size: 28px;
-    font-weight: 700;
-    letter-spacing: -0.02em;
+    font-family: var(--font-serif);
+    font-size: 36px;
+    font-weight: 500;
+    letter-spacing: -0.03em;
     color: var(--text-primary);
 }
 
-.auth-container h1::after {
-    content: '✨';
+.auth-logo {
     display: block;
-    font-size: 24px;
-    margin-top: 10px;
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 20px;
+    object-fit: contain;
+    filter: drop-shadow(0 4px 20px rgba(240, 90, 74, 0.2));
 }
 
 .auth-subtitle {
     text-align: center;
     color: var(--text-secondary);
-    margin-bottom: 32px;
+    margin-bottom: 40px;
     font-size: 15px;
-    font-weight: 500;
+    font-weight: 400;
+    line-height: 1.6;
 }
 
 .auth-tabs {
     display: flex;
-    margin-bottom: 28px;
-    background: var(--bg-subtle);
-    border-radius: var(--radius-lg);
-    padding: 5px;
-    border: 1px solid var(--border-light);
+    margin-bottom: 32px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: var(--radius-full);
+    padding: 4px;
+    border: 1px solid var(--border-subtle);
 }
 
 .tab-btn {
     flex: 1;
-    padding: 12px 20px;
-    min-height: var(--touch-target);
+    padding: 12px 24px;
+    min-height: 44px;
     border: none;
     background: transparent;
     color: var(--text-muted);
     cursor: pointer;
     font-family: inherit;
     font-size: 14px;
-    font-weight: 600;
-    border-radius: var(--radius-md);
-    transition: var(--transition-normal);
+    font-weight: 500;
+    border-radius: var(--radius-full);
+    transition: var(--transition-smooth);
 }
 
 .tab-btn:hover {
@@ -381,9 +357,8 @@ body {
 }
 
 .tab-btn.active {
-    background: var(--surface-elevated);
-    color: var(--primary);
-    box-shadow: var(--shadow-sm);
+    background: var(--primary);
+    color: var(--text-inverse);
 }
 
 .auth-form {
@@ -398,49 +373,52 @@ body {
 
 .auth-form input {
     width: 100%;
-    padding: 16px 20px;
+    padding-top: 16px;
+    padding-bottom: 16px;
+    padding-right: 20px;
+    /* padding-left is controlled by Tailwind classes */
     min-height: 52px;
-    border: 1px solid var(--border-default);
+    border: 1px solid var(--border-light);
     border-radius: var(--radius-md);
-    background: var(--bg-base);
+    background: rgba(255, 255, 255, 0.03);
     color: var(--text-primary);
     font-family: inherit;
     font-size: 15px;
-    font-weight: 500;
-    transition: var(--transition-normal);
+    font-weight: 400;
+    transition: var(--transition-smooth);
 }
 
 .auth-form input::placeholder {
     color: var(--text-muted);
-    font-weight: 500;
 }
 
 .auth-form input:focus {
     outline: none;
-    border-color: var(--border-focus);
+    border-color: var(--accent);
+    background: rgba(255, 255, 255, 0.05);
     box-shadow: var(--shadow-focus);
 }
 
 .auth-form button[type="submit"] {
     width: 100%;
-    padding: 16px 24px;
+    padding: 16px 28px;
     min-height: 52px;
     border: none;
-    border-radius: var(--radius-md);
-    background: var(--gradient-primary);
+    border-radius: var(--radius-full);
+    background: var(--primary);
     color: var(--text-inverse);
     font-family: inherit;
     font-size: 15px;
     font-weight: 600;
     cursor: pointer;
-    transition: var(--transition-normal);
+    transition: var(--transition-smooth);
     margin-top: 8px;
 }
 
 .auth-form button[type="submit"]:hover {
+    background: var(--primary-hover);
     transform: translateY(-2px);
     box-shadow: var(--shadow-lg);
-    filter: brightness(1.05);
 }
 
 .auth-form button[type="submit"]:active {
@@ -450,7 +428,7 @@ body {
 .error-msg {
     color: var(--error);
     text-align: center;
-    font-size: 14px;
+    font-size: 13px;
     min-height: 20px;
     font-weight: 500;
 }
@@ -467,124 +445,105 @@ body {
 .auth-divider::after {
     content: '';
     flex: 1;
-    border-bottom: 1px solid var(--border-default);
+    border-bottom: 1px solid var(--border-subtle);
 }
 
 .auth-divider span {
     padding: 0 16px;
-    font-size: 13px;
+    font-size: 12px;
     color: var(--text-muted);
     font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
-/* X 官方风格登录按钮 */
+/* X 登录按钮 */
 .btn-twitter-login {
     width: 100%;
     padding: 0 24px;
-    height: 44px;
-    border: none;
-    border-radius: 9999px;
-    background: #000000;
-    color: #ffffff;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    font-size: 15px;
-    font-weight: 700;
+    height: 48px;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-full);
+    background: transparent;
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    transition: background-color 0.2s ease;
+    gap: 10px;
+    transition: var(--transition-smooth);
 }
 
 .btn-twitter-login:hover {
-    background: #272727;
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--border-default);
 }
 
 .btn-twitter-login:active {
-    background: #3a3a3a;
+    background: rgba(255, 255, 255, 0.08);
 }
 
 .btn-twitter-login:disabled {
-    background: #87898c;
+    opacity: 0.5;
     cursor: not-allowed;
 }
 
 .btn-twitter-login .x-logo {
-    width: 18px;
-    height: 18px;
-    fill: #ffffff;
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
 }
 
 .btn-twitter-login .spinner {
     display: inline-block;
-    width: 18px;
-    height: 18px;
-    border: 2px solid rgba(255, 255, 255, 0.3);
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.2);
     border-radius: 50%;
     border-top-color: white;
     animation: spin 0.8s linear infinite;
 }
 
-/* 浅色主题下的 X 登录按钮（可选：白底黑字版本） */
-[data-theme="light"] .btn-twitter-login.btn-twitter-light {
-    background: #ffffff;
-    color: #0f1419;
-    border: 1px solid #cfd9de;
-}
-
-[data-theme="light"] .btn-twitter-login.btn-twitter-light:hover {
-    background: #f7f9f9;
-}
-
-[data-theme="light"] .btn-twitter-login.btn-twitter-light .x-logo {
-    fill: #0f1419;
-}
-
 @keyframes spin {
-    to {
-        transform: rotate(360deg);
-    }
+    to { transform: rotate(360deg); }
 }
 
 /* ===================================
-   生成器页面入口
-   =================================== */
-#generator-page {
-    min-height: 100vh;
-    min-height: 100dvh;
-}
-
-/* ===================================
-   按钮系统
+   按钮系统 - Cinematic Buttons
    =================================== */
 .btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    padding: 12px 20px;
+    gap: 10px;
+    padding: 14px 28px;
     min-height: var(--touch-target);
     border: none;
-    border-radius: var(--radius-md);
-    font-family: inherit;
+    border-radius: var(--radius-full);
+    font-family: var(--font-sans);
     font-size: 14px;
     font-weight: 600;
+    letter-spacing: -0.01em;
     cursor: pointer;
-    transition: var(--transition-normal);
+    transition: var(--transition-smooth);
     text-decoration: none;
+    position: relative;
 }
 
+/* Primary CTA - White Pill */
 .btn-primary {
-    background: var(--gradient-primary);
+    background: var(--primary);
     color: var(--text-inverse);
-    box-shadow: var(--shadow-sm);
+    box-shadow: var(--shadow-md);
 }
 
 .btn-primary:hover {
+    background: var(--primary-hover);
     transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
-    filter: brightness(1.05);
+    box-shadow: var(--shadow-lg);
 }
 
 .btn-primary:active {
@@ -596,179 +555,350 @@ body {
     cursor: not-allowed;
     transform: none;
     box-shadow: none;
-    filter: none;
 }
 
+/* Secondary - Outline */
 .btn-secondary {
-    background: var(--surface-card);
-    color: var(--text-secondary);
-    border: 1px solid var(--border-default);
+    background: transparent;
+    color: var(--text-primary);
+    border: 1px solid rgba(255, 255, 255, 0.8);
 }
 
 .btn-secondary:hover {
-    background: var(--surface-hover);
-    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.1);
     border-color: var(--primary);
 }
 
+/* Accent CTA - Coral */
+.btn-accent {
+    background: var(--accent);
+    color: var(--text-primary);
+    box-shadow: var(--shadow-md);
+}
+
+.btn-accent:hover {
+    background: var(--accent-light);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-glow);
+}
+
+/* Ghost Button */
 .btn-ghost {
     background: transparent;
     color: var(--text-secondary);
-    padding: 10px 14px;
+    padding: 12px 18px;
 }
 
 .btn-ghost:hover {
-    background: var(--surface-hover);
-    color: var(--primary);
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.05);
 }
 
+/* Outline Button */
+.btn-outline {
+    background: transparent;
+    color: var(--text-primary);
+    border: 1px solid var(--border-light);
+    padding: 12px 24px;
+}
+
+.btn-outline:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--border-default);
+}
+
+/* Small Button */
+.btn-sm {
+    padding: 10px 18px;
+    font-size: 13px;
+    min-height: 36px;
+}
+
+/* Large Button */
+.btn-lg {
+    padding: 18px 36px;
+    font-size: 16px;
+    min-height: 56px;
+}
+
+/* Extra Large Button */
+.btn-large {
+    padding: 16px 32px;
+    font-size: 15px;
+    font-weight: 600;
+    min-height: 52px;
+}
+
+/* Danger Button */
 .btn-danger {
-    background: rgba(239, 68, 68, 0.1);
+    background: transparent;
     color: var(--error);
-    border: 1px solid rgba(239, 68, 68, 0.2);
+    border: 1px solid var(--error);
 }
 
 .btn-danger:hover {
-    background: rgba(239, 68, 68, 0.15);
+    background: rgba(239, 68, 68, 0.1);
+    border-color: var(--error);
+}
+
+.btn-danger.btn-sm {
+    color: var(--error);
+    border-color: rgba(239, 68, 68, 0.5);
+}
+
+.btn-danger.btn-sm:hover {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: var(--error);
+}
+
+/* ===================================
+   卡片系统 - Cinematic Cards
+   =================================== */
+.card {
+    background: var(--surface-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: 28px;
+    transition: var(--transition-smooth);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.card:hover {
+    border-color: var(--border-light);
+    box-shadow: var(--shadow-card);
+}
+
+.card-elevated {
+    background: var(--surface-elevated);
+    box-shadow: var(--shadow-md);
+}
+
+.card-elevated:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lift);
+}
+
+/* ===================================
+   标签系统 - Tags
+   =================================== */
+.tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    border-radius: var(--radius-full);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-subtle);
+}
+
+.tag-accent {
+    background: rgba(240, 90, 74, 0.1);
+    color: var(--accent);
+    border-color: rgba(240, 90, 74, 0.2);
+}
+
+.tag-success {
+    background: rgba(34, 197, 94, 0.1);
+    color: var(--success);
+    border-color: rgba(34, 197, 94, 0.2);
+}
+
+/* ===================================
+   输入框系统 - Inputs
+   =================================== */
+.input {
+    width: 100%;
+    padding: 14px 18px;
+    min-height: 48px;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 15px;
+    transition: var(--transition-smooth);
+}
+
+.input::placeholder {
+    color: var(--text-muted);
+}
+
+.input:focus {
+    outline: none;
+    border-color: var(--accent);
+    background: rgba(255, 255, 255, 0.05);
+    box-shadow: var(--shadow-focus);
+}
+
+textarea.input {
+    min-height: 120px;
+    resize: vertical;
+    line-height: 1.6;
+}
+
+/* ===================================
+   Toast 提示
+   =================================== */
+.toast {
+    position: fixed;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    padding: 14px 28px;
+    background: var(--surface-elevated);
+    color: var(--text-primary);
+    border-radius: var(--radius-full);
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--border-light);
+    opacity: 0;
+    visibility: hidden;
+    transition: all var(--transition-smooth);
+    z-index: 10000;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.toast.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+}
+
+.toast-success {
+    border-color: rgba(34, 197, 94, 0.3);
+}
+
+.toast-error {
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+/* ===================================
+   Modal 弹窗
+   =================================== */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    padding: 24px;
+    opacity: 0;
+    visibility: hidden;
+    transition: all var(--transition-smooth);
+}
+
+.modal-overlay.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.modal {
+    background: var(--surface-card);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-xl);
+    padding: 32px;
+    max-width: 500px;
+    width: 100%;
+    box-shadow: var(--shadow-xl);
+    transform: scale(0.95) translateY(20px);
+    transition: all var(--transition-smooth);
+}
+
+.modal-overlay.show .modal {
+    transform: scale(1) translateY(0);
+}
+
+.modal-title {
+    font-family: var(--font-serif);
+    font-size: 24px;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 16px;
+}
+
+.modal-content {
+    color: var(--text-secondary);
+    font-size: 15px;
+    line-height: 1.7;
+    margin-bottom: 28px;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+/* ===================================
+   响应式基础
+   =================================== */
+@media (max-width: 768px) {
+    .auth-container {
+        padding: 36px 28px;
+    }
+
+    .auth-container h1 {
+        font-size: 28px;
+    }
+
+    .auth-logo {
+        width: 70px;
+        height: 70px;
+    }
+
+    .theme-toggle {
+        top: 16px;
+        right: 16px;
+        width: 40px;
+        height: 40px;
+        font-size: 16px;
+    }
 }
 
 /* ===================================
    滚动条样式
    =================================== */
 ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 8px;
+    height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-    background: transparent;
+    background: var(--bg-deep);
 }
 
 ::-webkit-scrollbar-thumb {
     background: var(--border-default);
-    border-radius: 10px;
+    border-radius: var(--radius-full);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: var(--primary);
+    background: var(--text-muted);
 }
 
 /* ===================================
-   选择文本样式
+   选择高亮
    =================================== */
 ::selection {
-    background: rgba(14, 165, 233, 0.2);
+    background: rgba(240, 90, 74, 0.3);
     color: var(--text-primary);
 }
 
-[data-theme="dark"] ::selection {
-    background: rgba(34, 211, 238, 0.3);
-}
-
 /* ===================================
-   焦点可见性
+   生成器页面入口
    =================================== */
-:focus-visible {
-    outline: 2px solid var(--primary);
-    outline-offset: 2px;
-}
-
-/* ===================================
-   响应式设计 - 手机
-   =================================== */
-@media (max-width: 768px) {
-    .theme-toggle {
-        top: 16px;
-        right: 16px;
-        width: 44px;
-        height: 44px;
-        font-size: 18px;
-    }
-
-    .auth-container {
-        padding: 32px 24px;
-        border-radius: var(--radius-lg);
-        margin: 16px;
-    }
-
-    .auth-container h1 {
-        font-size: 24px;
-    }
-
-    .auth-container h1::after {
-        font-size: 20px;
-    }
-
-    .auth-subtitle {
-        margin-bottom: 24px;
-    }
-
-    .auth-tabs {
-        margin-bottom: 20px;
-    }
-
-    .tab-btn {
-        padding: 10px 14px;
-        font-size: 13px;
-    }
-
-    .auth-form input {
-        padding: 14px 16px;
-        min-height: 48px;
-    }
-
-    .auth-form button[type="submit"] {
-        padding: 14px 20px;
-        min-height: 48px;
-    }
-}
-
-/* ===================================
-   小屏手机
-   =================================== */
-@media (max-width: 375px) {
-    .auth-container {
-        padding: 24px 20px;
-    }
-
-    .auth-container h1 {
-        font-size: 22px;
-    }
-}
-
-/* ===================================
-   动画库
-   =================================== */
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-@keyframes slideUp {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes slideDown {
-    from { opacity: 0; transform: translateY(-20px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes scaleIn {
-    from { opacity: 0; transform: scale(0.9); }
-    to { opacity: 1; transform: scale(1); }
-}
-
-@keyframes spin {
-    to { transform: rotate(360deg); }
-}
-
-@keyframes shimmer {
-    0% { background-position: -200% 0; }
-    100% { background-position: 200% 0; }
-}
-
-@keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
+#generator-page {
+    min-height: 100vh;
+    min-height: 100dvh;
 }
