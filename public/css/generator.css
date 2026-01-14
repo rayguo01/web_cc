@@ -2458,6 +2458,18 @@
     margin-top: 12px;
 }
 
+/* 水平三列布局 - 项目按行排列 */
+.voice-columns-horizontal {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 12px;
+}
+
+.voice-columns-horizontal .voice-column {
+    width: 100%;
+}
+
 .voice-column {
     background: var(--bg-muted);
     border: 1px solid var(--border-subtle);
@@ -2476,15 +2488,30 @@
 
 .voice-column-items {
     display: flex;
-    flex-direction: column;
+    flex-wrap: wrap;
     gap: 8px;
-    max-height: 200px;
-    overflow-y: auto;
+    max-height: none;
 }
 
 .voice-column-items .voice-style-item {
-    background: rgba(255, 255, 255, 0.03);
-    padding: 10px 12px;
+    background: rgba(255, 255, 255, 0.5);
+    padding: 8px 10px;
+    flex: 0 0 calc(20% - 7px);
+    max-width: calc(20% - 7px);
+    min-width: 0;
+}
+
+.voice-column-items .voice-style-item .voice-avatar {
+    width: 32px;
+    height: 32px;
+}
+
+.voice-column-items .voice-style-item .voice-name {
+    font-size: 12px;
+}
+
+.voice-column-items .voice-style-item .voice-role {
+    font-size: 10px;
 }
 
 .voice-column-empty {

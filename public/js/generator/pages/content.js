@@ -121,6 +121,19 @@ class ContentPage {
 
         // 渲染单个语气项
         const renderItem = (style) => {
+            // 处理默认语气
+            if (style.isDefault) {
+                const isSelected = !this.selectedVoiceStyleId;
+                return `
+                    <div class="voice-style-item default-style ${isSelected ? 'selected' : ''}" data-id="">
+                        <img src="${style.avatar}" alt="${style.name}" class="voice-avatar">
+                        <div class="voice-item-info">
+                            <span class="voice-name">${style.name}</span>
+                            <span class="voice-role">${style.role}</span>
+                        </div>
+                    </div>
+                `;
+            }
             const isSelected = this.selectedVoiceStyleId === style.id;
             const displayName = style.display_name || style.username;
             const role = style.role || '';
@@ -157,21 +170,22 @@ class ContentPage {
             `;
         };
 
+        // 默认语气项
+        const defaultItem = {
+            id: '',
+            name: '默认语气',
+            role: '通用风格',
+            avatar: defaultAvatar,
+            isDefault: true
+        };
+
+        // 热门列表前面加上默认语气
+        const popularWithDefault = [defaultItem, ...data.popular];
+
         return `
-            <div class="voice-row">
-                <div class="voice-style-item default-style ${!this.selectedVoiceStyleId ? 'selected' : ''}" data-id="">
-                    <img src="${defaultAvatar}" alt="默认" class="voice-avatar">
-                    <div class="voice-item-info">
-                        <span class="voice-name">默认语气</span>
-                        <span class="voice-role">通用风格</span>
-                    </div>
-                </div>
-                ${renderColumn('🔥 热门', data.popular, '暂无热门', null, null)}
-            </div>
-            <div class="voice-row">
+            <div class="voice-columns-horizontal">
+                ${renderColumn('🔥 热门', popularWithDefault, '暂无热门', null, null)}
                 ${renderColumn('⭐ 订阅', data.subscribed, '还没订阅', '#voice-mimicker/market', '去市场 →')}
-            </div>
-            <div class="voice-row">
                 ${renderColumn('📚 我的', data.mine, '还没创建', '#voice-mimicker/mine', '去创建 →')}
             </div>
         `;
