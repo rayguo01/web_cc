@@ -1,8 +1,18 @@
 # Web Claude Code 项目概要
 
-## 版本: v2.9.19
+## 版本: v2.9.20
 
 ## 完成的工作
+
+### 3.40 修复语气模仿器 user_id 保存问题 (v2.9.20)
+
+**问题**：语气分析完成后保存到数据库，但"已保存的语气"列表中看不到。
+
+**原因**：JWT token 中的用户 ID 字段是 `userId`，但 `tools.js` 中使用了 `req.user.id`，导致 `user_id` 保存为 NULL。
+
+**修复**：将 `src/routes/tools.js` 中所有 `req.user.id` 改为 `req.user.userId`。
+
+---
 
 ### 3.39 语气模仿器改用 advanced_search 端点 (v2.9.19)
 

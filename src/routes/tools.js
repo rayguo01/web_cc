@@ -14,7 +14,7 @@ const router = express.Router();
  */
 router.get('/voice-prompts', authenticate, async (req, res) => {
     try {
-        const prompts = await voicePromptDb.getByUserId(req.user.id);
+        const prompts = await voicePromptDb.getByUserId(req.user.userId);
         res.json({ success: true, prompts });
     } catch (error) {
         console.error('获取语气 Prompt 列表失败:', error);
@@ -27,7 +27,7 @@ router.get('/voice-prompts', authenticate, async (req, res) => {
  */
 router.get('/voice-prompts/:id', authenticate, async (req, res) => {
     try {
-        const prompt = await voicePromptDb.getById(req.params.id, req.user.id);
+        const prompt = await voicePromptDb.getById(req.params.id, req.user.userId);
         if (!prompt) {
             return res.status(404).json({ error: '未找到该记录' });
         }
@@ -43,7 +43,7 @@ router.get('/voice-prompts/:id', authenticate, async (req, res) => {
  */
 router.delete('/voice-prompts/:id', authenticate, async (req, res) => {
     try {
-        const deleted = await voicePromptDb.delete(req.params.id, req.user.id);
+        const deleted = await voicePromptDb.delete(req.params.id, req.user.userId);
         if (!deleted) {
             return res.status(404).json({ error: '未找到该记录' });
         }
@@ -136,7 +136,7 @@ router.post('/voice-prompts/analyze', authenticate, async (req, res) => {
             if (code === 0 && resultJson) {
                 try {
                     // 保存到数据库
-                    const saved = await voicePromptDb.save(req.user.id, resultJson);
+                    const saved = await voicePromptDb.save(req.user.userId, resultJson);
 
                     safeWrite(`data: ${JSON.stringify({
                         type: 'done',
