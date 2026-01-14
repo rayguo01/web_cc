@@ -254,9 +254,11 @@ class ContentPage {
     renderContentArea() {
         if (this.isLoading) {
             return `
-                <div class="loading">
-                    <div class="loading-spinner"></div>
-                    <div class="loading-text">正在生成内容...</div>
+                <div class="loading-container">
+                    <div class="loading">
+                        <div class="loading-spinner"></div>
+                        <div class="loading-text">正在生成内容...</div>
+                    </div>
                 </div>
                 <div class="log-output" id="log-output"></div>
             `;

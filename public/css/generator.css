@@ -1403,6 +1403,22 @@
 /* ===================================
    加载状态
    =================================== */
+.loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+    padding: 40px 20px;
+}
+
+.loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
 .loading-state {
     display: flex;
     flex-direction: column;
@@ -2787,6 +2803,7 @@
 
 .score-circle {
     display: flex;
+    flex-direction: row;
     align-items: baseline;
     justify-content: center;
     width: 100px;
@@ -2795,6 +2812,8 @@
     background: var(--bg-muted);
     border: 3px solid var(--accent);
     flex-shrink: 0;
+    padding-top: 32px;
+    box-sizing: border-box;
 }
 
 .total-score-card.score-high .score-circle {

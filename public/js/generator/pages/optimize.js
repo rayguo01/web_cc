@@ -1,5 +1,5 @@
 /**
- * 优化内容页 - 爆款验证和优化版本
+ * 优化内容页 - 爆款优化和优化版本
  */
 class OptimizePage {
     constructor(generator, params) {
@@ -51,7 +51,7 @@ class OptimizePage {
 
                 <div class="page-actions">
                     <div class="action-left">
-                        <button class="btn btn-secondary" id="back-btn">
+                        <button class="btn btn-primary" id="back-btn">
                             ← 返回编辑
                         </button>
                         <button class="btn btn-danger" id="abandon-btn">
@@ -76,9 +76,11 @@ class OptimizePage {
     renderOptimizeArea() {
         if (this.isLoading) {
             return `
-                <div class="loading">
-                    <div class="loading-spinner"></div>
-                    <div class="loading-text">正在进行爆款验证...</div>
+                <div class="loading-container">
+                    <div class="loading">
+                        <div class="loading-spinner"></div>
+                        <div class="loading-text">正在进行爆款优化...</div>
+                    </div>
                 </div>
                 <div class="log-output" id="log-output"></div>
             `;
@@ -91,7 +93,7 @@ class OptimizePage {
 
             return `
                 <div class="content-preview">
-                    <div class="preview-label">待验证内容：</div>
+                    <div class="preview-label">待优化内容：</div>
                     <div class="preview-text">${this.escapeHtml(preview)}</div>
                 </div>
 
@@ -102,7 +104,7 @@ class OptimizePage {
                     <textarea
                         class="content-textarea suggestion-input"
                         id="user-suggestion"
-                        rows="3"
+                        rows="5"
                         placeholder="输入你的优化建议，例如：&#10;• 语气更加犀利一些&#10;• 加入更多数据支撑&#10;• 结尾需要更有力的金句"
                     >${this.escapeHtml(this.userSuggestion)}</textarea>
                     <div class="suggestion-hint">AI 会根据你的意见进行针对性优化</div>
@@ -110,7 +112,7 @@ class OptimizePage {
 
                 <div style="text-align: center; margin-top: 24px;">
                     <button class="btn btn-primary" id="verify-btn">
-                        🧪 开始爆款验证
+                        🧪 开始爆款优化
                     </button>
                 </div>
             `;
@@ -130,15 +132,6 @@ class OptimizePage {
                 <!-- 优化策略 -->
                 ${this.renderStrategies()}
 
-                <!-- 原始报告折叠 -->
-                <div class="report-toggle">
-                    <button class="btn btn-ghost" id="toggle-report-btn">
-                        📄 查看原始报告
-                    </button>
-                </div>
-                <div class="report-content raw-report" id="raw-report" style="display: none;">
-                    ${this.generator.formatMarkdown(this.report)}
-                </div>
             </div>
 
             <!-- 版本对比 Tab -->
@@ -311,13 +304,13 @@ class OptimizePage {
     }
 
     bindEvents(container) {
-        // 返回按钮
+        // 返回按钮 - 仅导航，不清除数据
         container.querySelector('#back-btn').addEventListener('click', async () => {
             try {
-                await this.generator.updateTask('goBack', { toStep: 'content' });
+                await this.generator.updateTask('navigateTo', { toStep: 'content' });
                 this.generator.navigate('content');
             } catch (error) {
-                console.error('回退失败:', error);
+                console.error('导航失败:', error);
             }
         });
 
@@ -368,17 +361,6 @@ class OptimizePage {
         const reverifyBtn = container.querySelector('#reverify-btn');
         if (reverifyBtn) {
             reverifyBtn.addEventListener('click', () => this.startVerification());
-        }
-
-        // 原始报告折叠按钮
-        const toggleBtn = container.querySelector('#toggle-report-btn');
-        const rawReport = container.querySelector('#raw-report');
-        if (toggleBtn && rawReport) {
-            toggleBtn.addEventListener('click', () => {
-                const isVisible = rawReport.style.display !== 'none';
-                rawReport.style.display = isVisible ? 'none' : 'block';
-                toggleBtn.textContent = isVisible ? '📄 查看原始报告' : '📄 收起报告';
-            });
         }
 
         // 版本 Tab 切换
@@ -435,6 +417,14 @@ class OptimizePage {
         if (!content) {
             this.generator.showToast('没有找到待验证的内容', 'error');
             return;
+        }
+
+        // 如果已有优化内容，显示确认弹窗
+        if (this.optimizedVersion) {
+            const confirmed = await this.generator.showConfirm(
+                '重新优化将清除当前优化结果及后续所有步骤的数据，确定继续吗？'
+            );
+            if (!confirmed) return;
         }
 
         // 清除后续步骤的缓存数据
