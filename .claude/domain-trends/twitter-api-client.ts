@@ -66,8 +66,8 @@ export class TwitterApiClient {
       if (!data.has_next_page) break;
       cursor = data.next_cursor;
 
-      // 添加延迟避免速率限制 (免费用户限制: 5秒/请求)
-      await this.delay(5500);
+      // 短暂延迟避免请求过快
+      await this.delay(500);
     }
 
     return tweets;

@@ -136,9 +136,8 @@ async function fetchUserTweets(username: string, minChars: number = 100, targetC
     // 已经够了就不再翻页
     if (allTweets.length >= targetCount) break;
 
-    // API 速率限制延迟
-    console.log(`⏳ 等待 API 速率限制...`);
-    await delay(5500);
+    // 短暂延迟避免请求过快
+    await delay(500);
   }
 
   console.log(`✅ 共获取 ${allTweets.length} 条推文（>= ${minChars} 字，共翻 ${pageCount} 页）`);
