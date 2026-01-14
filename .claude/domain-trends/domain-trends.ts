@@ -595,14 +595,183 @@ export async function run(presetId: string = 'web3'): Promise<{
   }
 }
 
+/**
+ * 仅抓取数据（两阶段执行 - 阶段1）
+ * 返回原始推文数据，供后续分析使用
+ */
+export async function fetchOnly(presetId: string = 'ai'): Promise<{
+  tweets: DomainTweet[];
+  groupId: number;
+  groupName: string;
+  config: GroupRotationConfig;
+}> {
+  console.log(`\n🎯 开始 Domain Trends 仅抓取 [${presetId}]`);
+
+  // 1. 加载分组配置
+  const groupConfig = loadGroupConfig(presetId);
+  console.log(`📋 配置: ${groupConfig.name}`);
+
+  // 2. 获取当前分组
+  const currentHour = new Date().getHours();
+  const group = getCurrentGroup(groupConfig, currentHour);
+  console.log(`⏰ 当前时间: ${currentHour}:00, 轮换到分组 ${group.groupId}`);
+
+  // 3. 抓取该分组的推文
+  const tweets = await fetchGroupTweets(group, groupConfig);
+
+  if (tweets.length === 0) {
+    throw new Error('未获取到任何推文');
+  }
+
+  console.log(`✅ 抓取完成: ${tweets.length} 条推文`);
+
+  return {
+    tweets,
+    groupId: group.groupId,
+    groupName: group.name,
+    config: groupConfig
+  };
+}
+
+/**
+ * 仅分析数据（两阶段执行 - 阶段2）
+ * 使用已有的原始数据进行分析
+ */
+export async function analyzeOnly(
+  tweets: DomainTweet[],
+  presetId: string,
+  groupId: number,
+  groupName: string,
+  groupConfig: GroupRotationConfig
+): Promise<{
+  reportPath: string;
+  report: string;
+  data: any;
+}> {
+  console.log(`\n🎯 开始 Domain Trends 仅分析 [${presetId}] 组${groupId}`);
+  console.log(`📊 输入数据: ${tweets.length} 条推文`);
+
+  // 1. 聚合数据
+  const trendItems = aggregateTweets(tweets);
+  console.log(`📊 聚合后话题数: ${trendItems.length}`);
+
+  // 2. Claude 分析 - 使用简化的配置对象
+  const analysisConfig: DomainConfig = {
+    id: groupConfig.id,
+    name: `${groupConfig.name} - ${groupName}`,
+    description: groupConfig.description,
+    hoursAgo: groupConfig.hoursAgo,
+    query: {
+      enabled: false,
+      keywords: [],
+      hashtags: [],
+      minLikes: 0,
+      languages: [],
+      excludeRetweets: true
+    },
+    kols: {
+      enabled: true,
+      accounts: [],
+      minLikes: groupConfig.fetchConfig.minLikes,
+      tweetsPerKol: groupConfig.fetchConfig.tweetsPerKol
+    },
+    fetchCount: 50
+  };
+
+  const rawOutput = await analyzeTrends(trendItems, analysisConfig);
+
+  console.log('📋 正在解析 JSON 输出...');
+  const data = parseAndValidateJSON(rawOutput);
+
+  // 3. 保存报告
+  const dateStr = new Date().toISOString().replace(/[:.]/g, '-');
+  const reportFilename = `${presetId}_group${groupId}_analysis_${dateStr}.json`;
+  const reportPath = path.join(TRENDS_DIR, reportFilename);
+
+  const finalData = {
+    metadata: {
+      generatedAt: new Date().toISOString(),
+      source: `domain-trends:${presetId}`,
+      preset: presetId,
+      presetName: groupConfig.name,
+      groupId: groupId,
+      groupName: groupName,
+      tweetCount: tweets.length
+    },
+    ...data
+  };
+
+  fs.writeFileSync(reportPath, JSON.stringify(finalData, null, 2), 'utf-8');
+  console.log(`✅ 分析报告已保存: ${reportPath}`);
+
+  return {
+    reportPath,
+    report: JSON.stringify(finalData),
+    data: finalData
+  };
+}
+
 // 命令行执行
 if (require.main === module) {
   const args = process.argv.slice(2);
-  const mode = args[0] || 'standard';  // standard 或 rotation
-  const presetId = args[1] || (mode === 'rotation' ? 'ai' : 'web3');
+  const mode = args[0] || 'standard';  // standard, rotation, fetch, analyze-file
+  const presetId = args[1] || (mode === 'rotation' || mode === 'fetch' ? 'ai' : 'web3');
 
-  if (mode === 'rotation') {
-    // 分组轮换模式
+  if (mode === 'fetch') {
+    // 仅抓取模式（两阶段执行 - 阶段1）
+    fetchOnly(presetId).then(result => {
+      // 输出 JSON 供调度器解析
+      console.log('__FETCH_RESULT__' + JSON.stringify({
+        tweets: result.tweets,
+        groupId: result.groupId,
+        groupName: result.groupName,
+        presetId: presetId,
+        configName: result.config.name,
+        configDescription: result.config.description,
+        hoursAgo: result.config.hoursAgo,
+        fetchConfig: result.config.fetchConfig
+      }));
+    }).catch(error => {
+      console.error(error);
+      process.exit(1);
+    });
+  } else if (mode === 'analyze-file') {
+    // 仅分析模式（两阶段执行 - 阶段2）
+    const dataFilePath = args[1];
+    if (!dataFilePath || !fs.existsSync(dataFilePath)) {
+      console.error('请提供有效的数据文件路径');
+      process.exit(1);
+    }
+
+    const rawData = JSON.parse(fs.readFileSync(dataFilePath, 'utf-8'));
+
+    // 重建 groupConfig
+    const groupConfig: GroupRotationConfig = {
+      id: rawData.presetId,
+      name: rawData.configName,
+      description: rawData.configDescription,
+      hoursAgo: rawData.hoursAgo,
+      rotationIntervalHours: 2,
+      totalGroups: 10,
+      fetchConfig: rawData.fetchConfig,
+      groups: []
+    };
+
+    analyzeOnly(
+      rawData.tweets,
+      rawData.presetId,
+      rawData.groupId,
+      rawData.groupName,
+      groupConfig
+    ).then(result => {
+      console.log('\n📊 分析完成！');
+      console.log(`报告已保存到: ${result.reportPath}`);
+    }).catch(error => {
+      console.error(error);
+      process.exit(1);
+    });
+  } else if (mode === 'rotation') {
+    // 分组轮换模式（原有完整流程）
     runWithRotation(presetId).then(result => {
       console.log('\n📊 分组轮换抓取完成！');
       console.log(`分组: ${result.groupId}`);

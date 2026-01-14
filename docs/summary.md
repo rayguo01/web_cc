@@ -1,8 +1,41 @@
 # Web Claude Code 项目概要
 
-## 版本: v2.9.17
+## 版本: v2.9.18
 
 ## 完成的工作
+
+### 3.38 domain-trends 两阶段执行 (v2.9.18)
+
+**问题**：domain-trends 分析失败后重试时，会重复抓取原始数据，浪费 API 调用。
+
+**解决方案**：为 domain-trends 实现与 x-trends/tophub-trends 相同的两阶段执行模式。
+
+**修改**：
+
+1. **`.claude/domain-trends/domain-trends.ts`**：
+   - 新增 `fetchOnly()` 函数 - 仅抓取数据，输出 `__FETCH_RESULT__` 标记
+   - 新增 `analyzeOnly()` 函数 - 使用已有数据进行分析
+   - 新增 CLI 模式：`fetch` 和 `analyze-file`
+
+2. **`src/services/scheduler.js`**：
+   - 新增 `fetchDomainTrendsData()` - 调用 domain-trends fetch 模式
+   - 新增 `analyzeDomainTrendsData()` - 调用 domain-trends analyze-file 模式
+   - 新增 `executeTwoPhaseDomainTrends()` - 两阶段执行逻辑
+   - 新增 `executeTwoPhaseDomainTrendsWithRetry()` - 带重试的两阶段执行
+   - 修改 `fetchAllTrends()` - domain-trends 使用两阶段执行
+
+**执行流程**：
+```
+1. 检查数据库是否有 completed 的分析结果 → 直接返回
+2. 检查数据库是否有原始数据 → 跳过抓取
+3. 抓取原始数据 → 保存到数据库
+4. 检查 analyzing 状态 → 等待其他进程完成
+5. 执行分析 → 保存结果到数据库
+```
+
+**效果**：分析失败重试时，直接使用已保存的原始数据，不再重复抓取。
+
+---
 
 ### 3.37 语气模仿器工具 (v2.9.17)
 

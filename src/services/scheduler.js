@@ -200,6 +200,143 @@ class Scheduler {
     }
 
     /**
+     * 仅抓取 domain-trends 数据
+     * @param {string} presetId - 预设ID，如 'ai', 'web3'
+     * @returns {Promise<Object>} 原始数据对象
+     */
+    async fetchDomainTrendsData(presetId) {
+        console.log(`[调度器] 开始抓取 domain-trends:${presetId} 数据...`);
+
+        const scriptPath = path.join(__dirname, '../../.claude/domain-trends/domain-trends.ts');
+
+        return new Promise((resolve, reject) => {
+            const args = ['ts-node', scriptPath, 'fetch', presetId];
+
+            const child = spawn('npx', args, {
+                cwd: path.join(__dirname, '../..'),
+                env: { ...process.env },
+                shell: true
+            });
+
+            let output = '';
+            let errorOutput = '';
+
+            child.stdout.on('data', (data) => {
+                output += data.toString();
+                const lines = data.toString().trim().split('\n');
+                for (const line of lines) {
+                    if (!line.startsWith('__FETCH_RESULT__') && !line.startsWith('[') && !line.startsWith('{')) {
+                        console.log(`[调度器][domain-trends:${presetId}] ${line}`);
+                    }
+                }
+            });
+
+            child.stderr.on('data', (data) => {
+                const text = data.toString();
+                if (!text.includes('Compiling') && !text.includes('Using TypeScript')) {
+                    errorOutput += text;
+                }
+            });
+
+            child.on('close', (code) => {
+                if (code === 0) {
+                    try {
+                        const marker = '__FETCH_RESULT__';
+                        const markerIndex = output.indexOf(marker);
+                        if (markerIndex !== -1) {
+                            const jsonStr = output.substring(markerIndex + marker.length).trim();
+                            const data = JSON.parse(jsonStr);
+                            resolve(data);
+                        } else {
+                            reject(new Error('未找到抓取结果标记'));
+                        }
+                    } catch (err) {
+                        reject(new Error(`解析抓取结果失败: ${err.message}`));
+                    }
+                } else {
+                    reject(new Error(`执行失败，退出码: ${code}, 错误: ${errorOutput}`));
+                }
+            });
+
+            child.on('error', reject);
+        });
+    }
+
+    /**
+     * 仅分析 domain-trends 数据（使用已有数据）
+     * @param {Object} rawData - 包含 tweets, groupId, groupName, presetId 等
+     * @returns {Promise<string>} 分析报告
+     */
+    async analyzeDomainTrendsData(rawData) {
+        const presetId = rawData.presetId;
+        const groupId = rawData.groupId;
+        console.log(`[调度器] 开始分析 domain-trends:${presetId} 组${groupId} 数据...`);
+
+        const scriptPath = path.join(__dirname, '../../.claude/domain-trends/domain-trends.ts');
+
+        // 将数据写入临时文件
+        const tempFile = path.join(__dirname, '../../outputs/.temp_domain_trends_data.json');
+        fs.writeFileSync(tempFile, JSON.stringify(rawData));
+
+        return new Promise((resolve, reject) => {
+            const args = ['ts-node', scriptPath, 'analyze-file', tempFile];
+
+            const child = spawn('npx', args, {
+                cwd: path.join(__dirname, '../..'),
+                env: { ...process.env },
+                shell: true
+            });
+
+            let output = '';
+            let errorOutput = '';
+
+            child.stdout.on('data', (data) => {
+                output += data.toString();
+                console.log(`[调度器][domain-trends:${presetId}] ${data.toString().trim()}`);
+            });
+
+            child.stderr.on('data', (data) => {
+                const text = data.toString();
+                if (!text.includes('Compiling') && !text.includes('Using TypeScript')) {
+                    errorOutput += text;
+                }
+            });
+
+            child.on('close', (code) => {
+                // 清理临时文件
+                try { fs.unlinkSync(tempFile); } catch (e) {}
+
+                if (code === 0) {
+                    try {
+                        const outputDir = path.join(__dirname, '../../outputs/trends/domain');
+                        const prefix = `${presetId}_group${groupId}_analysis`;
+
+                        let files = fs.readdirSync(outputDir)
+                            .filter(f => f.startsWith(prefix) && f.endsWith('.json'))
+                            .sort()
+                            .reverse();
+
+                        if (files.length > 0) {
+                            const reportPath = path.join(outputDir, files[0]);
+                            const report = fs.readFileSync(reportPath, 'utf-8');
+                            console.log(`[调度器][domain-trends:${presetId}] 分析成功，报告长度: ${report.length}`);
+                            resolve(report);
+                        } else {
+                            reject(new Error('未找到报告文件'));
+                        }
+                    } catch (err) {
+                        reject(err);
+                    }
+                } else {
+                    reject(new Error(`分析失败，退出码: ${code}, 错误: ${errorOutput}`));
+                }
+            });
+
+            child.on('error', reject);
+        });
+    }
+
+    /**
      * 仅分析数据（使用已有数据）
      * @param {string} skillId - x-trends 或 tophub-trends
      * @param {Array} rawData - 原始数据数组
@@ -290,6 +427,126 @@ class Scheduler {
 
             child.on('error', reject);
         });
+    }
+
+    /**
+     * 执行两阶段 domain-trends 抓取（检查数据库，避免重复抓取和分析）
+     * @param {string} presetId - 预设ID，如 'ai', 'web3'
+     * @returns {Promise<{report: string, groupId: number}>} 分析报告和组ID
+     */
+    async executeTwoPhaseDomainTrends(presetId) {
+        // 获取当前组ID
+        const rotationConfig = this.getRotationConfig(presetId);
+        const groupId = this.getCurrentGroupId(rotationConfig);
+        const skillId = `domain-trends:${presetId}:group${groupId}`;
+        const hourKey = trendsDb.get2HourWindowKey();
+
+        console.log(`[调度器] domain-trends:${presetId} 组${groupId} 两阶段执行`);
+
+        // 1. 检查数据库是否已有完成的分析
+        const existing = await trendsDb.getByHourKey(skillId, hourKey);
+
+        if (existing && existing.analysis_status === 'completed' && existing.analysis_result) {
+            console.log(`[调度器][${skillId}] 当前窗口已有分析结果，跳过抓取和分析`);
+            return {
+                report: typeof existing.analysis_result === 'string'
+                    ? existing.analysis_result
+                    : JSON.stringify(existing.analysis_result),
+                groupId
+            };
+        }
+
+        // 2. 检查是否已有原始数据（避免重复抓取）
+        let rawData;
+        if (existing && existing.raw_data) {
+            console.log(`[调度器][${skillId}] 使用数据库中的原始数据，跳过抓取`);
+            rawData = typeof existing.raw_data === 'string'
+                ? JSON.parse(existing.raw_data)
+                : existing.raw_data;
+        } else {
+            // 抓取原始数据
+            rawData = await this.fetchDomainTrendsData(presetId);
+            console.log(`[调度器][${skillId}] 抓取到 ${rawData.tweets.length} 条推文`);
+
+            // 保存原始数据到数据库
+            await trendsDb.saveRawData(skillId, hourKey, rawData);
+        }
+
+        // 3. 再次检查分析状态（防止并发时重复分析）
+        const checkAgain = await trendsDb.getByHourKey(skillId, hourKey);
+        if (checkAgain && checkAgain.analysis_status === 'completed' && checkAgain.analysis_result) {
+            console.log(`[调度器][${skillId}] 分析已由其他进程完成，跳过`);
+            return {
+                report: typeof checkAgain.analysis_result === 'string'
+                    ? checkAgain.analysis_result
+                    : JSON.stringify(checkAgain.analysis_result),
+                groupId
+            };
+        }
+
+        // 4. 如果正在分析中，等待一段时间后再检查
+        if (checkAgain && checkAgain.analysis_status === 'analyzing') {
+            console.log(`[调度器][${skillId}] 其他进程正在分析，等待...`);
+            await this.sleep(10000);
+            const afterWait = await trendsDb.getByHourKey(skillId, hourKey);
+            if (afterWait && afterWait.analysis_status === 'completed' && afterWait.analysis_result) {
+                return {
+                    report: typeof afterWait.analysis_result === 'string'
+                        ? afterWait.analysis_result
+                        : JSON.stringify(afterWait.analysis_result),
+                    groupId
+                };
+            }
+        }
+
+        // 5. 标记为分析中
+        await trendsDb.setAnalyzing(skillId, hourKey);
+
+        // 6. 执行分析
+        try {
+            const report = await this.analyzeDomainTrendsData(rawData);
+
+            // 7. 保存分析结果到数据库
+            let analysisResult;
+            try {
+                analysisResult = JSON.parse(report);
+            } catch (e) {
+                analysisResult = { rawReport: report };
+            }
+            await trendsDb.saveAnalysisResult(skillId, hourKey, analysisResult);
+
+            return { report, groupId };
+        } catch (err) {
+            // 保存错误状态
+            await trendsDb.saveAnalysisError(skillId, hourKey, err.message);
+            throw err;
+        }
+    }
+
+    /**
+     * 带重试的两阶段 domain-trends 执行
+     * @param {string} presetId - 预设ID
+     * @param {number} attempt - 当前尝试次数
+     * @returns {Promise<{report: string, groupId: number}>}
+     */
+    async executeTwoPhaseDomainTrendsWithRetry(presetId, attempt = 1) {
+        try {
+            return await this.executeTwoPhaseDomainTrends(presetId);
+        } catch (err) {
+            const isRetryable = err.message.includes('JSON 解析失败') ||
+                               err.message.includes('执行失败') ||
+                               err.message.includes('分析失败') ||
+                               err.message.includes('未找到报告文件') ||
+                               err.message.includes('Claude CLI');
+
+            if (isRetryable && attempt < this.maxRetries) {
+                console.log(`[调度器] domain-trends:${presetId} 第 ${attempt} 次失败，${this.retryDelay / 1000}秒后重试...`);
+                console.log(`[调度器] 失败原因: ${err.message.substring(0, 100)}...`);
+                await this.sleep(this.retryDelay);
+                return this.executeTwoPhaseDomainTrendsWithRetry(presetId, attempt + 1);
+            }
+            throw err;
+        }
     }
 
     /**
@@ -539,23 +796,20 @@ class Scheduler {
         for (const skillId of skills) {
             try {
                 let report;
+                let cacheKey = skillId;
 
-                // x-trends 和 tophub-trends 使用两阶段执行（检查数据库避免重复分析）
+                // x-trends 和 tophub-trends 使用两阶段执行
                 if (skillId === 'x-trends' || skillId === 'tophub-trends') {
                     report = await this.executeTwoPhaseSkillWithRetry(skillId);
-                } else {
-                    // domain-trends 仍使用原有流程
-                    report = await this.executeSkillWithRetry(skillId);
-                }
-
-                // 确定缓存 key
-                let cacheKey = skillId;
-                if (skillId.startsWith('domain-trends-rotation:')) {
-                    // 轮换模式的缓存 key 包含组ID
+                } else if (skillId.startsWith('domain-trends-rotation:')) {
+                    // domain-trends 也使用两阶段执行
                     const presetId = skillId.split(':')[1];
-                    const rotationConfig = this.getRotationConfig(presetId);
-                    const groupId = this.getCurrentGroupId(rotationConfig);
-                    cacheKey = `domain-trends:${presetId}:group${groupId}`;
+                    const result = await this.executeTwoPhaseDomainTrendsWithRetry(presetId);
+                    report = result.report;
+                    cacheKey = `domain-trends:${presetId}:group${result.groupId}`;
+                } else {
+                    // 其他 skill 使用原有流程
+                    report = await this.executeSkillWithRetry(skillId);
                 }
 
                 skillCache.set(cacheKey, report);
