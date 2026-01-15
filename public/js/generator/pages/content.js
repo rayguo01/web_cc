@@ -174,7 +174,7 @@ class ContentPage {
         const defaultItem = {
             id: '',
             name: '默认语气',
-            role: '通用风格',
+            role: '同时追求爆款和深度价值的创作者',
             avatar: defaultAvatar,
             isDefault: true
         };

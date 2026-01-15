@@ -321,7 +321,9 @@ class PostGenerator {
                 method: 'DELETE'
             });
             this.state.reset();
-            this.navigate('home');
+            // 强制重新渲染首页（即使已经在首页）
+            this.renderPage('home');
+            window.location.hash = '#/home';
             this.showToast('任务已放弃', 'info');
         } catch (error) {
             this.showToast(error.message, 'error');

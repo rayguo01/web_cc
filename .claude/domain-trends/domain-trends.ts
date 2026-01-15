@@ -2,12 +2,12 @@
  * Domain Trends - 特定领域趋势追踪
  * 从 twitterapi.io 抓取特定领域的推文并分析
  */
-import { spawn } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import { TwitterApiClient, buildSearchQuery } from './twitter-api-client';
 import { DomainConfig, DomainTweet, DomainTrendItem, AggregatedTopic, GroupRotationConfig, KolGroup } from './types';
 import { parseRobustJSON } from '../utils/json-parser';
+import { callClaude, ClaudeUsage, formatUsageLog } from '../utils/claude-cli';
 
 // 路径配置
 const projectRoot = path.resolve(__dirname, '../../');
@@ -381,42 +381,14 @@ export function aggregateTweets(tweets: DomainTweet[]): DomainTrendItem[] {
     }));
 }
 
+// 存储最近一次调用的 usage 信息
+let lastUsage: ClaudeUsage | null = null;
+
 /**
- * 调用 AI 分析
+ * 获取最近一次调用的 usage 信息
  */
-function callClaudeCLI(prompt: string): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const child = spawn('claude', ['--output-format', 'text'], {
-      cwd: projectRoot,
-      stdio: ['pipe', 'pipe', 'pipe']
-    });
-
-    let stdout = '';
-    let stderr = '';
-
-    child.stdout.on('data', (data) => {
-      stdout += data.toString();
-    });
-
-    child.stderr.on('data', (data) => {
-      stderr += data.toString();
-    });
-
-    child.on('close', (code) => {
-      if (code === 0) {
-        resolve(stdout.trim());
-      } else {
-        reject(new Error(`AI 退出码: ${code}, stderr: ${stderr}`));
-      }
-    });
-
-    child.on('error', (error) => {
-      reject(error);
-    });
-
-    child.stdin.write(prompt);
-    child.stdin.end();
-  });
+export function getLastUsage(): ClaudeUsage | null {
+  return lastUsage;
 }
 
 // JSON Schema
@@ -502,7 +474,10 @@ ${JSON_SCHEMA}
 8. 所有标点符号必须使用英文半角字符`;
 
   console.log('🤖 正在使用 AI 分析趋势...');
-  return await callClaudeCLI(prompt);
+  const response = await callClaude(prompt);
+  lastUsage = response.usage;
+  console.log(`📊 ${formatUsageLog(response.usage)}`);
+  return response.result;
 }
 
 /**
@@ -531,6 +506,7 @@ export async function run(presetId: string = 'web3'): Promise<{
   reportPath: string;
   report: string;
   data: any;
+  usage?: ClaudeUsage;
 }> {
   try {
     console.log(`\n🎯 开始 Domain Trends 抓取 [${presetId}]`);
@@ -577,7 +553,16 @@ export async function run(presetId: string = 'web3'): Promise<{
         tweetCount: tweets.length,
         rawDataFile: rawFilename
       },
-      ...data
+      ...data,
+      _usage: lastUsage ? {
+        inputTokens: lastUsage.inputTokens,
+        outputTokens: lastUsage.outputTokens,
+        cacheCreationTokens: lastUsage.cacheCreationTokens,
+        cacheReadTokens: lastUsage.cacheReadTokens,
+        costUsd: lastUsage.costUsd,
+        durationMs: lastUsage.durationMs,
+        model: lastUsage.model
+      } : undefined
     };
 
     fs.writeFileSync(reportPath, JSON.stringify(finalData, null, 2), 'utf-8');
@@ -586,7 +571,8 @@ export async function run(presetId: string = 'web3'): Promise<{
     return {
       reportPath,
       report: JSON.stringify(finalData),
-      data: finalData
+      data: finalData,
+      usage: lastUsage || undefined
     };
 
   } catch (error) {

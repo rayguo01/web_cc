@@ -259,7 +259,9 @@ export async function run(userInput?: string): Promise<{ reportPath: string; rep
         generatedAt: new Date().toISOString(),
         query: input
       },
-      ...data
+      ...data,
+      // 使用 Claude CLI text 模式，无法获取 token 使用信息
+      _usage: null
     };
 
     fs.writeFileSync(reportPath, JSON.stringify(finalData, null, 2), 'utf-8');

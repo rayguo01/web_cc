@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理后台 - Viral-X</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png">
+    <link href="https://fonts.googleapis.com" rel="preconnect">
+    <link crossorigin href="https://fonts.gstatic.com" rel="preconnect">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { "background-light": "#F0F4F8" },
+                    fontFamily: {
+                        display: ["Playfair Display", "SimHei", "Heiti SC", "Microsoft YaHei", "sans-serif"],
+                        sans: ["Inter", "SimHei", "Heiti SC", "Microsoft YaHei", "sans-serif"],
+                    },
+                },
+            },
+        };
+    </script>
+    <style>
+        .glass-panel { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.2); }
+        .hidden { display: none !important; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.3); border-radius: 3px; }
+        .sidebar-item { transition: all 0.2s; }
+        .sidebar-item:hover { background: rgba(251, 191, 36, 0.1); }
+        .sidebar-item.active { background: rgba(251, 191, 36, 0.15); border-right: 3px solid #f59e0b; }
+    </style>
+</head>
+<body class="bg-background-light text-slate-800 font-sans antialiased min-h-screen">
+    <div class="fixed inset-0 z-0 bg-gradient-to-br from-slate-100/80 to-slate-200/90 pointer-events-none"></div>
+
+    <div id="app" class="relative z-10 min-h-screen">
+        <!-- 未授权 -->
+        <div id="unauthorized" class="hidden fixed inset-0 flex items-center justify-center bg-background-light">
+            <div class="glass-panel rounded-2xl p-8 text-center max-w-md mx-4">
+                <span class="material-icons-outlined text-6xl text-red-500 mb-4">lock</span>
+                <h2 class="font-display text-2xl text-slate-900 mb-2">无权限访问</h2>
+                <p class="text-slate-500 mb-6">您没有管理员权限</p>
+                <a href="/" class="inline-block px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-600 text-white font-medium rounded-xl">返回首页</a>
+            </div>
+        </div>
+
+        <!-- 加载中 -->
+        <div id="loading" class="fixed inset-0 flex items-center justify-center bg-background-light">
+            <div class="text-center">
+                <div class="animate-spin rounded-full h-12 w-12 border-4 border-amber-500 border-t-transparent mb-4 mx-auto"></div>
+                <p class="text-slate-500">加载中...</p>
+            </div>
+        </div>
+
+        <!-- 主内容 -->
+        <div id="main-content" class="hidden flex min-h-screen">
+            <!-- 侧边栏 -->
+            <aside class="w-64 glass-panel border-r border-slate-200/50 flex flex-col">
+                <div class="p-6 border-b border-slate-200/50">
+                    <div class="flex items-center space-x-3">
+                        <img src="/logo-100.png" alt="Viral-X" class="w-10 h-10">
+                        <div>
+                            <h1 class="font-display text-lg font-semibold text-slate-900">管理后台</h1>
+                            <p class="text-xs text-slate-400" id="admin-username"></p>
+                        </div>
+                    </div>
+                </div>
+                <nav class="flex-1 py-4">
+                    <a href="#stats" class="sidebar-item active flex items-center px-6 py-3 text-slate-700" data-page="stats">
+                        <span class="material-icons-outlined mr-3">analytics</span>
+                        统计概览
+                    </a>
+                    <a href="#invitations" class="sidebar-item flex items-center px-6 py-3 text-slate-700" data-page="invitations">
+                        <span class="material-icons-outlined mr-3">confirmation_number</span>
+                        邀请码管理
+                    </a>
+                    <a href="#users" class="sidebar-item flex items-center px-6 py-3 text-slate-700" data-page="users">
+                        <span class="material-icons-outlined mr-3">people</span>
+                        用户管理
+                    </a>
+                </nav>
+                <div class="p-4 border-t border-slate-200/50">
+                    <a href="/" class="flex items-center px-4 py-2 text-slate-500 hover:text-slate-700 transition">
+                        <span class="material-icons-outlined mr-2 text-sm">arrow_back</span>
+                        返回首页
+                    </a>
+                    <button id="logout-btn" class="flex items-center px-4 py-2 text-slate-500 hover:text-red-600 transition w-full">
+                        <span class="material-icons-outlined mr-2 text-sm">logout</span>
+                        退出登录
+                    </button>
+                </div>
+            </aside>
+
+            <!-- 主区域 -->
+            <main class="flex-1 overflow-auto">
+                <!-- 统计概览页 -->
+                <div id="page-stats" class="p-8">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-2xl font-display text-slate-900">统计概览</h2>
+                        <select id="overview-period" class="text-sm border border-slate-200 rounded-lg px-3 py-2 bg-white">
+                            <option value="day">今日</option>
+                            <option value="week">本周</option>
+                            <option value="month" selected>本月</option>
+                        </select>
+                    </div>
+                    <div id="overview-stats" class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8"></div>
+
+                    <h3 class="text-lg font-medium text-slate-800 mb-4">用户消耗排行</h3>
+                    <div class="glass-panel rounded-xl overflow-hidden">
+                        <table class="w-full">
+                            <thead class="bg-slate-50/50 border-b border-slate-200/50">
+                                <tr>
+                                    <th class="text-left px-6 py-3 text-sm font-medium text-slate-600">用户</th>
+                                    <th class="text-right px-6 py-3 text-sm font-medium text-slate-600">Tokens</th>
+                                    <th class="text-right px-6 py-3 text-sm font-medium text-slate-600">花费</th>
+                                    <th class="text-right px-6 py-3 text-sm font-medium text-slate-600">调用</th>
+                                </tr>
+                            </thead>
+                            <tbody id="stats-users-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 邀请码管理页 -->
+                <div id="page-invitations" class="p-8 hidden">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-2xl font-display text-slate-900">邀请码管理</h2>
+                        <button onclick="dashboard.showGenerateModal()" class="px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-lg hover:from-amber-600 hover:to-orange-700 transition flex items-center">
+                            <span class="material-icons-outlined mr-1 text-sm">add</span>
+                            生成邀请码
+                        </button>
+                    </div>
+
+                    <!-- 统计卡片 -->
+                    <div id="invitation-stats" class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6"></div>
+
+                    <!-- 筛选和搜索 -->
+                    <div class="flex items-center space-x-3 mb-4">
+                        <select id="invitation-filter" class="text-sm border border-slate-200 rounded-lg px-3 py-2 bg-white">
+                            <option value="all">全部</option>
+                            <option value="available">可用</option>
+                            <option value="used">已使用</option>
+                            <option value="expired">已过期</option>
+                        </select>
+                        <div class="relative flex-1 max-w-xs">
+                            <span class="material-icons-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">search</span>
+                            <input type="text" id="invitation-search" placeholder="搜索备注..." class="w-full pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-lg bg-white">
+                        </div>
+                    </div>
+
+                    <!-- 邀请码列表 -->
+                    <div class="glass-panel rounded-xl overflow-hidden">
+                        <table class="w-full">
+                            <thead class="bg-slate-50/50 border-b border-slate-200/50">
+                                <tr>
+                                    <th class="text-left px-6 py-3 text-sm font-medium text-slate-600">邀请码</th>
+                                    <th class="text-left px-6 py-3 text-sm font-medium text-slate-600">备注</th>
+                                    <th class="text-center px-6 py-3 text-sm font-medium text-slate-600">状态</th>
+                                    <th class="text-left px-6 py-3 text-sm font-medium text-slate-600">使用者</th>
+                                    <th class="text-left px-6 py-3 text-sm font-medium text-slate-600">创建时间</th>
+                                    <th class="text-center px-6 py-3 text-sm font-medium text-slate-600">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="invitations-body"></tbody>
+                        </table>
+                        <div class="px-6 py-4 border-t border-slate-200/50 flex items-center justify-between">
+                            <p class="text-sm text-slate-500" id="invitation-pagination-info"></p>
+                            <div class="flex items-center space-x-2">
+                                <button id="invitation-prev" class="px-3 py-1.5 text-sm border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50">上一页</button>
+                                <button id="invitation-next" class="px-3 py-1.5 text-sm border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50">下一页</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 用户管理页 -->
+                <div id="page-users" class="p-8 hidden">
+                    <h2 class="text-2xl font-display text-slate-900 mb-6">用户管理</h2>
+
+                    <div class="flex items-center space-x-3 mb-4">
+                        <div class="relative flex-1 max-w-xs">
+                            <span class="material-icons-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">search</span>
+                            <input type="text" id="user-search" placeholder="搜索用户名..." class="w-full pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-lg bg-white">
+                        </div>
+                    </div>
+
+                    <div class="glass-panel rounded-xl overflow-hidden">
+                        <table class="w-full">
+                            <thead class="bg-slate-50/50 border-b border-slate-200/50">
+                                <tr>
+                                    <th class="text-left px-6 py-3 text-sm font-medium text-slate-600">用户</th>
+                                    <th class="text-left px-6 py-3 text-sm font-medium text-slate-600">邀请码</th>
+                                    <th class="text-left px-6 py-3 text-sm font-medium text-slate-600">注册时间</th>
+                                    <th class="text-center px-6 py-3 text-sm font-medium text-slate-600">角色</th>
+                                    <th class="text-center px-6 py-3 text-sm font-medium text-slate-600">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="users-body"></tbody>
+                        </table>
+                        <div class="px-6 py-4 border-t border-slate-200/50 flex items-center justify-between">
+                            <p class="text-sm text-slate-500" id="user-pagination-info"></p>
+                            <div class="flex items-center space-x-2">
+                                <button id="user-prev" class="px-3 py-1.5 text-sm border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50">上一页</button>
+                                <button id="user-next" class="px-3 py-1.5 text-sm border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50">下一页</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- 生成邀请码弹窗 -->
+        <div id="generate-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+            <div class="glass-panel bg-white/95 rounded-2xl max-w-md w-full mx-4">
+                <div class="px-6 py-4 border-b border-slate-200/50 flex items-center justify-between">
+                    <h3 class="text-lg font-display text-slate-900">生成邀请码</h3>
+                    <button onclick="dashboard.closeGenerateModal()" class="text-slate-400 hover:text-slate-600">
+                        <span class="material-icons-outlined">close</span>
+                    </button>
+                </div>
+                <div class="p-6 space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">生成数量</label>
+                        <input type="number" id="gen-count" min="1" max="100" value="10" class="w-full px-3 py-2 border border-slate-200 rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">有效期</label>
+                        <select id="gen-expires" class="w-full px-3 py-2 border border-slate-200 rounded-lg">
+                            <option value="7">7 天</option>
+                            <option value="30" selected>30 天</option>
+                            <option value="90">90 天</option>
+                            <option value="never">永久有效</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">备注（可选）</label>
+                        <input type="text" id="gen-note" placeholder="如：内测用户、KOL邀请" class="w-full px-3 py-2 border border-slate-200 rounded-lg">
+                    </div>
+                </div>
+                <div class="px-6 py-4 border-t border-slate-200/50 flex justify-end space-x-3">
+                    <button onclick="dashboard.closeGenerateModal()" class="px-4 py-2 text-slate-600 hover:text-slate-800">取消</button>
+                    <button onclick="dashboard.generateCodes()" class="px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-lg hover:from-amber-600 hover:to-orange-700">生成</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 生成结果弹窗 -->
+        <div id="result-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+            <div class="glass-panel bg-white/95 rounded-2xl max-w-lg w-full mx-4 max-h-[80vh] overflow-hidden">
+                <div class="px-6 py-4 border-b border-slate-200/50 flex items-center justify-between">
+                    <h3 class="text-lg font-display text-slate-900">生成成功</h3>
+                    <button onclick="dashboard.closeResultModal()" class="text-slate-400 hover:text-slate-600">
+                        <span class="material-icons-outlined">close</span>
+                    </button>
+                </div>
+                <div class="p-6 overflow-y-auto max-h-[60vh]">
+                    <p class="text-sm text-slate-500 mb-3">以下邀请码已生成，可以复制分享：</p>
+                    <div id="generated-codes" class="space-y-2"></div>
+                </div>
+                <div class="px-6 py-4 border-t border-slate-200/50 flex justify-end">
+                    <button onclick="dashboard.copyAllCodes()" class="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 mr-2">复制全部</button>
+                    <button onclick="dashboard.closeResultModal()" class="px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-lg">完成</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class AdminDashboard {
+            constructor() {
+                this.token = localStorage.getItem('token');
+                this.username = localStorage.getItem('username');
+                this.currentPage = 'stats';
+                this.invitationPage = 1;
+                this.userPage = 1;
+                this.pageSize = 20;
+                this.generatedCodes = [];
+                this.init();
+            }
+
+            async init() {
+                if (!this.token) { this.showUnauthorized(); return; }
+
+                try {
+                    const res = await fetch('/api/admin/stats/overview?period=month', {
+                        headers: { 'Authorization': `Bearer ${this.token}` }
+                    });
+
+                    if (res.status === 403) { this.showUnauthorized(); return; }
+                    if (!res.ok) throw new Error('验证失败');
+
+                    document.getElementById('loading').classList.add('hidden');
+                    document.getElementById('main-content').classList.remove('hidden');
+                    document.getElementById('admin-username').textContent = this.username;
+
+                    this.bindEvents();
+                    this.loadStats();
+                } catch (err) {
+                    console.error('初始化失败:', err);
+                    this.showUnauthorized();
+                }
+            }
+
+            showUnauthorized() {
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('unauthorized').classList.remove('hidden');
+            }
+
+            bindEvents() {
+                // 侧边栏导航
+                document.querySelectorAll('.sidebar-item').forEach(item => {
+                    item.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const page = item.dataset.page;
+                        this.switchPage(page);
+                    });
+                });
+
+                // 退出登录
+                document.getElementById('logout-btn').addEventListener('click', () => {
+                    localStorage.clear();
+                    window.location.href = '/';
+                });
+
+                // 统计周期
+                document.getElementById('overview-period').addEventListener('change', () => this.loadStats());
+
+                // 邀请码筛选
+                document.getElementById('invitation-filter').addEventListener('change', () => { this.invitationPage = 1; this.loadInvitations(); });
+                let invSearchTimeout;
+                document.getElementById('invitation-search').addEventListener('input', () => {
+                    clearTimeout(invSearchTimeout);
+                    invSearchTimeout = setTimeout(() => { this.invitationPage = 1; this.loadInvitations(); }, 300);
+                });
+                document.getElementById('invitation-prev').addEventListener('click', () => { if (this.invitationPage > 1) { this.invitationPage--; this.loadInvitations(); } });
+                document.getElementById('invitation-next').addEventListener('click', () => { this.invitationPage++; this.loadInvitations(); });
+
+                // 用户搜索
+                let userSearchTimeout;
+                document.getElementById('user-search').addEventListener('input', () => {
+                    clearTimeout(userSearchTimeout);
+                    userSearchTimeout = setTimeout(() => { this.userPage = 1; this.loadUsers(); }, 300);
+                });
+                document.getElementById('user-prev').addEventListener('click', () => { if (this.userPage > 1) { this.userPage--; this.loadUsers(); } });
+                document.getElementById('user-next').addEventListener('click', () => { this.userPage++; this.loadUsers(); });
+            }
+
+            switchPage(page) {
+                this.currentPage = page;
+                document.querySelectorAll('.sidebar-item').forEach(item => {
+                    item.classList.toggle('active', item.dataset.page === page);
+                });
+                document.querySelectorAll('[id^="page-"]').forEach(el => {
+                    el.classList.toggle('hidden', el.id !== `page-${page}`);
+                });
+
+                if (page === 'stats') this.loadStats();
+                else if (page === 'invitations') { this.loadInvitationStats(); this.loadInvitations(); }
+                else if (page === 'users') this.loadUsers();
+            }
+
+            // ========== 统计概览 ==========
+            async loadStats() {
+                const period = document.getElementById('overview-period').value;
+                const container = document.getElementById('overview-stats');
+                container.innerHTML = '<div class="col-span-4 text-center py-8"><div class="animate-spin rounded-full h-8 w-8 border-2 border-amber-500 border-t-transparent mx-auto"></div></div>';
+
+                try {
+                    const res = await fetch(`/api/admin/stats/overview?period=${period}`, { headers: { 'Authorization': `Bearer ${this.token}` } });
+                    const data = await res.json();
+                    const { summary, userCount, totalUsers } = data;
+                    const formatTokens = n => n >= 1000000 ? (n/1000000).toFixed(1)+'M' : n >= 1000 ? (n/1000).toFixed(1)+'K' : n;
+                    const formatCost = c => '$' + parseFloat(c||0).toFixed(4);
+
+                    container.innerHTML = `
+                        <div class="glass-panel rounded-xl p-5 text-center">
+                            <p class="text-3xl font-display text-amber-600">${formatTokens((summary?.totalInputTokens||0)+(summary?.totalOutputTokens||0))}</p>
+                            <p class="text-sm text-slate-500 mt-1">总 Tokens</p>
+                        </div>
+                        <div class="glass-panel rounded-xl p-5 text-center">
+                            <p class="text-3xl font-display text-emerald-600">${formatCost(summary?.totalCost)}</p>
+                            <p class="text-sm text-slate-500 mt-1">总花费</p>
+                        </div>
+                        <div class="glass-panel rounded-xl p-5 text-center">
+                            <p class="text-3xl font-display text-blue-600">${summary?.totalCalls || 0}</p>
+                            <p class="text-sm text-slate-500 mt-1">调用次数</p>
+                        </div>
+                        <div class="glass-panel rounded-xl p-5 text-center">
+                            <p class="text-3xl font-display text-purple-600">${totalUsers || 0}</p>
+                            <p class="text-sm text-slate-500 mt-1">总用户数</p>
+                        </div>
+                    `;
+
+                    // 加载用户排行
+                    const usersRes = await fetch(`/api/admin/stats/users?period=${period}&limit=10&sort=cost_desc`, { headers: { 'Authorization': `Bearer ${this.token}` } });
+                    const usersData = await usersRes.json();
+                    const tbody = document.getElementById('stats-users-body');
+                    tbody.innerHTML = usersData.users.map(u => `
+                        <tr class="border-b border-slate-100">
+                            <td class="px-6 py-3">
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-amber-500 to-orange-600 flex items-center justify-center text-white text-sm">${(u.username||'?')[0].toUpperCase()}</div>
+                                    <span class="text-slate-900">${u.username}</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-3 text-right text-slate-600">${formatTokens(u.total_tokens||0)}</td>
+                            <td class="px-6 py-3 text-right text-emerald-600 font-medium">${formatCost(u.total_cost)}</td>
+                            <td class="px-6 py-3 text-right text-slate-600">${u.total_calls||0}</td>
+                        </tr>
+                    `).join('') || '<tr><td colspan="4" class="px-6 py-8 text-center text-slate-400">暂无数据</td></tr>';
+                } catch (err) {
+                    container.innerHTML = '<div class="col-span-4 text-center py-8 text-red-500">加载失败</div>';
+                }
+            }
+
+            // ========== 邀请码管理 ==========
+            async loadInvitationStats() {
+                try {
+                    const res = await fetch('/api/invitations/stats', { headers: { 'Authorization': `Bearer ${this.token}` } });
+                    const data = await res.json();
+                    document.getElementById('invitation-stats').innerHTML = `
+                        <div class="glass-panel rounded-xl p-4 text-center">
+                            <p class="text-2xl font-display text-slate-700">${data.total || 0}</p>
+                            <p class="text-xs text-slate-500 mt-1">总数</p>
+                        </div>
+                        <div class="glass-panel rounded-xl p-4 text-center">
+                            <p class="text-2xl font-display text-green-600">${data.available || 0}</p>
+                            <p class="text-xs text-slate-500 mt-1">可用</p>
+                        </div>
+                        <div class="glass-panel rounded-xl p-4 text-center">
+                            <p class="text-2xl font-display text-blue-600">${data.used || 0}</p>
+                            <p class="text-xs text-slate-500 mt-1">已使用</p>
+                        </div>
+                        <div class="glass-panel rounded-xl p-4 text-center">
+                            <p class="text-2xl font-display text-slate-400">${data.expired || 0}</p>
+                            <p class="text-xs text-slate-500 mt-1">已过期</p>
+                        </div>
+                    `;
+                } catch (err) { console.error(err); }
+            }
+
+            async loadInvitations() {
+                const filter = document.getElementById('invitation-filter').value;
+                const search = document.getElementById('invitation-search').value;
+                const tbody = document.getElementById('invitations-body');
+                tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-8 text-center"><div class="animate-spin rounded-full h-6 w-6 border-2 border-amber-500 border-t-transparent mx-auto"></div></td></tr>';
+
+                try {
+                    const res = await fetch(`/api/invitations?status=${filter}&search=${encodeURIComponent(search)}&page=${this.invitationPage}&limit=${this.pageSize}`, { headers: { 'Authorization': `Bearer ${this.token}` } });
+                    const data = await res.json();
+
+                    const statusBadge = s => s === 'available' ? '<span class="px-2 py-0.5 rounded-full text-xs bg-green-100 text-green-700">可用</span>' : s === 'used' ? '<span class="px-2 py-0.5 rounded-full text-xs bg-blue-100 text-blue-700">已使用</span>' : '<span class="px-2 py-0.5 rounded-full text-xs bg-slate-100 text-slate-500">已过期</span>';
+                    const formatDate = d => d ? new Date(d).toLocaleString('zh-CN', {month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}) : '-';
+
+                    tbody.innerHTML = data.codes.map(c => `
+                        <tr class="border-b border-slate-100 hover:bg-slate-50/50">
+                            <td class="px-6 py-3 font-mono text-sm">${c.code}</td>
+                            <td class="px-6 py-3 text-slate-600 text-sm">${c.note || '-'}</td>
+                            <td class="px-6 py-3 text-center">${statusBadge(c.status)}</td>
+                            <td class="px-6 py-3 text-slate-600 text-sm">${c.used_by_username || '-'}</td>
+                            <td class="px-6 py-3 text-slate-500 text-sm">${formatDate(c.created_at)}</td>
+                            <td class="px-6 py-3 text-center">
+                                <button onclick="navigator.clipboard.writeText('${c.code}')" class="p-1 text-slate-400 hover:text-blue-600" title="复制">
+                                    <span class="material-icons-outlined text-sm">content_copy</span>
+                                </button>
+                                ${c.status === 'available' ? `<button onclick="dashboard.deleteCode(${c.id})" class="p-1 text-slate-400 hover:text-red-600" title="删除"><span class="material-icons-outlined text-sm">delete</span></button>` : ''}
+                            </td>
+                        </tr>
+                    `).join('') || '<tr><td colspan="6" class="px-6 py-8 text-center text-slate-400">暂无邀请码</td></tr>';
+
+                    const totalPages = Math.ceil(data.total / this.pageSize);
+                    document.getElementById('invitation-pagination-info').textContent = `第 ${this.invitationPage} / ${totalPages || 1} 页，共 ${data.total} 条`;
+                    document.getElementById('invitation-prev').disabled = this.invitationPage <= 1;
+                    document.getElementById('invitation-next').disabled = this.invitationPage >= totalPages;
+                } catch (err) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-8 text-center text-red-500">加载失败</td></tr>';
+                }
+            }
+
+            showGenerateModal() { document.getElementById('generate-modal').classList.remove('hidden'); }
+            closeGenerateModal() { document.getElementById('generate-modal').classList.add('hidden'); }
+
+            async generateCodes() {
+                const count = document.getElementById('gen-count').value;
+                const expiresIn = document.getElementById('gen-expires').value;
+                const note = document.getElementById('gen-note').value;
+
+                try {
+                    const res = await fetch('/api/invitations/generate', {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${this.token}`, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ count, expiresIn, note })
+                    });
+                    const data = await res.json();
+
+                    if (data.success) {
+                        this.generatedCodes = data.codes.map(c => c.code);
+                        this.closeGenerateModal();
+                        this.showResultModal();
+                        this.loadInvitationStats();
+                        this.loadInvitations();
+                    } else {
+                        alert('生成失败: ' + (data.error || '未知错误'));
+                    }
+                } catch (err) {
+                    alert('生成失败');
+                }
+            }
+
+            showResultModal() {
+                const container = document.getElementById('generated-codes');
+                container.innerHTML = this.generatedCodes.map(code => `
+                    <div class="flex items-center justify-between p-2 bg-slate-50 rounded-lg">
+                        <code class="font-mono text-sm">${code}</code>
+                        <button onclick="navigator.clipboard.writeText('${code}')" class="text-slate-400 hover:text-blue-600">
+                            <span class="material-icons-outlined text-sm">content_copy</span>
+                        </button>
+                    </div>
+                `).join('');
+                document.getElementById('result-modal').classList.remove('hidden');
+            }
+
+            closeResultModal() { document.getElementById('result-modal').classList.add('hidden'); }
+
+            copyAllCodes() {
+                navigator.clipboard.writeText(this.generatedCodes.join('\n'));
+                alert('已复制全部邀请码');
+            }
+
+            async deleteCode(id) {
+                if (!confirm('确定删除此邀请码？')) return;
+                try {
+                    await fetch(`/api/invitations/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${this.token}` } });
+                    this.loadInvitationStats();
+                    this.loadInvitations();
+                } catch (err) { alert('删除失败'); }
+            }
+
+            // ========== 用户管理 ==========
+            async loadUsers() {
+                const search = document.getElementById('user-search').value;
+                const tbody = document.getElementById('users-body');
+                tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-8 text-center"><div class="animate-spin rounded-full h-6 w-6 border-2 border-amber-500 border-t-transparent mx-auto"></div></td></tr>';
+
+                try {
+                    const res = await fetch(`/api/admin/users?search=${encodeURIComponent(search)}&page=${this.userPage}&limit=${this.pageSize}`, { headers: { 'Authorization': `Bearer ${this.token}` } });
+                    const data = await res.json();
+                    const formatDate = d => d ? new Date(d).toLocaleDateString('zh-CN') : '-';
+
+                    tbody.innerHTML = data.users.map(u => `
+                        <tr class="border-b border-slate-100 hover:bg-slate-50/50">
+                            <td class="px-6 py-3">
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-amber-500 to-orange-600 flex items-center justify-center text-white text-sm">${(u.username||'?')[0].toUpperCase()}</div>
+                                    <div>
+                                        <p class="text-slate-900">${u.username}</p>
+                                        <p class="text-xs text-slate-400">ID: ${u.id}</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-3 text-slate-600 text-sm font-mono">${u.invited_by_code || '-'}</td>
+                            <td class="px-6 py-3 text-slate-500 text-sm">${formatDate(u.created_at)}</td>
+                            <td class="px-6 py-3 text-center">
+                                ${u.is_admin ? '<span class="px-2 py-0.5 rounded-full text-xs bg-purple-100 text-purple-700">管理员</span>' : '<span class="px-2 py-0.5 rounded-full text-xs bg-slate-100 text-slate-600">用户</span>'}
+                            </td>
+                            <td class="px-6 py-3 text-center">
+                                <button onclick="dashboard.loginAsUser(${u.id}, '${u.username}')" class="p-1 text-slate-400 hover:text-amber-600" title="以该用户身份登录">
+                                    <span class="material-icons-outlined text-sm">login</span>
+                                </button>
+                                <button onclick="dashboard.toggleAdmin(${u.id}, ${!u.is_admin})" class="p-1 text-slate-400 hover:text-purple-600" title="${u.is_admin ? '取消管理员' : '设为管理员'}">
+                                    <span class="material-icons-outlined text-sm">${u.is_admin ? 'person_remove' : 'admin_panel_settings'}</span>
+                                </button>
+                            </td>
+                        </tr>
+                    `).join('') || '<tr><td colspan="5" class="px-6 py-8 text-center text-slate-400">暂无用户</td></tr>';
+
+                    const totalPages = Math.ceil(data.total / this.pageSize);
+                    document.getElementById('user-pagination-info').textContent = `第 ${this.userPage} / ${totalPages || 1} 页，共 ${data.total} 条`;
+                    document.getElementById('user-prev').disabled = this.userPage <= 1;
+                    document.getElementById('user-next').disabled = this.userPage >= totalPages;
+                } catch (err) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-8 text-center text-red-500">加载失败</td></tr>';
+                }
+            }
+
+            async loginAsUser(userId, username) {
+                if (!confirm(`确定要以用户 "${username}" 的身份登录吗？\n\n登录后将跳转到主页面。`)) return;
+                try {
+                    const res = await fetch(`/api/admin/users/${userId}/login-as`, {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${this.token}` }
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        localStorage.setItem('token', data.token);
+                        localStorage.setItem('username', data.username);
+                        window.location.href = '/';
+                    } else {
+                        alert('操作失败: ' + data.error);
+                    }
+                } catch (err) { alert('操作失败'); }
+            }
+
+            async toggleAdmin(userId, setAdmin) {
+                if (!confirm(setAdmin ? '设为管理员？' : '取消管理员权限？')) return;
+                try {
+                    await fetch(`/api/admin/users/${userId}/set-admin`, {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${this.token}`, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ isAdmin: setAdmin })
+                    });
+                    this.loadUsers();
+                } catch (err) { alert('操作失败'); }
+            }
+        }
+
+        const dashboard = new AdminDashboard();
+    </script>
+</body>
+</html>

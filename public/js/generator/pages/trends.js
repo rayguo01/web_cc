@@ -554,12 +554,17 @@ class TrendsPage {
                 e.stopPropagation();
                 const index = btn.dataset.index;
                 const details = content.querySelector(`.topic-details[data-index="${index}"]`);
+                const preview = content.querySelector(`.topic-preview[data-index="${index}"]`);
                 const icon = btn.querySelector('.material-icons-outlined');
+                const text = btn.querySelector('.expand-text');
 
                 if (details) {
                     const isExpanded = details.style.display !== 'none';
                     details.style.display = isExpanded ? 'none' : 'block';
+                    if (preview) preview.style.display = isExpanded ? 'block' : 'none';
                     icon.textContent = isExpanded ? 'expand_more' : 'expand_less';
+                    if (text) text.textContent = isExpanded ? '详情' : '收起';
+                    btn.title = isExpanded ? '展开详情' : '收起详情';
                     btn.classList.toggle('expanded', !isExpanded);
                 }
             });
@@ -882,6 +887,8 @@ class TrendsPage {
     renderTopicItem(topic, index) {
         // 检查是否有可折叠的详细内容
         const hasDetails = topic.source || topic.angle || topic.meta || topic.direction;
+        // 第一条默认展开
+        const isExpanded = index === 0 && hasDetails;
 
         return `
             <div class="topic-item ${this.selectedTopic?.index === index ? 'selected' : ''}"
@@ -891,7 +898,12 @@ class TrendsPage {
                     <span class="topic-number">${index + 1}</span>
                     <span class="topic-title">${this.escapeHtml(topic.title)}</span>
                     ${topic.score ? `<span class="topic-score score-${this.getScoreClass(topic.score)}" title="${this.getScoreTitle(topic.score)}">${this.getScoreFireIcons(topic.score)}</span>` : ''}
-                    ${hasDetails ? `<span class="topic-expand-btn" data-index="${index}" onclick="event.stopPropagation();"><span class="material-icons-outlined">expand_more</span></span>` : ''}
+                    ${hasDetails ? `
+                        <button class="topic-expand-btn ${isExpanded ? 'expanded' : ''}" data-index="${index}" onclick="event.stopPropagation();" title="${isExpanded ? '收起详情' : '展开详情'}">
+                            <span class="material-icons-outlined">${isExpanded ? 'expand_less' : 'expand_more'}</span>
+                            <span class="expand-text">${isExpanded ? '收起' : '详情'}</span>
+                        </button>
+                    ` : ''}
                 </div>
                 ${topic.link ? `
                     <div class="topic-field topic-link">
@@ -900,16 +912,16 @@ class TrendsPage {
                         </a>
                     </div>
                 ` : ''}
-                ${topic.reason ? `
-                    <div class="topic-field">
-                        <span class="field-label">潜力分析:</span>
-                        <span class="field-value">${this.escapeHtml(topic.reason)}</span>
+                ${topic.angle ? `
+                    <div class="topic-field topic-preview" data-index="${index}" style="display: ${isExpanded ? 'none' : 'block'};">
+                        <span class="field-label">选题角度:</span>
+                        <span class="field-value">${this.escapeHtml(topic.angle)}</span>
                     </div>
                 ` : ''}
 
                 <!-- 折叠的详细内容 -->
                 ${hasDetails ? `
-                    <div class="topic-details" data-index="${index}" style="display: none;">
+                    <div class="topic-details" data-index="${index}" style="display: ${isExpanded ? 'block' : 'none'};">
                         ${topic.source ? `
                             <div class="topic-field topic-source">
                                 <span class="field-label">来源:</span>

@@ -1,6 +1,6 @@
 # Web Claude Code 项目概要
 
-## 当前版本: v2.17.1
+## 当前版本: v2.18.0
 
 ## 项目定位
 
@@ -41,6 +41,13 @@
 - Twitter OAuth 2.0 登录
 - 用户配置和偏好保存
 
+### 7. Token 使用统计系统
+- **用量追踪**：记录每次 AI 调用的 Token 消耗和费用
+- **层级分解**：用户总量 → 任务 → 工作流步骤 → Skill
+- **用户统计**：个人页面显示使用统计卡片（日/周/月筛选）
+- **管理后台**：全局统计、用户管理、详情查看
+- **管理员权限**：通过 is_admin 字段控制访问权限
+
 ## 技术架构
 
 ```
@@ -62,21 +69,28 @@ AI: Anthropic API + Gemini API
   ├── prompt-generator/   # Prompt 生成
   ├── domain-trends/      # 领域趋势
   └── utils/
-      └── json-parser.ts  # 健壮 JSON 解析
+      ├── json-parser.ts  # 健壮 JSON 解析
+      └── claude-cli.ts   # Claude CLI 调用封装
 
 src/
   ├── routes/
   │   ├── tasks.js        # Skill 执行 API
   │   ├── tools.js        # 工具 API
+  │   ├── stats.js        # 用户统计 API
+  │   ├── admin.js        # 管理员 API
   │   └── trends.js       # 趋势 API
+  ├── middleware/
+  │   └── adminAuth.js    # 管理员权限中间件
   ├── services/
   │   ├── scheduler.js    # 定时任务调度
-  │   └── xTrendsDb.js    # 趋势数据存储
+  │   ├── xTrendsDb.js    # 趋势数据存储
+  │   └── tokenUsageDb.js # Token 使用统计
   └── db/                 # 数据库初始化
 
 public/
   ├── js/generator/       # 生成器前端
   ├── css/                # 样式文件
+  ├── admin.html          # 管理后台
   └── landing.html        # 营销落地页
 ```
 
@@ -102,8 +116,37 @@ public/
 | v2.15 | Viral-X 落地页 |
 | v2.16 | 全站图标系统升级 + 中文黑体 |
 | v2.17 | 图片描述与生成图片环节整合 |
+| v2.18 | Token 使用统计系统 |
 
 ## 最近更新
+
+### v2.18.0 - Token 使用统计系统
+- **数据库变更**:
+  - 新增 `token_usage` 表：记录每次 AI 调用的详细信息
+  - `users` 表新增 `is_admin` 字段：标识管理员用户
+- **后端服务**:
+  - 新增 `tokenUsageDb.js`：Token 使用数据库操作服务
+  - 新增 `/api/stats` 路由：用户统计 API
+  - 新增 `/api/admin` 路由：管理员统计和用户管理 API
+  - 新增 `adminAuth.js` 中间件：管理员权限验证
+- **Skill 改造**:
+  - 7 个 Skill 脚本改用 `--output-format json` 获取 usage 数据
+  - 新增 `.claude/utils/claude-cli.ts` 统一调用封装
+  - 输出 JSON 包含 `_usage` 字段供后端提取
+- **tasks.js 改造**:
+  - 执行步骤后提取 `_usage` 数据
+  - 同步记录到 `token_usage` 表
+- **前端功能**:
+  - 用户个人页面新增统计卡片（日/周/月筛选）
+  - 显示总 Token、总花费、调用次数、任务数
+  - 按工作流步骤和 Skill 分组统计
+- **管理后台** (`/admin.html`):
+  - 全局统计概览（总 Token、总花费、调用次数、活跃用户）
+  - 用户列表（搜索、排序、分页）
+  - 用户详情弹窗（查看用户统计明细）
+  - 管理员权限管理（设置/取消管理员）
+- **初始管理员**:
+  - 数据库初始化时自动设置 rayguo 为管理员
 
 ### v2.17.1 - 语气模仿器创建弹窗优化
 - **UI 优化**: "创建新生成器"从展开式输入区域改为图标按钮
@@ -406,6 +449,7 @@ public/
 - `domain_trends_analysis` - 领域趋势分析结果
 - `voice_prompts` - 语气 Prompt 存储（含 role, core_traits, subscriber_count）
 - `voice_prompt_subscriptions` - 语气模仿器订阅关系
+- `token_usage` - Token 使用统计（user_id, task_id, workflow_step, skill_id, model, tokens, cost）
 
 ## 环境变量
 

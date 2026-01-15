@@ -1,9 +1,9 @@
 import fetch from 'node-fetch';
 import * as cheerio from 'cheerio';
-import { spawn } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import { parseRobustJSON } from '../utils/json-parser';
+import { callClaude, ClaudeUsage, formatUsageLog } from '../utils/claude-cli';
 
 // 1. Define Output Paths
 const projectRoot = path.resolve(__dirname, '../../');
@@ -74,44 +74,14 @@ export async function fetchHotList(): Promise<HotItem[]> {
   return items;
 }
 
+// 存储最近一次调用的 usage 信息
+let lastUsage: ClaudeUsage | null = null;
+
 /**
- * Call AI to analyze data
- * 使用 stdin 传递 prompt，避免命令行长度限制
+ * 获取最近一次调用的 usage 信息
  */
-function callClaudeCLI(prompt: string): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const child = spawn('claude', ['--output-format', 'text'], {
-      cwd: projectRoot,
-      stdio: ['pipe', 'pipe', 'pipe']
-    });
-
-    let stdout = '';
-    let stderr = '';
-
-    child.stdout.on('data', (data) => {
-      stdout += data.toString();
-    });
-
-    child.stderr.on('data', (data) => {
-      stderr += data.toString();
-    });
-
-    child.on('close', (code) => {
-      if (code === 0) {
-        resolve(stdout.trim());
-      } else {
-        reject(new Error(`AI 退出码: ${code}, stderr: ${stderr}`));
-      }
-    });
-
-    child.on('error', (error) => {
-      reject(error);
-    });
-
-    // 通过 stdin 传递 prompt
-    child.stdin.write(prompt);
-    child.stdin.end();
-  });
+export function getLastUsage(): ClaudeUsage | null {
+  return lastUsage;
 }
 
 // JSON Schema 定义（合并高潜力话题和选题建议）
@@ -192,7 +162,11 @@ ${JSON_SCHEMA}
 
   console.log('🤖 正在使用 AI 分析热榜数据...');
 
-  return await callClaudeCLI(prompt);
+  const response = await callClaude(prompt);
+  lastUsage = response.usage;
+  console.log(`📊 ${formatUsageLog(response.usage)}`);
+
+  return response.result;
 }
 
 /**
@@ -246,7 +220,7 @@ export async function fetchOnly(): Promise<{ items: HotItem[]; rawPath: string }
  * 仅分析数据（不抓取）
  * 用于调度器分离抓取和分析阶段
  */
-export async function analyzeOnly(items: HotItem[]): Promise<{ reportPath: string; report: string; data: any }> {
+export async function analyzeOnly(items: HotItem[]): Promise<{ reportPath: string; report: string; data: any; usage?: ClaudeUsage }> {
   const rawOutput = await analyzeHotList(items);
 
   console.log('📋 正在解析 JSON 输出...');
@@ -263,7 +237,16 @@ export async function analyzeOnly(items: HotItem[]): Promise<{ reportPath: strin
       source: 'tophub.today',
       itemCount: items.length
     },
-    ...data
+    ...data,
+    _usage: lastUsage ? {
+      inputTokens: lastUsage.inputTokens,
+      outputTokens: lastUsage.outputTokens,
+      cacheCreationTokens: lastUsage.cacheCreationTokens,
+      cacheReadTokens: lastUsage.cacheReadTokens,
+      costUsd: lastUsage.costUsd,
+      durationMs: lastUsage.durationMs,
+      model: lastUsage.model
+    } : undefined
   };
 
   fs.writeFileSync(reportPath, JSON.stringify(finalData, null, 2), 'utf-8');
@@ -273,13 +256,13 @@ export async function analyzeOnly(items: HotItem[]): Promise<{ reportPath: strin
   const mdPath = reportPath.replace('.json', '.md');
   fs.writeFileSync(mdPath, JSON.stringify(finalData, null, 2), 'utf-8');
 
-  return { reportPath: mdPath, report: JSON.stringify(finalData), data: finalData };
+  return { reportPath: mdPath, report: JSON.stringify(finalData), data: finalData, usage: lastUsage || undefined };
 }
 
 /**
  * Main execution function
  */
-export async function run(): Promise<{ reportPath: string; report: string; data: any }> {
+export async function run(): Promise<{ reportPath: string; report: string; data: any; usage?: ClaudeUsage }> {
   try {
     // 1. Fetch
     const { items } = await fetchOnly();

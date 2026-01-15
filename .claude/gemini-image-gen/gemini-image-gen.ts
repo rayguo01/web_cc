@@ -212,8 +212,8 @@ export async function run(userInput?: string): Promise<{ imagePath: string; repo
     // Generate image
     const imagePath = await runPythonScript(prompt, aspectRatio);
 
-    // Create report
-    const report = `# 图片生成报告
+    // Create markdown report content
+    const markdownContent = `# 图片生成报告
 > 生成时间: ${new Date().toLocaleString('zh-CN')}
 
 ## 生成参数
@@ -226,14 +226,31 @@ export async function run(userInput?: string): Promise<{ imagePath: string; repo
 ![Generated Image](${imagePath})
 `;
 
-    // Save report
+    // Create JSON report for consistency with other skills
+    const reportData = {
+      title: '图片生成报告',
+      generatedAt: new Date().toISOString(),
+      params: {
+        prompt,
+        aspectRatio
+      },
+      output: {
+        imagePath
+      },
+      // Markdown content for frontend display
+      content: markdownContent,
+      // Gemini Imagen API 不提供 token 使用信息
+      _usage: null
+    };
+
+    // Save report as JSON
     const dateStr = new Date().toISOString().replace(/[:.]/g, '-');
-    const reportPath = path.join(IMAGES_DIR, `report_${dateStr}.md`);
-    fs.writeFileSync(reportPath, report);
+    const reportPath = path.join(IMAGES_DIR, `report_${dateStr}.json`);
+    fs.writeFileSync(reportPath, JSON.stringify(reportData, null, 2));
 
     console.log(`✅ 图片已保存到 ${imagePath}`);
 
-    return { imagePath, report };
+    return { imagePath, report: markdownContent };
 
   } catch (error) {
     console.error('❌ 图片生成失败:', error);

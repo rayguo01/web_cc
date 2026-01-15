@@ -1,7 +1,7 @@
-import { spawn } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import { parseRobustJSON } from '../utils/json-parser';
+import { callClaude, ClaudeUsage, formatUsageLog } from '../utils/claude-cli';
 
 // Define Output Paths
 const projectRoot = path.resolve(__dirname, '../../');
@@ -69,6 +69,30 @@ Role: 爆款内容验证专家
 - 在 strategies 中反映用户的具体需求
 - 确保最终的 optimizedVersion 充分体现用户的优化意见
 
+重写时，你必须严格遵循禁止使用的表达和模式：
+### 🚫 绝对不会使用的表达
+- "总而言之"、"综上所述"、"总的来说"
+- "希望能帮到你"、"如果有任何问题"
+- "值得注意的是"、"需要指出的是"
+- "首先...其次...最后..."（这种教科书式结构）
+- "作为一名..."、"在我看来"（过于正式的自我定位）
+- "让我们来看看"、"接下来我将介绍"、"让我来解释一下"
+
+### 禁止的写作模式
+- ❌ 列表式要点罗列（如"1. 2. 3."的清单体）
+- ❌ 过度解释技术概念（假设读者懂行）
+- ❌ 刻意制造金句或警句
+- ❌ 标准的教程式语气
+- ❌ 过度谦虚或自我贬低
+- ❌ 结尾喊口号或煽情
+
+### 禁止的 AI 典型特征
+- ❌ 每句话都语法完整、结构工整
+- ❌ 观点面面俱到、毫无偏向
+- ❌ 用"可能"、"或许"过度对冲
+- ❌ 机械的转折词使用（"然而"、"但是"开头）
+- ❌ 脱离个人经历的抽象论述
+
 ====================
 输出格式要求（极其重要）
 ====================
@@ -97,12 +121,21 @@ ${JSON_SCHEMA}
 6. totalScore 应该是 scoreCard 中所有分数的加权计算结果（每项满分10分，共6项，转换为百分制）
 `;
 
+// 存储最近一次调用的 usage 信息
+let lastUsage: ClaudeUsage | null = null;
+
+/**
+ * 获取最近一次调用的 usage 信息
+ */
+export function getLastUsage(): ClaudeUsage | null {
+  return lastUsage;
+}
+
 /**
  * Call AI to verify content
  */
-function callClaudeCLI(userInput: string): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const fullPrompt = `${SYSTEM_PROMPT}
+async function callClaudeCLI(userInput: string): Promise<string> {
+  const fullPrompt = `${SYSTEM_PROMPT}
 
 ====================
 待验证内容
@@ -111,43 +144,14 @@ ${userInput}
 
 请对以上内容进行爆款要素优化，严格按照 JSON 格式输出验证报告和优化版本。只输出 JSON，不要任何其他内容。`;
 
-    const child = spawn('claude', [
-      '--output-format', 'text',
-      '--allowedTools', 'WebSearch,WebFetch'
-    ], {
-      cwd: projectRoot,
-      stdio: ['pipe', 'pipe', 'pipe'],
-      shell: true,
-      env: process.env
-    });
-
-    let stdout = '';
-    let stderr = '';
-
-    child.stdout.on('data', (data) => {
-      stdout += data.toString();
-    });
-
-    child.stderr.on('data', (data) => {
-      stderr += data.toString();
-    });
-
-    child.on('close', (code) => {
-      if (code === 0) {
-        resolve(stdout.trim());
-      } else {
-        reject(new Error(`AI 退出码: ${code}, stderr: ${stderr}`));
-      }
-    });
-
-    child.on('error', (error) => {
-      reject(error);
-    });
-
-    // 通过 stdin 传递 prompt
-    child.stdin.write(fullPrompt);
-    child.stdin.end();
+  const response = await callClaude(fullPrompt, {
+    allowedTools: ['WebSearch', 'WebFetch']
   });
+
+  lastUsage = response.usage;
+  console.log(`📊 ${formatUsageLog(response.usage)}`);
+
+  return response.result;
 }
 
 /**
@@ -187,7 +191,7 @@ function parseAndValidateJSON(output: string): any {
 /**
  * Main execution function
  */
-export async function run(userInput?: string): Promise<{ reportPath: string; report: string; data: any }> {
+export async function run(userInput?: string): Promise<{ reportPath: string; report: string; data: any; usage?: ClaudeUsage }> {
   try {
     // 如果没有传入参数，从命令行参数获取
     let input = userInput || process.argv.slice(2).join(' ');
@@ -224,7 +228,16 @@ export async function run(userInput?: string): Promise<{ reportPath: string; rep
         generatedAt: new Date().toISOString(),
         inputLength: input.length
       },
-      ...data
+      ...data,
+      _usage: lastUsage ? {
+        inputTokens: lastUsage.inputTokens,
+        outputTokens: lastUsage.outputTokens,
+        cacheCreationTokens: lastUsage.cacheCreationTokens,
+        cacheReadTokens: lastUsage.cacheReadTokens,
+        costUsd: lastUsage.costUsd,
+        durationMs: lastUsage.durationMs,
+        model: lastUsage.model
+      } : undefined
     };
 
     fs.writeFileSync(reportPath, JSON.stringify(finalData, null, 2), 'utf-8');
@@ -234,7 +247,7 @@ export async function run(userInput?: string): Promise<{ reportPath: string; rep
     const mdPath = reportPath.replace('.json', '.md');
     fs.writeFileSync(mdPath, JSON.stringify(finalData, null, 2), 'utf-8');
 
-    return { reportPath: mdPath, report: JSON.stringify(finalData), data: finalData };
+    return { reportPath: mdPath, report: JSON.stringify(finalData), data: finalData, usage: lastUsage || undefined };
 
   } catch (error) {
     console.error('❌ 执行 Viral Verification Skill 出错:', error);

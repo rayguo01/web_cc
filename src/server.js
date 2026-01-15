@@ -11,6 +11,9 @@ const skillsRoutes = require('./routes/skills');
 const tasksRoutes = require('./routes/tasks');
 const twitterRoutes = require('./routes/twitter');
 const toolsRoutes = require('./routes/tools');
+const statsRoutes = require('./routes/stats');
+const adminRoutes = require('./routes/admin');
+const invitationsRoutes = require('./routes/invitations');
 const { setupWebSocket } = require('./websocket/handler');
 const scheduler = require('./services/scheduler');
 
@@ -28,6 +31,9 @@ app.use('/api/skills', skillsRoutes);
 app.use('/api/tasks', tasksRoutes);
 app.use('/api/twitter', twitterRoutes);
 app.use('/api/tools', toolsRoutes);
+app.use('/api/stats', statsRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/invitations', invitationsRoutes);
 
 // 静态文件访问 - outputs 目录（用于图片访问）
 app.use('/outputs', express.static(path.join(__dirname, '../outputs')));
@@ -35,6 +41,11 @@ app.use('/outputs', express.static(path.join(__dirname, '../outputs')));
 // 健康检查
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok' });
+});
+
+// 管理后台页面路由
+app.get('/admin', (req, res) => {
+    res.sendFile(path.join(__dirname, '../public/admin.html'));
 });
 
 // 设置 WebSocket

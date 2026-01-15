@@ -264,6 +264,44 @@ async function initDatabase() {
             CREATE INDEX IF NOT EXISTS idx_voice_subscriptions_prompt ON voice_prompt_subscriptions(prompt_id)
         `);
 
+        // 添加 is_admin 字段
+        await client.query(`
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT FALSE
+        `);
+
+        // 创建 Token 使用统计表
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS token_usage (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+                task_id INTEGER REFERENCES post_tasks(id) ON DELETE SET NULL,
+                workflow_step VARCHAR(30),
+                skill_id VARCHAR(100),
+                model VARCHAR(100),
+                input_tokens INTEGER DEFAULT 0,
+                output_tokens INTEGER DEFAULT 0,
+                cache_creation_tokens INTEGER DEFAULT 0,
+                cache_read_tokens INTEGER DEFAULT 0,
+                cost_usd DECIMAL(12, 8) DEFAULT 0,
+                duration_ms INTEGER,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
+        // Token 使用统计表索引
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_token_usage_user ON token_usage(user_id)
+        `);
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_token_usage_created ON token_usage(created_at)
+        `);
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_token_usage_skill ON token_usage(skill_id)
+        `);
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_token_usage_step ON token_usage(workflow_step)
+        `);
+
         // 创建索引
         await client.query(`
             CREATE INDEX IF NOT EXISTS idx_post_tasks_user_status ON post_tasks(user_id, status)
@@ -279,6 +317,38 @@ async function initDatabase() {
         `);
         await client.query(`
             CREATE INDEX IF NOT EXISTS idx_trends_data_created ON trends_data(created_at)
+        `);
+
+        // 创建邀请码表
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS invitation_codes (
+                id SERIAL PRIMARY KEY,
+                code VARCHAR(20) UNIQUE NOT NULL,
+                note VARCHAR(200),
+                created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+                used_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+                used_at TIMESTAMP,
+                expires_at TIMESTAMP,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
+        // 邀请码索引
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_invitation_codes_code ON invitation_codes(code)
+        `);
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_invitation_codes_used ON invitation_codes(used_by)
+        `);
+
+        // 用户表添加邀请码关联字段
+        await client.query(`
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS invited_by_code VARCHAR(20)
+        `);
+
+        // 设置初始管理员（rayguo）
+        await client.query(`
+            UPDATE users SET is_admin = TRUE WHERE username = 'rayguo' AND (is_admin IS NULL OR is_admin = FALSE)
         `);
 
         console.log('数据库表初始化完成');

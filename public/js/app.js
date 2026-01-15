@@ -257,6 +257,7 @@ class App {
     }
 
     async register() {
+        const invitationCode = document.getElementById('register-invitation-code').value;
         const username = document.getElementById('register-username').value;
         const password = document.getElementById('register-password').value;
         const errorEl = document.getElementById('register-error');
@@ -269,7 +270,7 @@ class App {
             const res = await fetch('/api/auth/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password })
+                body: JSON.stringify({ username, password, invitationCode })
             });
 
             const data = await res.json();
@@ -452,6 +453,27 @@ class App {
                         <p class="text-slate-500 text-sm font-light">X 爆款帖生成器用户</p>
                     </div>
                 </div>
+
+                <!-- Token 使用统计卡片 -->
+                <div class="glass-panel bg-white/60 rounded-2xl overflow-hidden">
+                    <div class="flex items-center justify-between p-4 border-b border-slate-100">
+                        <div class="flex items-center space-x-2">
+                            <span class="material-icons-outlined text-amber-500">analytics</span>
+                            <h4 class="font-display text-lg text-slate-900">使用统计</h4>
+                        </div>
+                        <select id="stats-period-select" class="text-sm border border-slate-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500">
+                            <option value="day">今日</option>
+                            <option value="week">本周</option>
+                            <option value="month" selected>本月</option>
+                        </select>
+                    </div>
+                    <div id="stats-content" class="p-4">
+                        <div class="flex items-center justify-center py-8">
+                            <div class="animate-spin rounded-full h-6 w-6 border-2 border-amber-500 border-t-transparent"></div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- 设置菜单 -->
                 <div class="space-y-2">
                     <div class="flex items-center justify-between p-4 glass-panel bg-white/60 rounded-xl">
@@ -473,6 +495,159 @@ class App {
         document.getElementById('profile-logout-btn')?.addEventListener('click', () => {
             this.logout();
         });
+
+        // 绑定统计周期切换
+        document.getElementById('stats-period-select')?.addEventListener('change', (e) => {
+            this.loadUserStats(e.target.value);
+        });
+
+        // 加载统计数据
+        this.loadUserStats('month');
+    }
+
+    // 加载用户统计数据
+    async loadUserStats(period = 'month') {
+        const container = document.getElementById('stats-content');
+        if (!container) return;
+
+        // 显示加载状态
+        container.innerHTML = `
+            <div class="flex items-center justify-center py-8">
+                <div class="animate-spin rounded-full h-6 w-6 border-2 border-amber-500 border-t-transparent"></div>
+            </div>
+        `;
+
+        try {
+            const res = await fetch(`/api/stats/my?period=${period}`, {
+                headers: { 'Authorization': `Bearer ${this.token}` }
+            });
+
+            if (!res.ok) {
+                throw new Error('获取统计数据失败');
+            }
+
+            const stats = await res.json();
+            this.renderUserStats(stats);
+        } catch (err) {
+            container.innerHTML = `
+                <div class="text-center py-8 text-slate-500">
+                    <span class="material-icons-outlined text-3xl mb-2">error_outline</span>
+                    <p class="text-sm">${err.message}</p>
+                </div>
+            `;
+        }
+    }
+
+    // 渲染用户统计数据
+    renderUserStats(stats) {
+        const container = document.getElementById('stats-content');
+        if (!container) return;
+
+        const { summary, byWorkflowStep, bySkill } = stats;
+
+        // 格式化数字
+        const formatTokens = (num) => {
+            const n = num || 0;
+            if (n >= 1000000) return (n / 1000000).toFixed(2) + 'M';
+            if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
+            return n.toString();
+        };
+
+        const formatCost = (cost) => {
+            return '$' + parseFloat(cost || 0).toFixed(4);
+        };
+
+        container.innerHTML = `
+            <!-- 总览统计 -->
+            <div class="grid grid-cols-2 gap-3 mb-4">
+                <div class="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-4 text-center">
+                    <p class="text-2xl font-display text-amber-600">${formatTokens((summary.totalInputTokens || 0) + (summary.totalOutputTokens || 0))}</p>
+                    <p class="text-xs text-slate-500 mt-1">总 Tokens</p>
+                </div>
+                <div class="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-4 text-center">
+                    <p class="text-2xl font-display text-emerald-600">${formatCost(summary.totalCost)}</p>
+                    <p class="text-xs text-slate-500 mt-1">总花费</p>
+                </div>
+                <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 text-center">
+                    <p class="text-2xl font-display text-blue-600">${summary.totalCalls || 0}</p>
+                    <p class="text-xs text-slate-500 mt-1">调用次数</p>
+                </div>
+                <div class="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-4 text-center">
+                    <p class="text-2xl font-display text-purple-600">${summary.taskCount || 0}</p>
+                    <p class="text-xs text-slate-500 mt-1">任务数</p>
+                </div>
+            </div>
+
+            <!-- 按步骤统计 -->
+            ${byWorkflowStep && byWorkflowStep.length > 0 ? `
+            <div class="mb-4">
+                <h5 class="text-sm font-medium text-slate-700 mb-2 flex items-center">
+                    <span class="material-icons-outlined text-base mr-1">account_tree</span>
+                    按工作流步骤
+                </h5>
+                <div class="space-y-2">
+                    ${byWorkflowStep.map(step => `
+                        <div class="flex items-center justify-between p-2 bg-slate-50 rounded-lg">
+                            <span class="text-sm text-slate-600">${this.getStepLabel(step.workflow_step)}</span>
+                            <div class="text-right">
+                                <span class="text-sm font-medium text-slate-900">${formatCost(step.cost_usd)}</span>
+                                <span class="text-xs text-slate-400 ml-2">${formatTokens(step.total_tokens)} tokens</span>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+            ` : ''}
+
+            <!-- 按 Skill 统计 -->
+            ${bySkill && bySkill.length > 0 ? `
+            <div>
+                <h5 class="text-sm font-medium text-slate-700 mb-2 flex items-center">
+                    <span class="material-icons-outlined text-base mr-1">extension</span>
+                    按 Skill
+                </h5>
+                <div class="space-y-2">
+                    ${bySkill.slice(0, 5).map(skill => `
+                        <div class="flex items-center justify-between p-2 bg-slate-50 rounded-lg">
+                            <span class="text-sm text-slate-600 truncate max-w-[120px]" title="${skill.skill_id}">${this.getSkillLabel(skill.skill_id)}</span>
+                            <div class="text-right">
+                                <span class="text-sm font-medium text-slate-900">${formatCost(skill.cost)}</span>
+                                <span class="text-xs text-slate-400 ml-2">${skill.calls}次</span>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+            ` : ''}
+
+            ${(!byWorkflowStep || byWorkflowStep.length === 0) && (!bySkill || bySkill.length === 0) ? `
+            <div class="text-center py-4 text-slate-400">
+                <span class="material-icons-outlined text-2xl mb-1">insert_chart_outlined</span>
+                <p class="text-sm">暂无使用记录</p>
+            </div>
+            ` : ''}
+        `;
+    }
+
+    // 获取步骤标签
+    getStepLabel(step) {
+        const labels = {
+            'trends': '热点获取',
+            'content': '内容生成',
+            'optimize': '爆款优化',
+            'image': '图片生成'
+        };
+        return labels[step] || step;
+    }
+
+    // 获取 Skill 标签
+    getSkillLabel(skillId) {
+        if (!skillId) return '未知';
+        // 提取最后一个 / 后的部分
+        const parts = skillId.split('/');
+        const name = parts[parts.length - 1];
+        // 移除 .ts 后缀
+        return name.replace(/\.ts$/, '');
     }
 }
 

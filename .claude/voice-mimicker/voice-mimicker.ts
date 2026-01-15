@@ -2,10 +2,10 @@
  * Voice Mimicker - 特定推主语气模仿器
  * 抓取指定推主的推文，分析风格，生成模仿 Prompt
  */
-import { spawn } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import fetch from 'node-fetch';
+import { callClaude, ClaudeUsage, formatUsageLog } from '../utils/claude-cli';
 
 // 路径配置
 const projectRoot = path.resolve(__dirname, '../../');
@@ -45,6 +45,7 @@ interface AnalysisResult {
   role: string | null;
   coreTraits: string[] | null;
   domains: string[] | null;
+  usage?: ClaudeUsage;
 }
 
 interface UserInfo {
@@ -254,42 +255,14 @@ async function fetchUserTweets(username: string, minChars: number = 100, targetC
   return allTweets;
 }
 
+// 存储最近一次调用的 usage 信息
+let lastUsage: ClaudeUsage | null = null;
+
 /**
- * 调用 AI 分析风格
+ * 获取最近一次调用的 usage 信息
  */
-function callClaudeCLI(prompt: string): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const child = spawn('claude', ['--output-format', 'text'], {
-      cwd: projectRoot,
-      stdio: ['pipe', 'pipe', 'pipe']
-    });
-
-    let stdout = '';
-    let stderr = '';
-
-    child.stdout.on('data', (data) => {
-      stdout += data.toString();
-    });
-
-    child.stderr.on('data', (data) => {
-      stderr += data.toString();
-    });
-
-    child.on('close', (code) => {
-      if (code === 0) {
-        resolve(stdout.trim());
-      } else {
-        reject(new Error(`AI 退出码: ${code}, stderr: ${stderr}`));
-      }
-    });
-
-    child.on('error', (error) => {
-      reject(error);
-    });
-
-    child.stdin.write(prompt);
-    child.stdin.end();
-  });
+export function getLastUsage(): ClaudeUsage | null {
+  return lastUsage;
 }
 
 /**
@@ -344,9 +317,11 @@ Start directly with "# Role: [Name/Archetype based on @${username}]".
 - Pay special attention to line breaks, punctuation, and informal language patterns`;
 
   console.log('🤖 正在使用 AI 分析风格...');
-  const result = await callClaudeCLI(prompt);
+  const response = await callClaude(prompt);
+  lastUsage = response.usage;
+  console.log(`📊 ${formatUsageLog(response.usage)}`);
 
-  return result;
+  return response.result;
 }
 
 /**
@@ -416,7 +391,8 @@ async function run(username: string): Promise<AnalysisResult> {
     sampleTweets: selectedTweets.slice(0, 3).map(t => t.text),
     role,
     coreTraits,
-    domains
+    domains,
+    usage: lastUsage || undefined
   };
 
   // 输出 JSON 供 API 读取

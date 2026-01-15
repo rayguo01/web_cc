@@ -4,6 +4,7 @@ const path = require('path');
 const fs = require('fs');
 const { pool } = require('../config/database');
 const { authMiddleware: authenticate } = require('../middleware/auth');
+const tokenUsageDb = require('../services/tokenUsageDb');
 
 const router = express.Router();
 
@@ -15,7 +16,16 @@ function checkTrendsCache(source) {
     const trendsDir = path.join(__dirname, '../../outputs/trends');
     if (!fs.existsSync(trendsDir)) return null;
 
-    const prefix = source === 'x-trends' ? 'x_trends_analysis' : 'tophub_analysis';
+    let prefix;
+    if (source === 'x-trends') {
+        prefix = 'x_trends_analysis';
+    } else if (source === 'tophub-trends') {
+        prefix = 'tophub_analysis';
+    } else if (source === 'domain-trends') {
+        prefix = 'domain_trends_analysis';
+    } else {
+        return null;
+    }
 
     try {
         const files = fs.readdirSync(trendsDir)
@@ -77,7 +87,7 @@ router.get('/current', authenticate, async (req, res) => {
 router.post('/', authenticate, async (req, res) => {
     const { source } = req.body;
 
-    if (!source || !['x-trends', 'tophub-trends'].includes(source)) {
+    if (!source || !['x-trends', 'tophub-trends', 'domain-trends'].includes(source)) {
         return res.status(400).json({ error: '无效的数据源' });
     }
 
@@ -541,7 +551,15 @@ router.post('/:id/execute-step', authenticate, async (req, res) => {
             case 'trends':
                 skillId = input?.source || task.trends_data?.source || 'x-trends';
                 outputDir = path.join(__dirname, '../../outputs/trends');
-                prefix = skillId === 'x-trends' ? 'x_trends_analysis' : 'tophub_analysis';
+                if (skillId === 'x-trends') {
+                    prefix = 'x_trends_analysis';
+                } else if (skillId === 'tophub-trends') {
+                    prefix = 'tophub_analysis';
+                } else if (skillId === 'domain-trends') {
+                    prefix = 'domain_trends_analysis';
+                } else {
+                    prefix = 'trends_analysis';
+                }
 
                 // 检查趋势缓存（1小时内的文件直接使用）
                 const cachedTrends = checkTrendsCache(skillId);
@@ -651,6 +669,7 @@ router.post('/:id/execute-step', authenticate, async (req, res) => {
         switch (skillId) {
             case 'x-trends': scriptName = 'x-trends.ts'; break;
             case 'tophub-trends': scriptName = 'tophub.ts'; break;
+            case 'domain-trends': scriptName = 'domain-trends.ts'; break;
             case 'content-writer': scriptName = 'content-writer.ts'; break;
             case 'viral-verification': scriptName = 'viral-verification.ts'; break;
             case 'gemini-image-gen': scriptName = 'gemini-image-gen.ts'; break;
@@ -745,7 +764,42 @@ router.post('/:id/execute-step', authenticate, async (req, res) => {
 
                     if (files.length > 0) {
                         const reportPath = path.join(outputDir, files[0]);
-                        const report = fs.readFileSync(reportPath, 'utf-8');
+                        const reportRaw = fs.readFileSync(reportPath, 'utf-8');
+
+                        // 尝试解析为 JSON，提取 token 使用信息和显示内容
+                        let displayContent = reportRaw;
+                        try {
+                            const reportData = JSON.parse(reportRaw);
+
+                            // 如果 JSON 中有 content 字段，用于前端显示
+                            if (reportData.content) {
+                                displayContent = reportData.content;
+                            }
+
+                            // 记录 Token 使用信息
+                            if (reportData._usage) {
+                                await tokenUsageDb.recordUsage({
+                                    userId: req.user.userId,
+                                    taskId: parseInt(taskId),
+                                    workflowStep: step,
+                                    skillId: skillId,
+                                    model: reportData._usage.model || 'unknown',
+                                    inputTokens: reportData._usage.inputTokens || 0,
+                                    outputTokens: reportData._usage.outputTokens || 0,
+                                    cacheCreationTokens: reportData._usage.cacheCreationTokens || 0,
+                                    cacheReadTokens: reportData._usage.cacheReadTokens || 0,
+                                    costUsd: reportData._usage.costUsd || 0,
+                                    durationMs: reportData._usage.durationMs || 0
+                                });
+                                console.log(`[Token Usage] 已记录: ${skillId}, 费用: $${reportData._usage.costUsd?.toFixed(6) || 0}`);
+                            } else if (reportData._usage === null) {
+                                // 明确设置为 null 表示该 skill 不支持 token 使用记录
+                                console.log(`[Token Usage] ${skillId} 不提供 token 使用信息`);
+                            }
+                        } catch (usageError) {
+                            // 非 JSON 格式，保持原始内容用于显示
+                            console.warn('[Token Usage] 记录失败:', usageError.message);
+                        }
 
                         // 对于图片步骤，还需要找到生成的图片
                         let imagePath = null;
@@ -761,7 +815,7 @@ router.post('/:id/execute-step', authenticate, async (req, res) => {
 
                         safeWrite(`data: ${JSON.stringify({
                             type: 'report',
-                            content: report,
+                            content: displayContent,
                             imagePath
                         })}\n\n`);
                     } else {

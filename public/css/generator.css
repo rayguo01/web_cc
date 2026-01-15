@@ -927,7 +927,6 @@
     font-size: 16px;
     font-weight: 600;
     color: var(--text-primary);
-    flex: 1;
 }
 
 .topic-score {
@@ -1052,26 +1051,36 @@
 /* 展开/折叠按钮 */
 .topic-expand-btn {
     margin-left: auto;
-    width: 28px;
-    height: 28px;
-    display: flex;
+    padding: 4px 10px;
+    display: inline-flex;
     align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    background: rgba(148, 163, 184, 0.1);
-    color: #64748b;
+    gap: 2px;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    color: #475569;
+    font-size: 12px;
+    font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .topic-expand-btn:hover {
-    background: rgba(249, 115, 22, 0.1);
-    color: #f97316;
+    background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+    border-color: #fed7aa;
+    color: #ea580c;
+    box-shadow: 0 2px 4px rgba(249, 115, 22, 0.15);
 }
 
 .topic-expand-btn.expanded {
-    background: rgba(249, 115, 22, 0.1);
-    color: #f97316;
+    background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+    border-color: #fdba74;
+    color: #ea580c;
+}
+
+.topic-expand-btn .expand-text {
+    line-height: 1;
 }
 
 /* 潜力火焰图标 */
@@ -1105,7 +1114,7 @@
 }
 
 .topic-expand-btn .material-icons-outlined {
-    font-size: 20px;
+    font-size: 16px;
     transition: transform 0.2s ease;
 }
 

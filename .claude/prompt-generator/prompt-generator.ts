@@ -6,8 +6,8 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { spawn } from 'child_process';
 import { parseRobustJSON } from '../utils/json-parser';
+import { callClaude, ClaudeUsage, formatUsageLog } from '../utils/claude-cli';
 
 // JSON Schema 定义
 const JSON_SCHEMA = `
@@ -127,58 +127,10 @@ ${content}
         console.log('📌 使用 stdin 方式传递 prompt');
         console.log('📌 Prompt 长度:', userPrompt.length, '字符');
 
-        // 使用 spawn 执行 claude 命令（不带 --verbose，与 content-writer 一致）
-        const rawOutput = await new Promise<string>((resolve, reject) => {
-            const child = spawn('claude', ['--output-format', 'text'], {
-                cwd: process.cwd(),
-                stdio: ['pipe', 'pipe', 'pipe'],
-                shell: true,
-                env: process.env
-            });
-
-            let stdout = '';
-            let stderr = '';
-
-            child.stdout.on('data', (data) => {
-                const text = data.toString();
-                stdout += text;
-                // 显示生成进度
-                process.stdout.write('.');
-            });
-
-            child.stderr.on('data', (data) => {
-                stderr += data.toString();
-            });
-
-            // 超时处理 (90秒)
-            const timeout = setTimeout(() => {
-                console.log('\n⚠️  AI 响应超时 (90秒)，尝试终止...');
-                child.kill('SIGTERM');
-            }, 90000);
-
-            child.on('close', (code) => {
-                clearTimeout(timeout);
-                console.log(''); // 换行
-                if (code === 0) {
-                    console.log('✅ AI 响应成功');
-                    resolve(stdout.trim());
-                } else {
-                    console.log(`❌ AI 退出码: ${code}`);
-                    reject(new Error(`AI 退出码: ${code}, stderr: ${stderr}`));
-                }
-            });
-
-            child.on('error', (error) => {
-                clearTimeout(timeout);
-                console.log('❌ spawn 错误:', error.message);
-                reject(error);
-            });
-
-            // 通过 stdin 传递 prompt（与 content-writer 一致）
-            child.stdin.write(userPrompt);
-            child.stdin.end();
-            console.log('✅ 已发送 prompt，等待 AI 响应...');
-        });
+        // 使用新的 callClaude 函数
+        const response = await callClaude(userPrompt, { timeout: 90000 });
+        const rawOutput = response.result;
+        console.log(`📊 ${formatUsageLog(response.usage)}`);
 
         console.log('📋 正在解析 JSON 输出...');
         const data = parseAndValidateJSON(rawOutput);

@@ -1,7 +1,7 @@
-import { spawn } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import { parseRobustJSON, generateXMLOutputInstructions } from '../utils/json-parser';
+import { callClaude, ClaudeUsage, formatUsageLog } from '../utils/claude-cli';
 
 // Define Output Paths
 const projectRoot = path.resolve(__dirname, '../../');
@@ -124,6 +124,31 @@ IP 人格规范
 - **结构**：采用 Stanley 的短句节奏、视觉留白和犀利钩子
 - **内核**：植入 Defou 的结构化思维和底层逻辑拆解
 - **目标**：既要有高点击率（爆款），又要有高留存和高价值（长尾）
+
+在创作这三个版本时，你必须严格遵循禁止使用的表达和模式：
+### 🚫 绝对不会使用的表达
+- "总而言之"、"综上所述"、"总的来说"
+- "希望能帮到你"、"如果有任何问题"
+- "值得注意的是"、"需要指出的是"
+- "首先...其次...最后..."（这种教科书式结构）
+- "作为一名..."、"在我看来"（过于正式的自我定位）
+- "让我们来看看"、"接下来我将介绍"、"让我来解释一下"
+
+### 禁止的写作模式
+- ❌ 列表式要点罗列（如"1. 2. 3."的清单体）
+- ❌ 过度解释技术概念（假设读者懂行）
+- ❌ 刻意制造金句或警句
+- ❌ 标准的教程式语气
+- ❌ 过度谦虚或自我贬低
+- ❌ 结尾喊口号或煽情
+
+### 禁止的 AI 典型特征
+- ❌ 每句话都语法完整、结构工整
+- ❌ 观点面面俱到、毫无偏向
+- ❌ 用"可能"、"或许"过度对冲
+- ❌ 机械的转折词使用（"然而"、"但是"开头）
+- ❌ 脱离个人经历的抽象论述
+
 `;
 
 // 自定义语气的创作任务说明
@@ -217,12 +242,11 @@ function buildSystemPrompt(userInput: string): string {
 /**
  * Call AI to generate content
  */
-function callClaudeCLI(userInput: string): Promise<string> {
-  return new Promise((resolve, reject) => {
-    // 根据用户输入动态构建系统 prompt
-    const systemPrompt = buildSystemPrompt(userInput);
+async function callClaudeCLI(userInput: string): Promise<{ result: string; usage: ClaudeUsage }> {
+  // 根据用户输入动态构建系统 prompt
+  const systemPrompt = buildSystemPrompt(userInput);
 
-    const fullPrompt = `${systemPrompt}
+  const fullPrompt = `${systemPrompt}
 
 ====================
 用户素材
@@ -231,70 +255,20 @@ ${userInput}
 
 请基于以上素材，严格按照 JSON 格式输出三个版本的内容。只输出 JSON，不要任何其他内容。`;
 
-    // 设置超时（3分钟）
-    const TIMEOUT = 3 * 60 * 1000;
-    let killed = false;
-
-    const child = spawn('claude', [
-      '--output-format', 'text',
-      '--allowedTools', 'WebSearch,WebFetch'
-    ], {
-      cwd: projectRoot,
-      stdio: ['pipe', 'pipe', 'pipe'],
-      shell: true,
-      env: process.env
-    });
-
-    const timeout = setTimeout(() => {
-      killed = true;
-      console.error(`⏰ AI 执行超时（${TIMEOUT / 1000}秒），强制终止`);
-      child.kill('SIGTERM');
-    }, TIMEOUT);
-
-    let stdout = '';
-    let stderr = '';
-
-    child.stdout.on('data', (data) => {
-      const text = data.toString();
-      stdout += text;
-      // 实时输出进度
+  const response = await callClaude(fullPrompt, {
+    allowedTools: ['WebSearch', 'WebFetch'],
+    timeout: 3 * 60 * 1000,
+    onProgress: (text) => {
       if (text.includes('{') || text.includes('"version')) {
         console.log('📝 正在生成内容...');
       }
-    });
-
-    child.stderr.on('data', (data) => {
-      stderr += data.toString();
-    });
-
-    child.on('close', (code) => {
-      clearTimeout(timeout);
-
-      if (killed) {
-        reject(new Error(`AI 执行超时（超过 ${TIMEOUT / 1000} 秒）`));
-        return;
-      }
-
-      if (code === 0) {
-        console.log(`✅ AI 返回，输出长度: ${stdout.length}`);
-        resolve(stdout.trim());
-      } else {
-        console.error(`❌ AI 错误，退出码: ${code}`);
-        console.error(`stderr: ${stderr.substring(0, 500)}`);
-        console.error(`stdout (最后500字符): ${stdout.substring(stdout.length - 500)}`);
-        reject(new Error(`AI 退出码: ${code}, stderr: ${stderr.substring(0, 200)}`));
-      }
-    });
-
-    child.on('error', (error) => {
-      clearTimeout(timeout);
-      console.error(`❌ AI spawn 错误:`, error);
-      reject(error);
-    });
-
-    child.stdin.write(fullPrompt);
-    child.stdin.end();
+    }
   });
+
+  console.log(`✅ AI 返回，输出长度: ${response.result.length}`);
+  console.log(`📊 ${formatUsageLog(response.usage)}`);
+
+  return { result: response.result, usage: response.usage };
 }
 
 /**
@@ -328,7 +302,7 @@ function parseAndValidateJSON(output: string): any {
 /**
  * Main execution function
  */
-export async function run(userInput?: string): Promise<{ reportPath: string; report: string; data: any }> {
+export async function run(userInput?: string): Promise<{ reportPath: string; report: string; data: any; usage?: ClaudeUsage }> {
   try {
     let input = userInput || process.argv.slice(2).join(' ');
 
@@ -346,7 +320,7 @@ export async function run(userInput?: string): Promise<{ reportPath: string; rep
     console.log(`素材预览: ${input.substring(0, 100)}${input.length > 100 ? '...' : ''}`);
 
     console.log('🤖 正在使用 AI 生成三个版本的内容...');
-    const rawOutput = await callClaudeCLI(input);
+    const { result: rawOutput, usage } = await callClaudeCLI(input);
 
     console.log('📋 正在解析 JSON 输出...');
     const data = parseAndValidateJSON(rawOutput);
@@ -361,7 +335,16 @@ export async function run(userInput?: string): Promise<{ reportPath: string; rep
         generatedAt: new Date().toISOString(),
         inputLength: input.length
       },
-      ...data
+      ...data,
+      _usage: usage ? {
+        inputTokens: usage.inputTokens,
+        outputTokens: usage.outputTokens,
+        cacheCreationTokens: usage.cacheCreationTokens,
+        cacheReadTokens: usage.cacheReadTokens,
+        costUsd: usage.costUsd,
+        durationMs: usage.durationMs,
+        model: usage.model
+      } : undefined
     };
 
     fs.writeFileSync(reportPath, JSON.stringify(finalData, null, 2), 'utf-8');
@@ -371,7 +354,7 @@ export async function run(userInput?: string): Promise<{ reportPath: string; rep
     const mdPath = reportPath.replace('.json', '.md');
     fs.writeFileSync(mdPath, JSON.stringify(finalData, null, 2), 'utf-8');
 
-    return { reportPath: mdPath, report: JSON.stringify(finalData), data: finalData };
+    return { reportPath: mdPath, report: JSON.stringify(finalData), data: finalData, usage };
 
   } catch (error) {
     console.error('❌ 执行 Content Writer Skill 出错:', error);
