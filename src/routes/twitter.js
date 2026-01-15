@@ -101,17 +101,17 @@ router.get('/callback', async (req, res) => {
     const { code, state, error } = req.query;
 
     if (error) {
-        return res.redirect('/?twitter_error=' + encodeURIComponent(error));
+        return res.redirect('/login.html?twitter_error=' + encodeURIComponent(error));
     }
 
     if (!code || !state) {
-        return res.redirect('/?twitter_error=missing_params');
+        return res.redirect('/login.html?twitter_error=missing_params');
     }
 
     const stateData = oauthStates.get(state);
     if (!stateData || stateData.expiresAt < Date.now()) {
         oauthStates.delete(state);
-        return res.redirect('/?twitter_error=invalid_state');
+        return res.redirect('/login.html?twitter_error=invalid_state');
     }
 
     oauthStates.delete(state);
@@ -137,7 +137,7 @@ router.get('/callback', async (req, res) => {
         if (!tokenResponse.ok) {
             const errorData = await tokenResponse.text();
             console.error('Token exchange failed:', errorData);
-            return res.redirect('/?twitter_error=token_exchange_failed');
+            return res.redirect('/login.html?twitter_error=token_exchange_failed');
         }
 
         const tokenData = await tokenResponse.json();
@@ -174,15 +174,15 @@ router.get('/callback', async (req, res) => {
             );
 
             // 重定向到前端，带上 token
-            res.redirect(`/?twitter_login=success&token=${encodeURIComponent(token)}&username=${encodeURIComponent(result.username)}`);
+            res.redirect(`/login.html?twitter_login=success&token=${encodeURIComponent(token)}&username=${encodeURIComponent(result.username)}`);
         } else {
             // 绑定模式：保存 token 到已登录用户
             await saveTwitterCredentials(stateData.userId, twitterUser, access_token, refresh_token, expiresAt);
-            res.redirect('/?twitter_connected=true&twitter_username=' + encodeURIComponent(twitterUser.username || ''));
+            res.redirect('/login.html?twitter_connected=true&twitter_username=' + encodeURIComponent(twitterUser.username || ''));
         }
     } catch (err) {
         console.error('OAuth callback error:', err);
-        res.redirect('/?twitter_error=server_error');
+        res.redirect('/login.html?twitter_error=server_error');
     }
 });
 
