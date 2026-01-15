@@ -337,32 +337,39 @@ async function run(username: string): Promise<AnalysisResult> {
 
   console.log(`\n🎭 开始分析 @${cleanUsername} 的写作风格\n`);
 
-  // 1. 抓取推文 - 分层策略
-  let tweets = await fetchUserTweets(cleanUsername, 100, 15);
-  let minCharsUsed = 100;
+  // 1. 一次性抓取所有推文（不限字数），然后本地筛选
+  const allTweets = await fetchUserTweets(cleanUsername, 0, 50);
 
-  // 如果长推文不够，降低到 50 字
-  if (tweets.length < 5) {
-    console.log(`⚠️ >= 100 字的推文不足，尝试 >= 50 字...`);
-    tweets = await fetchUserTweets(cleanUsername, 50, 15);
-    minCharsUsed = 50;
+  if (allTweets.length < 3) {
+    throw new Error(`@${cleanUsername} 的推文数量不足（需要至少 3 条推文，当前只有 ${allTweets.length} 条）。该用户可能近期推文很少或账号受限。`);
   }
 
-  // 如果还不够，使用所有非转发推文（不限字数）
-  if (tweets.length < 3) {
-    console.log(`⚠️ >= 50 字的推文不足，使用所有非转发推文...`);
-    tweets = await fetchUserTweets(cleanUsername, 0, 20);
-    minCharsUsed = 0;
+  // 2. 分层筛选策略（本地筛选，不重复请求API）
+  let selectedTweets: Tweet[];
+  let minCharsUsed: number;
+
+  // 优先使用 >= 100 字的推文
+  const longTweets = allTweets.filter(t => t.text.length >= 100);
+  if (longTweets.length >= 5) {
+    selectedTweets = longTweets.slice(0, 15);
+    minCharsUsed = 100;
+    console.log(`✅ 使用 >= 100 字的推文: ${selectedTweets.length} 条`);
+  } else {
+    // 尝试 >= 50 字的推文
+    const mediumTweets = allTweets.filter(t => t.text.length >= 50);
+    if (mediumTweets.length >= 5) {
+      selectedTweets = mediumTweets.slice(0, 15);
+      minCharsUsed = 50;
+      console.log(`⚠️ >= 100 字推文不足，使用 >= 50 字的推文: ${selectedTweets.length} 条`);
+    } else {
+      // 使用所有推文
+      selectedTweets = allTweets.slice(0, 20);
+      minCharsUsed = 0;
+      console.log(`⚠️ >= 50 字推文不足，使用所有推文: ${selectedTweets.length} 条`);
+    }
   }
 
-  if (tweets.length < 3) {
-    throw new Error(`@${cleanUsername} 的推文数量不足（需要至少 3 条推文，当前只有 ${tweets.length} 条）。该用户可能近期推文很少或账号受限。`);
-  }
-
-  console.log(`📊 最终使用 ${tweets.length} 条推文（>= ${minCharsUsed} 字）`);
-
-  // 使用所有符合条件的推文
-  const selectedTweets = tweets;
+  console.log(`📊 最终使用 ${selectedTweets.length} 条推文（>= ${minCharsUsed} 字）`);
 
   // 2. 获取用户信息
   const userInfo = await fetchUserInfo(cleanUsername);

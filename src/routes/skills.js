@@ -431,7 +431,9 @@ router.post('/:skillId/execute', authenticate, async (req, res) => {
         }
 
         // 使用 ts-node 执行脚本
-        const child = spawn('npx', args, {
+        // 将命令合并为字符串，避免 DEP0190 警告
+        const fullCommand = ['npx', ...args].join(' ');
+        const child = spawn(fullCommand, [], {
             cwd: path.join(__dirname, '../..'),
             env: { ...process.env },
             shell: true

@@ -128,24 +128,39 @@
             background: #000000 !important;
             color: white !important;
         }
+        /* 登录页面移动端滚动优化 */
+        #auth-page {
+            -webkit-overflow-scrolling: touch;
+        }
+        /* 主应用页面需要固定高度防止双滚动 */
+        #main-app:not(.hidden) ~ #auth-page,
+        #main-app:not(.hidden) {
+            height: 100vh;
+        }
+        /* 确保小屏幕上登录卡片有足够空间 */
+        @media (max-height: 700px) {
+            #auth-page {
+                align-items: flex-start;
+            }
+        }
     </style>
     <!-- 保留原有 CSS 用于特定组件 -->
     <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="/css/generator.css">
 </head>
-<body class="bg-background-light text-slate-800 font-sans antialiased h-screen overflow-hidden flex selection:bg-indigo-500 selection:text-white">
+<body class="bg-background-light text-slate-800 font-sans antialiased min-h-screen flex selection:bg-indigo-500 selection:text-white">
     <!-- 背景图层 -->
     <div class="fixed inset-0 z-0 w-full h-full bg-cover bg-center bg-no-repeat opacity-20 pointer-events-none" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDTfaQfOqrMlb2it9V2xDJ3dtn_2NpPvDP-X3Gh9DrsrkjBfqpnH5MakWrHFllP8Y3Ls6YWmmmdEY3taYZxjpRHPSO6ub0frBg5puJEKocRb8jgTywvV7YbkaZuukcB5GWHVO8KriFle08bXK75siYgJ_SHLYmvwokSMh-4uGAXc9QuZZxx-g_vmT9fGkeNqZg8iBfI40zHVO-utZQ1nsNtzavMfPCPaXVAq5ccURyc789Ng3Pb_WgBI7FbT7XK6rIb8Is-oik83S8');"></div>
     <div class="fixed inset-0 z-0 bg-gradient-to-br from-slate-100/80 to-slate-200/90 pointer-events-none"></div>
 
     <div id="app" class="relative z-10 flex w-full h-full">
         <!-- 登录页面 -->
-        <div id="auth-page" class="page absolute inset-0 z-50 flex items-center justify-center">
+        <div id="auth-page" class="page absolute inset-0 z-50 flex items-center justify-center overflow-y-auto py-8">
             <!-- 登录页背景 -->
             <div class="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat opacity-30 pointer-events-none" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDTfaQfOqrMlb2it9V2xDJ3dtn_2NpPvDP-X3Gh9DrsrkjBfqpnH5MakWrHFllP8Y3Ls6YWmmmdEY3taYZxjpRHPSO6ub0frBg5puJEKocRb8jgTywvV7YbkaZuukcB5GWHVO8KriFle08bXK75siYgJ_SHLYmvwokSMh-4uGAXc9QuZZxx-g_vmT9fGkeNqZg8iBfI40zHVO-utZQ1nsNtzavMfPCPaXVAq5ccURyc789Ng3Pb_WgBI7FbT7XK6rIb8Is-oik83S8');"></div>
             <div class="absolute inset-0 bg-gradient-to-br from-slate-100/90 to-slate-200/95 pointer-events-none"></div>
 
-            <div class="relative z-10 glass-panel bg-white/70 rounded-2xl p-8 md:p-10 w-full max-w-md mx-4 shadow-xl">
+            <div class="relative z-10 glass-panel bg-white/70 rounded-2xl p-8 md:p-10 w-full max-w-md mx-4 my-auto shadow-xl">
                 <!-- Logo -->
                 <div class="flex flex-col items-center mb-8">
                     <img src="/logo-100.png" alt="Viral-X" class="w-16 h-16 mb-4">
@@ -256,27 +271,27 @@
             </aside>
 
             <!-- 主内容区域 -->
-            <main class="main-content flex-1 h-full overflow-y-auto p-8 lg:p-12">
+            <main class="main-content flex-1 h-full overflow-y-auto p-4 md:p-8 lg:p-12">
                 <!-- 写作页面 -->
                 <div id="writing-page" class="nav-page active">
-                    <div class="max-w-6xl mx-auto space-y-8">
+                    <div class="max-w-6xl mx-auto space-y-4 md:space-y-8">
                         <!-- 页面头部 -->
-                        <div id="generator-header" class="flex items-center justify-between mb-8">
+                        <div id="generator-header" class="flex items-center justify-between mb-4 md:mb-8">
                             <div>
-                                <h2 class="text-4xl mb-2" style="color: #0f172a !important; font-family: 'SimHei', 'Heiti SC', 'Microsoft YaHei', sans-serif; font-weight: 600;">X 爆款生成器</h2>
-                                <p class="font-light" style="color: #64748b;">AI 驱动的爆款内容创作工具</p>
+                                <h2 class="text-2xl md:text-4xl mb-1 md:mb-2" style="color: #0f172a !important; font-family: 'SimHei', 'Heiti SC', 'Microsoft YaHei', sans-serif; font-weight: 600;">X 爆款生成器</h2>
+                                <p class="text-sm md:text-base font-light hidden md:block" style="color: #64748b;">AI 驱动的爆款内容创作工具</p>
                             </div>
-                            <button class="flex items-center space-x-2 text-sm text-slate-500 hover:text-slate-900 transition-colors" id="history-btn">
-                                <span class="material-icons-outlined text-lg">history</span>
+                            <button class="flex items-center space-x-1 md:space-x-2 text-xs md:text-sm text-slate-500 hover:text-slate-900 transition-colors" id="history-btn">
+                                <span class="material-icons-outlined text-base md:text-lg">history</span>
                                 <span>历史</span>
                             </button>
                         </div>
 
                         <!-- 工作流程图 -->
-                        <div id="workflow-container" class="glass-panel bg-white/60 rounded-2xl p-8 shadow-sm"></div>
+                        <div id="workflow-container" class="glass-panel bg-white/60 rounded-xl md:rounded-2xl p-4 md:p-8 shadow-sm"></div>
 
                         <!-- 内容区域 -->
-                        <div class="generator-content glass-panel bg-white/40 rounded-2xl p-8 lg:p-10 shadow-sm" id="generator-content">
+                        <div class="generator-content glass-panel bg-white/40 rounded-xl md:rounded-2xl p-4 md:p-8 lg:p-10 shadow-sm" id="generator-content">
                             <!-- 动态渲染的页面内容 -->
                         </div>
                     </div>
@@ -284,12 +299,12 @@
 
                 <!-- 工具页面 -->
                 <div id="tools-page" class="nav-page hidden">
-                    <div class="max-w-6xl mx-auto space-y-8">
-                        <div class="mb-8">
-                            <h2 class="font-display text-4xl mb-2" style="color: #0f172a !important;">创作工具</h2>
-                            <p class="font-light" style="color: #64748b;">提升创作效率的专业工具集</p>
+                    <div class="max-w-6xl mx-auto space-y-6 md:space-y-8">
+                        <div class="mb-4 md:mb-8">
+                            <h2 class="font-display text-2xl md:text-4xl mb-1 md:mb-2" style="color: #0f172a !important;">创作工具</h2>
+                            <p class="text-sm md:text-base font-light hidden md:block" style="color: #64748b;">提升创作效率的专业工具集</p>
                         </div>
-                        <div class="tools-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="tools-content">
+                        <div class="tools-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6" id="tools-content">
                             <!-- 工具卡片 -->
                         </div>
                     </div>
@@ -297,10 +312,10 @@
 
                 <!-- 我的页面 -->
                 <div id="profile-page" class="nav-page hidden">
-                    <div class="max-w-6xl mx-auto space-y-8">
-                        <div class="mb-8">
-                            <h2 class="font-display text-4xl mb-2" style="color: #0f172a !important;">我的</h2>
-                            <p class="font-light" style="color: #64748b;">账户信息与设置</p>
+                    <div class="max-w-6xl mx-auto space-y-4 md:space-y-8">
+                        <div class="mb-4 md:mb-8">
+                            <h2 class="font-display text-2xl md:text-4xl mb-1 md:mb-2" style="color: #0f172a !important;">我的</h2>
+                            <p class="text-sm md:text-base font-light hidden md:block" style="color: #64748b;">账户信息与设置</p>
                         </div>
                         <div class="profile-content" id="profile-content">
                             <!-- 个人信息内容 -->

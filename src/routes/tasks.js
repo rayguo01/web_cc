@@ -699,9 +699,9 @@ router.post('/:id/execute-step', authenticate, async (req, res) => {
         }
 
         // 执行脚本 - Windows 兼容
-        const isWindows = process.platform === 'win32';
-        const npxCmd = isWindows ? 'npx.cmd' : 'npx';
-        const child = spawn(npxCmd, args, {
+        // 将命令和参数合并为字符串，避免 DEP0190 警告
+        const fullCommand = ['npx', ...args].join(' ');
+        const child = spawn(fullCommand, [], {
             cwd: path.join(__dirname, '../..'),
             env: { ...process.env },
             shell: true

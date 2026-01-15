@@ -122,12 +122,10 @@ ${userInput}
 
     // Windows 兼容
     const isWindows = process.platform === 'win32';
-    const claudeCmd = isWindows ? 'claude.cmd' : 'claude';
+    // 将命令合并为字符串，避免 DEP0190 警告
+    const fullCommand = `claude --output-format text --allowedTools WebSearch,WebFetch`;
 
-    const child = spawn(claudeCmd, [
-      '--output-format', 'text',
-      '--allowedTools', 'WebSearch,WebFetch'
-    ], {
+    const child = spawn(fullCommand, [], {
       cwd: projectRoot,
       stdio: ['pipe', 'pipe', 'pipe'],
       shell: true,

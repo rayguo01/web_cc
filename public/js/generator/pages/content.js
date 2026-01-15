@@ -284,7 +284,7 @@ class ContentPage {
                         </div>
                     </div>
 
-                    <div class="input-actions" style="display: flex; justify-content: center; gap: 16px;">
+                    <div class="input-actions">
                         <button class="btn btn-primary btn-large" id="generate-btn">
                             <span class="material-icons-outlined" style="font-size: 18px; vertical-align: middle;">auto_awesome</span> 生成内容
                         </button>

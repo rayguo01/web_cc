@@ -403,14 +403,18 @@ class App {
         if (!container) return;
 
         container.innerHTML = `
-            <div class="tool-card group relative overflow-hidden rounded-2xl bg-white/80 p-6 border border-slate-200/60 hover:border-purple-300 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 cursor-pointer" data-tool="voice-mimicker">
+            <div class="tool-card group relative overflow-hidden rounded-xl md:rounded-2xl bg-white/80 p-4 md:p-6 border border-slate-200/60 hover:border-purple-300 transition-all duration-300 hover:shadow-xl md:hover:-translate-y-1 cursor-pointer active:scale-[0.98]" data-tool="voice-mimicker">
                 <div class="absolute inset-0 bg-gradient-to-br from-purple-50/0 to-purple-100/30 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <div class="absolute top-0 right-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div class="absolute top-0 right-0 p-2 md:p-3 opacity-0 group-hover:opacity-100 transition-opacity">
                     <span class="material-icons-outlined text-purple-400">arrow_forward</span>
                 </div>
-                <div class="relative z-10 mb-4 w-12 h-12 flex items-center justify-center rounded-xl bg-purple-50 text-purple-500"><span class="material-icons-outlined text-2xl">theater_comedy</span></div>
-                <h4 class="relative z-10 font-display text-xl text-slate-900 mb-3">语气模仿器</h4>
-                <p class="relative z-10 text-sm text-slate-500 leading-relaxed">分析任意推主的写作风格，生成模仿 Prompt，让 AI 用他们的语气写作</p>
+                <div class="flex items-center md:block">
+                    <div class="relative z-10 mb-0 md:mb-4 mr-3 md:mr-0 w-10 h-10 md:w-12 md:h-12 flex-shrink-0 flex items-center justify-center rounded-lg md:rounded-xl bg-purple-50 text-purple-500"><span class="material-icons-outlined text-xl md:text-2xl">theater_comedy</span></div>
+                    <div class="flex-1 min-w-0 relative z-10">
+                        <h4 class="font-display text-lg md:text-xl text-slate-900 mb-1 md:mb-3">语气模仿器</h4>
+                        <p class="text-xs md:text-sm text-slate-500 leading-relaxed line-clamp-2 md:line-clamp-none">分析推主写作风格，生成模仿 Prompt</p>
+                    </div>
+                </div>
             </div>
         `;
 
@@ -444,31 +448,31 @@ class App {
         const initial = username.charAt(0).toUpperCase();
 
         container.innerHTML = `
-            <div class="space-y-6">
+            <div class="space-y-4 md:space-y-6">
                 <!-- 用户信息卡片 -->
-                <div class="flex items-center space-x-4 p-6 glass-panel bg-white/60 rounded-2xl">
-                    <div class="w-16 h-16 rounded-full bg-gradient-to-tr from-amber-500 to-orange-600 flex items-center justify-center text-white text-2xl font-display shadow-lg shadow-orange-500/20">${initial}</div>
-                    <div>
-                        <h3 class="font-display text-xl text-slate-900">${username}</h3>
-                        <p class="text-slate-500 text-sm font-light">X 爆款帖生成器用户</p>
+                <div class="flex items-center space-x-3 md:space-x-4 p-4 md:p-6 glass-panel bg-white/60 rounded-xl md:rounded-2xl">
+                    <div class="w-12 h-12 md:w-16 md:h-16 rounded-full bg-gradient-to-tr from-amber-500 to-orange-600 flex items-center justify-center text-white text-xl md:text-2xl font-display shadow-lg shadow-orange-500/20 flex-shrink-0">${initial}</div>
+                    <div class="min-w-0">
+                        <h3 class="font-display text-lg md:text-xl text-slate-900 truncate">${username}</h3>
+                        <p class="text-slate-500 text-xs md:text-sm font-light">X 爆款帖生成器用户</p>
                     </div>
                 </div>
 
                 <!-- Token 使用统计卡片 -->
-                <div class="glass-panel bg-white/60 rounded-2xl overflow-hidden">
-                    <div class="flex items-center justify-between p-4 border-b border-slate-100">
+                <div class="glass-panel bg-white/60 rounded-xl md:rounded-2xl overflow-hidden">
+                    <div class="flex items-center justify-between p-3 md:p-4 border-b border-slate-100">
                         <div class="flex items-center space-x-2">
-                            <span class="material-icons-outlined text-amber-500">analytics</span>
-                            <h4 class="font-display text-lg text-slate-900">使用统计</h4>
+                            <span class="material-icons-outlined text-amber-500 text-xl md:text-2xl">analytics</span>
+                            <h4 class="font-display text-base md:text-lg text-slate-900">使用统计</h4>
                         </div>
-                        <select id="stats-period-select" class="text-sm border border-slate-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500">
+                        <select id="stats-period-select" class="text-xs md:text-sm border border-slate-200 rounded-lg px-2 md:px-3 py-1 md:py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500">
                             <option value="day">今日</option>
                             <option value="week">本周</option>
                             <option value="month" selected>本月</option>
                         </select>
                     </div>
-                    <div id="stats-content" class="p-4">
-                        <div class="flex items-center justify-center py-8">
+                    <div id="stats-content" class="p-3 md:p-4">
+                        <div class="flex items-center justify-center py-6 md:py-8">
                             <div class="animate-spin rounded-full h-6 w-6 border-2 border-amber-500 border-t-transparent"></div>
                         </div>
                     </div>
@@ -476,16 +480,16 @@ class App {
 
                 <!-- 设置菜单 -->
                 <div class="space-y-2">
-                    <div class="flex items-center justify-between p-4 glass-panel bg-white/60 rounded-xl">
-                        <div class="flex items-center space-x-3">
-                            <span class="material-icons-outlined text-slate-500">palette</span>
-                            <span class="text-slate-900">主题风格</span>
+                    <div class="flex items-center justify-between p-3 md:p-4 glass-panel bg-white/60 rounded-xl">
+                        <div class="flex items-center space-x-2 md:space-x-3">
+                            <span class="material-icons-outlined text-slate-500 text-xl">palette</span>
+                            <span class="text-slate-900 text-sm md:text-base">主题风格</span>
                         </div>
-                        <span class="text-slate-500 text-sm">${this.getThemeLabel()}</span>
+                        <span class="text-slate-500 text-xs md:text-sm">${this.getThemeLabel()}</span>
                     </div>
-                    <button class="w-full flex items-center space-x-3 p-4 glass-panel bg-white/60 rounded-xl text-red-600 hover:bg-red-50 transition-all duration-200" id="profile-logout-btn">
-                        <span class="material-icons-outlined">logout</span>
-                        <span>退出登录</span>
+                    <button class="w-full flex items-center space-x-2 md:space-x-3 p-3 md:p-4 glass-panel bg-white/60 rounded-xl text-red-600 hover:bg-red-50 transition-all duration-200 active:scale-[0.98]" id="profile-logout-btn">
+                        <span class="material-icons-outlined text-xl">logout</span>
+                        <span class="text-sm md:text-base">退出登录</span>
                     </button>
                 </div>
             </div>
@@ -559,39 +563,39 @@ class App {
 
         container.innerHTML = `
             <!-- 总览统计 -->
-            <div class="grid grid-cols-2 gap-3 mb-4">
-                <div class="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-4 text-center">
-                    <p class="text-2xl font-display text-amber-600">${formatTokens((summary.totalInputTokens || 0) + (summary.totalOutputTokens || 0))}</p>
-                    <p class="text-xs text-slate-500 mt-1">总 Tokens</p>
+            <div class="grid grid-cols-2 gap-2 md:gap-3 mb-3 md:mb-4">
+                <div class="bg-gradient-to-br from-amber-50 to-orange-50 rounded-lg md:rounded-xl p-3 md:p-4 text-center">
+                    <p class="text-xl md:text-2xl font-display text-amber-600">${formatTokens((summary.totalInputTokens || 0) + (summary.totalOutputTokens || 0))}</p>
+                    <p class="text-[10px] md:text-xs text-slate-500 mt-0.5 md:mt-1">总 Tokens</p>
                 </div>
-                <div class="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-4 text-center">
-                    <p class="text-2xl font-display text-emerald-600">${formatCost(summary.totalCost)}</p>
-                    <p class="text-xs text-slate-500 mt-1">总花费</p>
+                <div class="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-lg md:rounded-xl p-3 md:p-4 text-center">
+                    <p class="text-xl md:text-2xl font-display text-emerald-600">${formatCost(summary.totalCost)}</p>
+                    <p class="text-[10px] md:text-xs text-slate-500 mt-0.5 md:mt-1">总花费</p>
                 </div>
-                <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 text-center">
-                    <p class="text-2xl font-display text-blue-600">${summary.totalCalls || 0}</p>
-                    <p class="text-xs text-slate-500 mt-1">调用次数</p>
+                <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg md:rounded-xl p-3 md:p-4 text-center">
+                    <p class="text-xl md:text-2xl font-display text-blue-600">${summary.totalCalls || 0}</p>
+                    <p class="text-[10px] md:text-xs text-slate-500 mt-0.5 md:mt-1">调用次数</p>
                 </div>
-                <div class="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-4 text-center">
-                    <p class="text-2xl font-display text-purple-600">${summary.taskCount || 0}</p>
-                    <p class="text-xs text-slate-500 mt-1">任务数</p>
+                <div class="bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg md:rounded-xl p-3 md:p-4 text-center">
+                    <p class="text-xl md:text-2xl font-display text-purple-600">${summary.taskCount || 0}</p>
+                    <p class="text-[10px] md:text-xs text-slate-500 mt-0.5 md:mt-1">任务数</p>
                 </div>
             </div>
 
             <!-- 按步骤统计 -->
             ${byWorkflowStep && byWorkflowStep.length > 0 ? `
-            <div class="mb-4">
-                <h5 class="text-sm font-medium text-slate-700 mb-2 flex items-center">
-                    <span class="material-icons-outlined text-base mr-1">account_tree</span>
+            <div class="mb-3 md:mb-4">
+                <h5 class="text-xs md:text-sm font-medium text-slate-700 mb-2 flex items-center">
+                    <span class="material-icons-outlined text-sm md:text-base mr-1">account_tree</span>
                     按工作流步骤
                 </h5>
-                <div class="space-y-2">
+                <div class="space-y-1.5 md:space-y-2">
                     ${byWorkflowStep.map(step => `
                         <div class="flex items-center justify-between p-2 bg-slate-50 rounded-lg">
-                            <span class="text-sm text-slate-600">${this.getStepLabel(step.workflow_step)}</span>
-                            <div class="text-right">
-                                <span class="text-sm font-medium text-slate-900">${formatCost(step.cost_usd)}</span>
-                                <span class="text-xs text-slate-400 ml-2">${formatTokens(step.total_tokens)} tokens</span>
+                            <span class="text-xs md:text-sm text-slate-600">${this.getStepLabel(step.workflow_step)}</span>
+                            <div class="text-right flex items-center space-x-1 md:space-x-2">
+                                <span class="text-xs md:text-sm font-medium text-slate-900">${formatCost(step.cost_usd)}</span>
+                                <span class="text-[10px] md:text-xs text-slate-400">${formatTokens(step.total_tokens)}</span>
                             </div>
                         </div>
                     `).join('')}
@@ -602,17 +606,17 @@ class App {
             <!-- 按 Skill 统计 -->
             ${bySkill && bySkill.length > 0 ? `
             <div>
-                <h5 class="text-sm font-medium text-slate-700 mb-2 flex items-center">
-                    <span class="material-icons-outlined text-base mr-1">extension</span>
+                <h5 class="text-xs md:text-sm font-medium text-slate-700 mb-2 flex items-center">
+                    <span class="material-icons-outlined text-sm md:text-base mr-1">extension</span>
                     按 Skill
                 </h5>
-                <div class="space-y-2">
+                <div class="space-y-1.5 md:space-y-2">
                     ${bySkill.slice(0, 5).map(skill => `
                         <div class="flex items-center justify-between p-2 bg-slate-50 rounded-lg">
-                            <span class="text-sm text-slate-600 truncate max-w-[120px]" title="${skill.skill_id}">${this.getSkillLabel(skill.skill_id)}</span>
-                            <div class="text-right">
-                                <span class="text-sm font-medium text-slate-900">${formatCost(skill.cost)}</span>
-                                <span class="text-xs text-slate-400 ml-2">${skill.calls}次</span>
+                            <span class="text-xs md:text-sm text-slate-600 truncate max-w-[100px] md:max-w-[120px]" title="${skill.skill_id}">${this.getSkillLabel(skill.skill_id)}</span>
+                            <div class="text-right flex items-center space-x-1 md:space-x-2">
+                                <span class="text-xs md:text-sm font-medium text-slate-900">${formatCost(skill.cost)}</span>
+                                <span class="text-[10px] md:text-xs text-slate-400">${skill.calls}次</span>
                             </div>
                         </div>
                     `).join('')}
@@ -622,8 +626,8 @@ class App {
 
             ${(!byWorkflowStep || byWorkflowStep.length === 0) && (!bySkill || bySkill.length === 0) ? `
             <div class="text-center py-4 text-slate-400">
-                <span class="material-icons-outlined text-2xl mb-1">insert_chart_outlined</span>
-                <p class="text-sm">暂无使用记录</p>
+                <span class="material-icons-outlined text-xl md:text-2xl mb-1">insert_chart_outlined</span>
+                <p class="text-xs md:text-sm">暂无使用记录</p>
             </div>
             ` : ''}
         `;

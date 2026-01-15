@@ -148,7 +148,9 @@ class Scheduler {
         return new Promise((resolve, reject) => {
             const args = ['ts-node', scriptPath, 'fetch'];
 
-            const child = spawn('npx', args, {
+            // 将命令合并为字符串，避免 DEP0190 警告
+            const fullCommand = ['npx', ...args].join(' ');
+            const child = spawn(fullCommand, [], {
                 cwd: path.join(__dirname, '../..'),
                 env: { ...process.env },
                 shell: true
@@ -212,7 +214,9 @@ class Scheduler {
         return new Promise((resolve, reject) => {
             const args = ['ts-node', scriptPath, 'fetch', presetId];
 
-            const child = spawn('npx', args, {
+            // 将命令合并为字符串，避免 DEP0190 警告
+            const fullCommand = ['npx', ...args].join(' ');
+            const child = spawn(fullCommand, [], {
                 cwd: path.join(__dirname, '../..'),
                 env: { ...process.env },
                 shell: true
@@ -281,7 +285,9 @@ class Scheduler {
         return new Promise((resolve, reject) => {
             const args = ['ts-node', scriptPath, 'analyze-file', tempFile];
 
-            const child = spawn('npx', args, {
+            // 将命令合并为字符串，避免 DEP0190 警告
+            const fullCommand = ['npx', ...args].join(' ');
+            const child = spawn(fullCommand, [], {
                 cwd: path.join(__dirname, '../..'),
                 env: { ...process.env },
                 shell: true
@@ -366,7 +372,9 @@ class Scheduler {
             // 传递临时文件路径给脚本（而非 JSON 数据本身）
             const args = ['ts-node', scriptPath, 'analyze-file', tempFile];
 
-            const child = spawn('npx', args, {
+            // 将命令合并为字符串，避免 DEP0190 警告
+            const fullCommand = ['npx', ...args].join(' ');
+            const child = spawn(fullCommand, [], {
                 cwd: path.join(__dirname, '../..'),
                 env: { ...process.env },
                 shell: true
@@ -675,7 +683,9 @@ class Scheduler {
                 args.push(preset);
             }
 
-            const child = spawn('npx', args, {
+            // 将命令合并为字符串，避免 DEP0190 警告
+            const fullCommand = ['npx', ...args].join(' ');
+            const child = spawn(fullCommand, [], {
                 cwd: path.join(__dirname, '../..'),
                 env: { ...process.env },
                 shell: true

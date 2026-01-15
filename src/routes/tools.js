@@ -289,7 +289,9 @@ router.post('/voice-prompts/analyze', authenticate, async (req, res) => {
         const scriptPath = path.join(__dirname, '../../.claude/voice-mimicker/voice-mimicker.ts');
 
         // 使用 ts-node 执行脚本
-        const child = spawn('npx', ['ts-node', scriptPath, cleanUsername], {
+        // 将命令合并为字符串，避免 DEP0190 警告
+        const fullCommand = `npx ts-node "${scriptPath}" "${cleanUsername}"`;
+        const child = spawn(fullCommand, [], {
             cwd: path.join(__dirname, '../..'),
             env: { ...process.env },
             shell: true

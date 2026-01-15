@@ -53,37 +53,37 @@ class SubmitPage {
                     ` : ''}
                 </div>
 
-                <div class="submit-actions" style="margin-top: 24px; text-align: center;">
+                <div class="submit-actions">
                     <button class="btn btn-primary" id="copy-btn">
-                        <span class="material-icons-outlined" style="font-size: 18px; vertical-align: middle;">content_copy</span> 复制内容
+                        <span class="material-icons-outlined">content_copy</span> 复制内容
                     </button>
                     ${imagePath ? `
-                        <button class="btn btn-primary" id="download-btn" style="margin-left: 12px;">
-                            <span class="material-icons-outlined" style="font-size: 18px; vertical-align: middle;">download</span> 下载图片
+                        <button class="btn btn-primary" id="download-btn">
+                            <span class="material-icons-outlined">download</span> 下载图片
                         </button>
                     ` : ''}
-                    <button class="btn btn-twitter" id="twitter-btn" style="margin-left: 12px;" disabled>
+                    <button class="btn btn-twitter" id="twitter-btn" disabled>
                         <span class="twitter-icon">𝕏</span> <span class="btn-text">检查连接中...</span>
                     </button>
                 </div>
 
                 <!-- Twitter 连接状态提示 -->
-                <div class="twitter-status-bar" id="twitter-status-bar" style="margin-top: 12px; text-align: center;">
+                <div class="twitter-status-bar" id="twitter-status-bar">
                     <span class="status-loading">正在检查 Twitter 连接状态...</span>
                 </div>
 
                 <!-- 发布成功提示 -->
-                <div class="twitter-success-bar" id="twitter-success-bar" style="display: none; margin-top: 12px; text-align: center;"></div>
+                <div class="twitter-success-bar" id="twitter-success-bar"></div>
 
                 <div class="page-actions">
                     <div class="action-left">
                         <button class="btn btn-secondary" id="back-btn">
-                            <span class="material-icons-outlined" style="font-size: 18px; vertical-align: middle;">arrow_back</span> 返回图片编辑
+                            <span class="material-icons-outlined">arrow_back</span> <span class="btn-text-full">返回编辑</span>
                         </button>
                     </div>
                     <div class="action-right">
                         <button class="btn btn-primary" id="home-btn">
-                            <span class="material-icons-outlined" style="font-size: 18px; vertical-align: middle;">home</span> 返回首页
+                            <span class="material-icons-outlined">home</span> <span class="btn-text-full">返回首页</span>
                         </button>
                     </div>
                 </div>

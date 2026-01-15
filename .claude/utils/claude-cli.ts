@@ -42,7 +42,9 @@ export function callClaude(
 
         let killed = false;
 
-        const child = spawn('claude', args, {
+        // 将命令合并为字符串，避免 DEP0190 警告
+        const fullCommand = ['claude', ...args].join(' ');
+        const child = spawn(fullCommand, [], {
             cwd: projectRoot,
             stdio: ['pipe', 'pipe', 'pipe'],
             shell: true,

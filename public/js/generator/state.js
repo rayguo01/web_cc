@@ -11,11 +11,11 @@ class GeneratorState {
 
         // 工作流配置
         this.workflowSteps = [
-            { id: 'trends', name: '热帖抓取', icon: '🔥', skippable: false },
-            { id: 'content', name: '生成内容', icon: '✍️', skippable: false },
-            { id: 'optimize', name: '优化内容', icon: '🚀', skippable: true },
-            { id: 'image', name: '生成图片', icon: '🖼️', skippable: true },
-            { id: 'submit', name: '提交发布', icon: '📤', skippable: false }
+            { id: 'trends', name: '热帖抓取', shortName: '热帖', icon: '🔥', skippable: false },
+            { id: 'content', name: '生成内容', shortName: '内容', icon: '✍️', skippable: false },
+            { id: 'optimize', name: '优化内容', shortName: '优化', icon: '🚀', skippable: true },
+            { id: 'image', name: '生成图片', shortName: '配图', icon: '🖼️', skippable: true },
+            { id: 'submit', name: '提交发布', shortName: '发布', icon: '📤', skippable: false }
         ];
     }
 

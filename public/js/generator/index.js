@@ -101,6 +101,11 @@ class PostGenerator {
 
     // 处理路由变化
     handleRoute() {
+        // 确保页面已注册，如果未注册则先注册
+        if (Object.keys(this.pages).length === 0) {
+            this.registerPages();
+        }
+
         const hash = window.location.hash || '#/';
         const path = hash.replace('#/', '') || 'home';
 
