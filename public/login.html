@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="theme-color" content="#F0F4F8">
+    <meta name="format-detection" content="telephone=no">
+    <title>Viral-X</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png">
+    <link rel="apple-touch-icon" href="/logo-200.png">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com" rel="preconnect">
+    <link crossorigin href="https://fonts.gstatic.com" rel="preconnect">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#FFFFFF",
+                        "background-light": "#F0F4F8",
+                        "background-dark": "#0F172A",
+                        "panel-dark": "rgba(30, 41, 59, 0.4)",
+                        "panel-light": "rgba(255, 255, 255, 0.6)",
+                        "accent": "#d97757",
+                    },
+                    fontFamily: {
+                        display: ["Playfair Display", "SimHei", "Heiti SC", "Microsoft YaHei", "sans-serif"],
+                        sans: ["Inter", "SimHei", "Heiti SC", "Microsoft YaHei", "sans-serif"],
+                    },
+                    borderRadius: {
+                        DEFAULT: "12px",
+                        'xl': "1rem",
+                        '2xl': "1.5rem",
+                    },
+                },
+            },
+        };
+    </script>
+    <style>
+        /* 覆盖旧 CSS 变量为浅色主题 */
+        :root {
+            /* 背景色 */
+            --bg-primary: #F0F4F8 !important;
+            --bg-secondary: #E2E8F0 !important;
+            --bg-deep: #F0F4F8 !important;
+            --bg-muted: rgba(255, 255, 255, 0.5) !important;
+
+            /* 表面/卡片 */
+            --surface-card: rgba(255, 255, 255, 0.6) !important;
+            --surface-elevated: rgba(255, 255, 255, 0.8) !important;
+            --surface-hover: rgba(255, 255, 255, 0.9) !important;
+
+            /* 文字 */
+            --text-primary: #0f172a !important;
+            --text-secondary: #475569 !important;
+            --text-muted: #94a3b8 !important;
+
+            /* 边框 */
+            --border-subtle: rgba(148, 163, 184, 0.2) !important;
+            --border-light: rgba(148, 163, 184, 0.3) !important;
+            --border-default: rgba(148, 163, 184, 0.4) !important;
+
+            /* 强调色 - 琥珀/橙色渐变 */
+            --accent: #f59e0b !important;
+            --accent-light: #fbbf24 !important;
+            --accent-dark: #d97706 !important;
+
+            /* 阴影 */
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03) !important;
+            --shadow-focus: 0 0 0 3px rgba(245, 158, 11, 0.15) !important;
+        }
+        /* 覆盖 body 背景为浅色 */
+        body {
+            background: #F0F4F8 !important;
+        }
+        /* 隐藏深色主题的背景装饰 */
+        body::before, body::after {
+            display: none !important;
+        }
+        /* 强制标题颜色为深色 */
+        h1, h2, h3, h4 {
+            color: #0f172a !important;
+        }
+        p, .text-slate-500 {
+            color: #64748b !important;
+        }
+        /* 保留 Material Icons 和自定义颜色的 span */
+        span:not(.material-icons-outlined):not([class*="text-orange"]):not([style*="color"]) {
+            color: #64748b;
+        }
+        .glass-panel {
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .sidebar-glass {
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        /* 隐藏类 */
+        .hidden { display: none !important; }
+        /* 滚动条样式 */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.3); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(148, 163, 184, 0.5); }
+        /* 手机底部导航 */
+        @media (min-width: 768px) {
+            .bottom-nav { display: none !important; }
+        }
+        @media (max-width: 767px) {
+            .sidebar-nav { display: none !important; }
+            .main-content { padding-bottom: 80px; }
+        }
+        /* X 登录按钮 hover 变黑 */
+        #twitter-login-btn:hover {
+            background: #000000 !important;
+            color: white !important;
+        }
+    </style>
+    <!-- 保留原有 CSS 用于特定组件 -->
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/generator.css">
+</head>
+<body class="bg-background-light text-slate-800 font-sans antialiased h-screen overflow-hidden flex selection:bg-indigo-500 selection:text-white">
+    <!-- 背景图层 -->
+    <div class="fixed inset-0 z-0 w-full h-full bg-cover bg-center bg-no-repeat opacity-20 pointer-events-none" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDTfaQfOqrMlb2it9V2xDJ3dtn_2NpPvDP-X3Gh9DrsrkjBfqpnH5MakWrHFllP8Y3Ls6YWmmmdEY3taYZxjpRHPSO6ub0frBg5puJEKocRb8jgTywvV7YbkaZuukcB5GWHVO8KriFle08bXK75siYgJ_SHLYmvwokSMh-4uGAXc9QuZZxx-g_vmT9fGkeNqZg8iBfI40zHVO-utZQ1nsNtzavMfPCPaXVAq5ccURyc789Ng3Pb_WgBI7FbT7XK6rIb8Is-oik83S8');"></div>
+    <div class="fixed inset-0 z-0 bg-gradient-to-br from-slate-100/80 to-slate-200/90 pointer-events-none"></div>
+
+    <div id="app" class="relative z-10 flex w-full h-full">
+        <!-- 登录页面 -->
+        <div id="auth-page" class="page absolute inset-0 z-50 flex items-center justify-center">
+            <!-- 登录页背景 -->
+            <div class="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat opacity-30 pointer-events-none" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDTfaQfOqrMlb2it9V2xDJ3dtn_2NpPvDP-X3Gh9DrsrkjBfqpnH5MakWrHFllP8Y3Ls6YWmmmdEY3taYZxjpRHPSO6ub0frBg5puJEKocRb8jgTywvV7YbkaZuukcB5GWHVO8KriFle08bXK75siYgJ_SHLYmvwokSMh-4uGAXc9QuZZxx-g_vmT9fGkeNqZg8iBfI40zHVO-utZQ1nsNtzavMfPCPaXVAq5ccURyc789Ng3Pb_WgBI7FbT7XK6rIb8Is-oik83S8');"></div>
+            <div class="absolute inset-0 bg-gradient-to-br from-slate-100/90 to-slate-200/95 pointer-events-none"></div>
+
+            <div class="relative z-10 glass-panel bg-white/70 rounded-2xl p-8 md:p-10 w-full max-w-md mx-4 shadow-xl">
+                <!-- Logo -->
+                <div class="flex flex-col items-center mb-8">
+                    <img src="/logo-100.png" alt="Viral-X" class="w-16 h-16 mb-4">
+                    <h1 class="font-display text-3xl font-semibold tracking-tight text-slate-900">Viral-X</h1>
+                    <p class="text-slate-500 text-sm mt-2 font-light">AI 驱动的 X 爆款内容创作平台</p>
+                </div>
+
+                <!-- 登录/注册标签 -->
+                <div class="flex space-x-1 mb-6 p-1 bg-slate-200/60 rounded-xl">
+                    <button class="tab-btn flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all duration-200 bg-white text-slate-900 shadow-sm" data-tab="login">登录</button>
+                    <button class="tab-btn flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all duration-200 text-slate-500 hover:text-slate-900" data-tab="register">注册</button>
+                </div>
+
+                <!-- 登录表单 -->
+                <form id="login-form" class="auth-form space-y-4">
+                    <div class="relative">
+                        <span class="material-icons-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-xl">person</span>
+                        <input type="text" id="login-username" placeholder="用户名" required autocomplete="username"
+                               class="w-full pl-16 pr-4 py-3 bg-white/80 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-400/20 transition-all">
+                    </div>
+                    <div class="relative">
+                        <span class="material-icons-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-xl">lock</span>
+                        <input type="password" id="login-password" placeholder="密码" required autocomplete="current-password"
+                               class="w-full pl-16 pr-4 py-3 bg-white/80 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-400/20 transition-all">
+                    </div>
+                    <button type="submit" class="w-full py-3 bg-gradient-to-r from-amber-500 to-orange-600 text-white font-medium rounded-xl hover:from-amber-600 hover:to-orange-700 transition-all duration-200 shadow-lg shadow-orange-500/20">
+                        开始创作
+                    </button>
+                    <p class="error-msg text-red-500 text-sm text-center" id="login-error"></p>
+
+                    <div class="flex items-center my-6">
+                        <div class="flex-1 h-px bg-slate-200"></div>
+                        <span class="px-4 text-slate-400 text-sm">或</span>
+                        <div class="flex-1 h-px bg-slate-200"></div>
+                    </div>
+
+                    <button type="button" class="w-full py-3 font-medium rounded-xl transition-all duration-200 flex items-center justify-center space-x-2" id="twitter-login-btn" style="background: #ffffff; color: #0f172a; box-shadow: 0 10px 15px -3px rgba(249, 115, 22, 0.3); min-height: 52px; padding: 16px 28px; border-radius: 9999px;">
+                        <span class="text-xl font-serif">𝕏</span>
+                        <span>使用 X 登录</span>
+                    </button>
+                </form>
+
+                <!-- 注册表单 -->
+                <form id="register-form" class="auth-form space-y-4 hidden">
+                    <div class="relative">
+                        <span class="material-icons-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-xl">person</span>
+                        <input type="text" id="register-username" placeholder="用户名" required autocomplete="username"
+                               class="w-full pl-16 pr-4 py-3 bg-white/80 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-400/20 transition-all">
+                    </div>
+                    <div class="relative">
+                        <span class="material-icons-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-xl">lock</span>
+                        <input type="password" id="register-password" placeholder="密码 (至少6位)" required autocomplete="new-password"
+                               class="w-full pl-16 pr-4 py-3 bg-white/80 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-400/20 transition-all">
+                    </div>
+                    <button type="submit" class="w-full py-3 bg-gradient-to-r from-amber-500 to-orange-600 text-white font-medium rounded-xl hover:from-amber-600 hover:to-orange-700 transition-all duration-200 shadow-lg shadow-orange-500/20">
+                        创建账号
+                    </button>
+                    <p class="error-msg text-red-500 text-sm text-center" id="register-error"></p>
+                </form>
+            </div>
+        </div>
+
+        <!-- 主应用页面（含导航） -->
+        <div id="main-app" class="page hidden w-full h-full flex">
+            <!-- PC 侧边栏导航 -->
+            <aside class="sidebar-nav w-64 h-full flex flex-col justify-between sidebar-glass border-r border-slate-200/50 transition-all duration-300" style="background: rgba(255, 255, 255, 0.4) !important;">
+                <div>
+                    <!-- Logo -->
+                    <div class="p-8 flex items-center space-x-3">
+                        <img src="/logo-100.png" alt="Viral-X" class="w-10 h-10">
+                        <h1 class="font-display text-2xl font-semibold tracking-tight" style="color: #0f172a !important;">Viral-X</h1>
+                    </div>
+                    <!-- 导航菜单 -->
+                    <nav class="px-4 space-y-1">
+                        <a class="sidebar-item group flex items-center space-x-3 px-4 py-3 rounded-xl font-medium shadow-sm transition-all duration-200" href="#" data-nav="writing" style="background: rgba(15, 23, 42, 0.05) !important; color: #0f172a !important;">
+                            <span class="material-icons-outlined text-orange-600">edit_note</span>
+                            <span>写作</span>
+                        </a>
+                        <a class="sidebar-item group flex items-center space-x-3 px-4 py-3 rounded-xl hover:bg-white/40 transition-all duration-200" href="#" data-nav="tools" style="color: #64748b !important;">
+                            <span class="material-icons-outlined text-slate-400 group-hover:text-slate-600">handyman</span>
+                            <span>工具</span>
+                        </a>
+                        <a class="sidebar-item group flex items-center space-x-3 px-4 py-3 rounded-xl hover:bg-white/40 transition-all duration-200" href="#" data-nav="profile" style="color: #64748b !important;">
+                            <span class="material-icons-outlined text-slate-400 group-hover:text-slate-600">person</span>
+                            <span>我的</span>
+                        </a>
+                    </nav>
+                </div>
+                <!-- 底部退出按钮 -->
+                <div class="p-4" style="border-top: 1px solid rgba(148, 163, 184, 0.2);">
+                    <button class="group flex items-center space-x-3 px-4 py-3 rounded-xl hover:bg-red-50 transition-all duration-200 w-full" id="sidebar-logout-btn" style="color: #64748b !important;">
+                        <span class="material-icons-outlined">logout</span>
+                        <span>退出</span>
+                    </button>
+                </div>
+            </aside>
+
+            <!-- 主内容区域 -->
+            <main class="main-content flex-1 h-full overflow-y-auto p-8 lg:p-12">
+                <!-- 写作页面 -->
+                <div id="writing-page" class="nav-page active">
+                    <div class="max-w-6xl mx-auto space-y-8">
+                        <!-- 页面头部 -->
+                        <div id="generator-header" class="flex items-center justify-between mb-8">
+                            <div>
+                                <h2 class="text-4xl mb-2" style="color: #0f172a !important; font-family: 'SimHei', 'Heiti SC', 'Microsoft YaHei', sans-serif; font-weight: 600;">X 爆款生成器</h2>
+                                <p class="font-light" style="color: #64748b;">AI 驱动的爆款内容创作工具</p>
+                            </div>
+                            <button class="flex items-center space-x-2 text-sm text-slate-500 hover:text-slate-900 transition-colors" id="history-btn">
+                                <span class="material-icons-outlined text-lg">history</span>
+                                <span>历史</span>
+                            </button>
+                        </div>
+
+                        <!-- 工作流程图 -->
+                        <div id="workflow-container" class="glass-panel bg-white/60 rounded-2xl p-8 shadow-sm"></div>
+
+                        <!-- 内容区域 -->
+                        <div class="generator-content glass-panel bg-white/40 rounded-2xl p-8 lg:p-10 shadow-sm" id="generator-content">
+                            <!-- 动态渲染的页面内容 -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 工具页面 -->
+                <div id="tools-page" class="nav-page hidden">
+                    <div class="max-w-6xl mx-auto space-y-8">
+                        <div class="mb-8">
+                            <h2 class="font-display text-4xl mb-2" style="color: #0f172a !important;">创作工具</h2>
+                            <p class="font-light" style="color: #64748b;">提升创作效率的专业工具集</p>
+                        </div>
+                        <div class="tools-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="tools-content">
+                            <!-- 工具卡片 -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 我的页面 -->
+                <div id="profile-page" class="nav-page hidden">
+                    <div class="max-w-6xl mx-auto space-y-8">
+                        <div class="mb-8">
+                            <h2 class="font-display text-4xl mb-2" style="color: #0f172a !important;">我的</h2>
+                            <p class="font-light" style="color: #64748b;">账户信息与设置</p>
+                        </div>
+                        <div class="profile-content" id="profile-content">
+                            <!-- 个人信息内容 -->
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+            <!-- 手机底部导航 -->
+            <nav class="bottom-nav fixed bottom-0 left-0 right-0 z-50 glass-panel bg-white/80 border-t border-slate-200/50 px-4 py-2 flex justify-around items-center md:hidden">
+                <a href="#" class="bottom-nav-item flex flex-col items-center space-y-1 py-2 px-4 rounded-xl text-slate-900" data-nav="writing">
+                    <span class="material-icons-outlined text-orange-600">edit_note</span>
+                    <span class="text-xs font-medium">写作</span>
+                </a>
+                <a href="#" class="bottom-nav-item flex flex-col items-center space-y-1 py-2 px-4 rounded-xl text-slate-500 hover:text-slate-900 transition-colors" data-nav="tools">
+                    <span class="material-icons-outlined">handyman</span>
+                    <span class="text-xs">工具</span>
+                </a>
+                <a href="#" class="bottom-nav-item flex flex-col items-center space-y-1 py-2 px-4 rounded-xl text-slate-500 hover:text-slate-900 transition-colors" data-nav="profile">
+                    <span class="material-icons-outlined">person</span>
+                    <span class="text-xs">我的</span>
+                </a>
+            </nav>
+        </div>
+    </div>
+
+    <!-- 生成器模块 -->
+    <script src="/js/generator/state.js"></script>
+    <script src="/js/generator/workflow.js"></script>
+    <script src="/js/generator/pages/home.js"></script>
+    <script src="/js/generator/pages/trends.js"></script>
+    <script src="/js/generator/pages/content.js"></script>
+    <script src="/js/generator/pages/optimize.js"></script>
+    <script src="/js/generator/pages/image.js"></script>
+    <script src="/js/generator/pages/submit.js"></script>
+    <script src="/js/generator/pages/history.js"></script>
+    <script src="/js/generator/pages/voice-mimicker.js"></script>
+    <script src="/js/generator/index.js"></script>
+    <script src="/js/app.js"></script>
+</body>
+</html>

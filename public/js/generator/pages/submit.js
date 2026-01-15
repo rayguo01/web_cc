@@ -18,8 +18,11 @@ class SubmitPage {
         // 先渲染基础结构
         container.innerHTML = `
             <div class="submit-page">
-                <div class="page-title">
-                    <span>📤</span> 提交到 X
+                <div class="page-header">
+                    <div class="page-title">
+                        <span class="material-icons-outlined" style="color: #f97316;">publish</span> 提交到 X
+                    </div>
+                    <p class="page-subtitle">确认内容和图片后，发布到 X 平台；你可以复制内容和图片自己手动发布，也可以连接推特账号自动一键发布</p>
                 </div>
 
                 <div class="submit-info">
@@ -39,14 +42,6 @@ class SubmitPage {
                     ` : ''}
                 </div>
 
-                <!-- Twitter 连接状态 -->
-                <div class="twitter-section" id="twitter-section">
-                    <div class="twitter-status loading">
-                        <span class="twitter-icon">𝕏</span>
-                        <span>正在检查连接状态...</span>
-                    </div>
-                </div>
-
                 <div class="final-preview">
                     <div class="final-content" id="final-content">${this.escapeHtml(finalContent)}</div>
                     <div class="char-count">${finalContent.length} 字符</div>
@@ -60,27 +55,35 @@ class SubmitPage {
 
                 <div class="submit-actions" style="margin-top: 24px; text-align: center;">
                     <button class="btn btn-primary" id="copy-btn">
-                        📋 复制内容
+                        <span class="material-icons-outlined" style="font-size: 18px; vertical-align: middle;">content_copy</span> 复制内容
                     </button>
                     ${imagePath ? `
                         <button class="btn btn-primary" id="download-btn" style="margin-left: 12px;">
-                            ⬇️ 下载图片
+                            <span class="material-icons-outlined" style="font-size: 18px; vertical-align: middle;">download</span> 下载图片
                         </button>
                     ` : ''}
+                    <button class="btn btn-twitter" id="twitter-btn" style="margin-left: 12px;" disabled>
+                        <span class="twitter-icon">𝕏</span> <span class="btn-text">检查连接中...</span>
+                    </button>
                 </div>
+
+                <!-- Twitter 连接状态提示 -->
+                <div class="twitter-status-bar" id="twitter-status-bar" style="margin-top: 12px; text-align: center;">
+                    <span class="status-loading">正在检查 Twitter 连接状态...</span>
+                </div>
+
+                <!-- 发布成功提示 -->
+                <div class="twitter-success-bar" id="twitter-success-bar" style="display: none; margin-top: 12px; text-align: center;"></div>
 
                 <div class="page-actions">
                     <div class="action-left">
-                        <button class="btn btn-primary" id="back-btn">
-                            ← 返回编辑
-                        </button>
-                        <button class="btn btn-danger" id="abandon-btn">
-                            放弃任务
+                        <button class="btn btn-secondary" id="back-btn">
+                            <span class="material-icons-outlined" style="font-size: 18px; vertical-align: middle;">arrow_back</span> 返回图片编辑
                         </button>
                     </div>
                     <div class="action-right">
-                        <button class="btn btn-primary" id="complete-btn">
-                            ✅ 完成并保存到历史
+                        <button class="btn btn-primary" id="home-btn">
+                            <span class="material-icons-outlined" style="font-size: 18px; vertical-align: middle;">home</span> 返回首页
                         </button>
                     </div>
                 </div>
@@ -91,66 +94,85 @@ class SubmitPage {
 
         // 异步加载 Twitter 状态
         await this.loadTwitterStatus();
+
+        // 自动保存到历史（进入提交页即完成流程）
+        await this.autoSaveToHistory();
     }
 
-    async loadTwitterStatus() {
-        const section = document.getElementById('twitter-section');
-        if (!section) return;
-
+    /**
+     * 自动保存到历史记录
+     * 进入提交页面即视为流程完成，自动保存
+     */
+    async autoSaveToHistory() {
         try {
-            this.twitterStatus = await this.generator.getTwitterStatus();
-            this.renderTwitterSection(section);
+            await this.generator.updateTask('complete');
+            console.log('内容已自动保存到历史记录');
         } catch (error) {
-            console.error('加载 Twitter 状态失败:', error);
-            section.innerHTML = `
-                <div class="twitter-status error">
-                    <span class="twitter-icon">𝕏</span>
-                    <span>无法获取连接状态</span>
-                </div>
-            `;
+            console.error('自动保存失败:', error);
         }
     }
 
-    renderTwitterSection(section) {
-        const task = this.state.task;
-        const finalContent = task?.optimize_data?.optimizedVersion || task?.content_data?.versionC || '';
+    async loadTwitterStatus() {
+        const statusBar = document.getElementById('twitter-status-bar');
+        const twitterBtn = document.getElementById('twitter-btn');
+
+        try {
+            this.twitterStatus = await this.generator.getTwitterStatus();
+            this.updateTwitterUI();
+        } catch (error) {
+            console.error('加载 Twitter 状态失败:', error);
+            if (statusBar) {
+                statusBar.innerHTML = `<span class="status-error">无法获取 Twitter 连接状态</span>`;
+            }
+            if (twitterBtn) {
+                twitterBtn.disabled = false;
+                twitterBtn.querySelector('.btn-text').textContent = '连接并发布到 X';
+            }
+        }
+    }
+
+    updateTwitterUI() {
+        const statusBar = document.getElementById('twitter-status-bar');
+        const twitterBtn = document.getElementById('twitter-btn');
+
+        if (!statusBar || !twitterBtn) return;
 
         if (this.twitterStatus.connected) {
-            section.innerHTML = `
-                <div class="twitter-status connected">
-                    <span class="twitter-icon">𝕏</span>
-                    <span class="status-text">
-                        已连接 <strong>@${this.twitterStatus.username}</strong>
-                    </span>
-                    <button class="btn btn-sm btn-secondary" id="disconnect-twitter-btn">
-                        断开连接
+            statusBar.innerHTML = `
+                <span class="status-connected">
+                    <span class="twitter-icon" style="font-size: 14px;">𝕏</span>
+                    已连接 <strong>@${this.twitterStatus.username}</strong>
+                    <button class="btn btn-link btn-sm" id="disconnect-twitter-btn" style="margin-left: 8px; padding: 2px 8px;">
+                        断开
                     </button>
-                </div>
-                <div class="twitter-publish">
-                    <button class="btn btn-twitter" id="publish-twitter-btn">
-                        <span class="twitter-icon">𝕏</span> 发布到 X
-                    </button>
-                </div>
+                </span>
             `;
+            twitterBtn.disabled = false;
+            twitterBtn.querySelector('.btn-text').textContent = '发布到 X';
 
-            // 绑定 Twitter 按钮事件
-            section.querySelector('#disconnect-twitter-btn')?.addEventListener('click', () => this.handleDisconnect());
-            section.querySelector('#publish-twitter-btn')?.addEventListener('click', () => this.handlePublish());
+            // 绑定断开连接按钮
+            statusBar.querySelector('#disconnect-twitter-btn')?.addEventListener('click', () => this.handleDisconnect());
         } else {
-            section.innerHTML = `
-                <div class="twitter-status disconnected">
-                    <span class="twitter-icon">𝕏</span>
-                    <span class="status-text">未连接 Twitter 账号</span>
-                    <button class="btn btn-twitter" id="connect-twitter-btn">
-                        连接 Twitter
-                    </button>
-                </div>
-                <div class="twitter-hint">
-                    连接后可直接将内容发布到 X 平台
-                </div>
+            statusBar.innerHTML = `
+                <span class="status-disconnected">
+                    <span class="twitter-icon" style="font-size: 14px;">𝕏</span>
+                    未连接 Twitter 账号，点击按钮连接后发布
+                </span>
             `;
+            twitterBtn.disabled = false;
+            twitterBtn.querySelector('.btn-text').textContent = '连接并发布到 X';
+        }
+    }
 
-            section.querySelector('#connect-twitter-btn')?.addEventListener('click', () => this.handleConnect());
+    async handleTwitterBtn() {
+        if (this.isPublishing) return;
+
+        if (this.twitterStatus.connected) {
+            // 已连接，直接发布
+            await this.handlePublish();
+        } else {
+            // 未连接，先连接
+            await this.handleConnect();
         }
     }
 
@@ -165,6 +187,7 @@ class SubmitPage {
             this.pollTwitterStatus();
         } catch (error) {
             console.error('获取授权链接失败:', error);
+            this.generator.showToast('获取授权链接失败: ' + error.message, 'error');
         }
     }
 
@@ -178,7 +201,7 @@ class SubmitPage {
 
             if (status.connected) {
                 this.twitterStatus = status;
-                this.renderTwitterSection(document.getElementById('twitter-section'));
+                this.updateTwitterUI();
                 this.generator.showToast(`已连接 @${status.username}`, 'success');
                 return;
             }
@@ -198,7 +221,7 @@ class SubmitPage {
         const success = await this.generator.disconnectTwitter();
         if (success) {
             this.twitterStatus = { connected: false };
-            this.renderTwitterSection(document.getElementById('twitter-section'));
+            this.updateTwitterUI();
         }
     }
 
@@ -218,7 +241,7 @@ class SubmitPage {
         if (!confirmed) return;
 
         this.isPublishing = true;
-        const btn = document.getElementById('publish-twitter-btn');
+        const btn = document.getElementById('twitter-btn');
         if (btn) {
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner"></span> 发布中...';
@@ -246,25 +269,32 @@ class SubmitPage {
             this.generator.showToast('发布成功！', 'success');
 
             // 显示成功状态
-            const section = document.getElementById('twitter-section');
-            if (section) {
-                const publishDiv = section.querySelector('.twitter-publish');
-                if (publishDiv) {
-                    publishDiv.innerHTML = `
-                        <div class="twitter-success">
-                            ✅ 已成功发布到 X
-                            <a href="https://twitter.com/i/web/status/${result.tweetId}" target="_blank" class="view-tweet-link">
-                                查看推文 →
-                            </a>
-                        </div>
-                    `;
-                }
+            const successBar = document.getElementById('twitter-success-bar');
+            if (successBar) {
+                successBar.style.display = 'block';
+                successBar.innerHTML = `
+                    <span class="twitter-success">
+                        <span class="material-icons-outlined" style="font-size: 18px; vertical-align: middle; color: #10b981;">check_circle</span>
+                        已成功发布到 X
+                        <a href="https://twitter.com/i/web/status/${result.tweetId}" target="_blank" class="view-tweet-link" style="margin-left: 8px;">
+                            查看推文 →
+                        </a>
+                    </span>
+                `;
+            }
+
+            // 更新按钮状态
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="material-icons-outlined" style="font-size: 18px; vertical-align: middle;">check</span> 已发布';
+                btn.classList.remove('btn-twitter');
+                btn.classList.add('btn-success');
             }
         } catch (error) {
             this.generator.showToast('发布失败: ' + error.message, 'error');
             if (btn) {
                 btn.disabled = false;
-                btn.innerHTML = '<span class="twitter-icon">𝕏</span> 发布到 X';
+                btn.innerHTML = '<span class="twitter-icon">𝕏</span> <span class="btn-text">发布到 X</span>';
             }
         } finally {
             this.isPublishing = false;
@@ -272,7 +302,7 @@ class SubmitPage {
     }
 
     bindEvents(container) {
-        // 返回按钮
+        // 返回按钮（回退到前一步继续编辑）
         container.querySelector('#back-btn').addEventListener('click', async () => {
             const task = this.state.task;
             const prevStep = task?.image_data?.skipped ? 'optimize' : 'image';
@@ -282,11 +312,6 @@ class SubmitPage {
             } catch (error) {
                 console.error('回退失败:', error);
             }
-        });
-
-        // 放弃任务
-        container.querySelector('#abandon-btn').addEventListener('click', () => {
-            this.generator.abandonTask();
         });
 
         // 复制内容
@@ -316,16 +341,13 @@ class SubmitPage {
             });
         }
 
-        // 完成任务
-        container.querySelector('#complete-btn').addEventListener('click', async () => {
-            try {
-                await this.generator.updateTask('complete');
-                this.generator.showToast('帖子已保存到历史记录', 'success');
-                this.state.reset();
-                this.generator.navigate('home');
-            } catch (error) {
-                this.generator.showToast(`保存失败: ${error.message}`, 'error');
-            }
+        // Twitter 按钮（连接并发布 或 发布）
+        container.querySelector('#twitter-btn').addEventListener('click', () => this.handleTwitterBtn());
+
+        // 返回首页（任务已自动保存，直接返回）
+        container.querySelector('#home-btn').addEventListener('click', () => {
+            this.state.reset();
+            this.generator.navigate('home');
         });
     }
 

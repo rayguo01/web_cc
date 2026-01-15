@@ -49,8 +49,8 @@ function checkTrendsCache(source) {
 }
 
 // 工作流步骤配置
-const WORKFLOW_STEPS = ['trends', 'content', 'optimize', 'prompt', 'image', 'submit'];
-const SKIPPABLE_STEPS = ['optimize', 'prompt', 'image'];
+const WORKFLOW_STEPS = ['trends', 'content', 'optimize', 'image', 'submit'];
+const SKIPPABLE_STEPS = ['optimize', 'image'];
 
 // 获取当前进行中的任务
 router.get('/current', authenticate, async (req, res) => {
@@ -229,10 +229,10 @@ router.put('/:id', authenticate, async (req, res) => {
                 break;
 
             case 'saveOptimize':
-                // 保存优化的内容，进入 prompt 步骤
+                // 保存优化的内容，进入 image 步骤
                 updateQuery = `UPDATE post_tasks SET
                     optimize_data = $1,
-                    current_step = 'prompt',
+                    current_step = 'image',
                     updated_at = CURRENT_TIMESTAMP
                     WHERE id = $2 RETURNING *`;
                 updateParams = [JSON.stringify(data), taskId];
@@ -341,9 +341,8 @@ router.put('/:id', authenticate, async (req, res) => {
                 let dataField;
                 if (step === 'optimize') {
                     dataField = 'optimize_data';
-                } else if (step === 'prompt') {
-                    dataField = 'prompt_data';
                 } else {
+                    // image 步骤跳过时，同时标记 prompt_data 和 image_data
                     dataField = 'image_data';
                 }
 
@@ -680,8 +679,10 @@ router.post('/:id/execute-step', authenticate, async (req, res) => {
             args.push(inputTmpFile);
         }
 
-        // 执行脚本
-        const child = spawn('npx', args, {
+        // 执行脚本 - Windows 兼容
+        const isWindows = process.platform === 'win32';
+        const npxCmd = isWindows ? 'npx.cmd' : 'npx';
+        const child = spawn(npxCmd, args, {
             cwd: path.join(__dirname, '../..'),
             env: { ...process.env },
             shell: true

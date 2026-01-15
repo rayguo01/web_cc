@@ -32,8 +32,11 @@ class TrendsPage {
     render(container) {
         container.innerHTML = `
             <div class="trends-page">
-                <div class="page-title">
-                    <span>🔥</span> 热帖抓取
+                <div class="page-header">
+                    <div class="page-title">
+                        <span class="material-icons-outlined" style="color: #f97316;">local_fire_department</span> 热帖抓取
+                    </div>
+                    <p class="page-subtitle">从多个数据源选择实时热点，点击生成内容按钮，让AI开始创作</p>
                 </div>
 
                 <div class="tabs">
@@ -41,10 +44,10 @@ class TrendsPage {
                         𝕏 X 趋势
                     </button>
                     <button class="tab ${this.activeTab === 'tophub-trends' ? 'active' : ''}" data-tab="tophub-trends">
-                        🔥 TopHub 热榜
+                        <span class="material-icons-outlined" style="font-size: 16px; vertical-align: middle;">local_fire_department</span> TopHub 热榜
                     </button>
                     <button class="tab ${this.activeTab === 'domain-trends' ? 'active' : ''}" data-tab="domain-trends">
-                        🎯 X领域趋势
+                        <span class="material-icons-outlined" style="font-size: 16px; vertical-align: middle;">track_changes</span> X领域趋势
                     </button>
                 </div>
 
@@ -71,8 +74,15 @@ class TrendsPage {
                 <div class="page-actions">
                     <div class="action-left">
                         <button class="btn btn-secondary" id="back-btn">
-                            ← 返回首页
+                            <span class="material-icons-outlined" style="font-size: 18px; vertical-align: middle;">arrow_back</span> 返回首页
                         </button>
+                    </div>
+                    <div class="action-right">
+                        ${this.state.task?.content_data?.versionC ? `
+                            <button class="btn btn-primary" id="view-content-btn">
+                                <span class="material-icons-outlined" style="font-size: 18px; vertical-align: middle;">visibility</span> 查看生成内容
+                            </button>
+                        ` : ''}
                     </div>
                 </div>
             </div>
@@ -107,6 +117,14 @@ class TrendsPage {
         container.querySelector('#back-btn').addEventListener('click', () => {
             this.generator.navigate('home');
         });
+
+        // 查看生成内容按钮
+        const viewContentBtn = container.querySelector('#view-content-btn');
+        if (viewContentBtn) {
+            viewContentBtn.addEventListener('click', () => {
+                this.generator.navigate('content');
+            });
+        }
     }
 
     /**
@@ -137,16 +155,16 @@ class TrendsPage {
 
         // 预设图标映射
         const presetIcons = {
-            'web3': '🌐',
-            'ai': '🤖',
-            'gaming': '🎮'
+            'web3': 'language',
+            'ai': 'smart_toy',
+            'gaming': 'sports_esports'
         };
 
         container.innerHTML = this.domainPresets.map(preset => `
             <button class="preset-btn ${this.selectedPreset === preset.id ? 'active' : ''}"
                     data-preset="${preset.id}"
                     title="${preset.description || preset.name}">
-                ${presetIcons[preset.id] || '📊'} ${preset.name}
+                <span class="material-icons-outlined" style="font-size: 16px; vertical-align: middle;">${presetIcons[preset.id] || 'analytics'}</span> ${preset.name}
             </button>
         `).join('');
 
@@ -238,7 +256,7 @@ class TrendsPage {
 
         content.innerHTML = `
             <div class="empty-state">
-                <div class="empty-state-icon">⏳</div>
+                <div class="empty-state-icon"><span class="material-icons-outlined" style="font-size: 48px;">hourglass_empty</span></div>
                 <div class="empty-state-text">暂无缓存数据，请等待系统定时抓取（${scheduleText}）</div>
             </div>
         `;
@@ -393,7 +411,7 @@ class TrendsPage {
         if (!report) {
             content.innerHTML = `
                 <div class="empty-state">
-                    <div class="empty-state-icon">📊</div>
+                    <div class="empty-state-icon"><span class="material-icons-outlined">analytics</span></div>
                     <div class="empty-state-text">选择上方时间查看历史数据，或等待下次定时抓取</div>
                 </div>
             `;
@@ -431,7 +449,7 @@ class TrendsPage {
             <!-- 热点概览 -->
             ${sections.overview ? `
                 <div class="trends-section">
-                    <h3 class="section-title">🔥 热点概览</h3>
+                    <h3 class="section-title"><span class="material-icons-outlined" style="font-size: 18px; vertical-align: middle;">local_fire_department</span> 热点概览</h3>
                     <div class="section-content overview-content">
                         ${jsonData ? this.escapeHtml(sections.overview) : this.generator.formatMarkdown(sections.overview)}
                     </div>
@@ -441,7 +459,7 @@ class TrendsPage {
             <!-- 话题分类 -->
             ${sections.categories ? `
                 <div class="trends-section">
-                    <h3 class="section-title">📂 话题分类</h3>
+                    <h3 class="section-title"><span class="material-icons-outlined" style="font-size: 18px; vertical-align: middle;">folder</span> 话题分类</h3>
                     <div class="section-content categories-content">
                         ${jsonData ? this.renderCategoriesFromJSON(sections.categories) : this.renderCategories(sections.categories)}
                     </div>
@@ -450,7 +468,9 @@ class TrendsPage {
 
             <!-- 选题建议（已合并高潜力话题分析） -->
             <div class="trends-section">
-                <h3 class="section-title">💡 选题建议 <span class="section-hint">（点击选择一个话题）</span></h3>
+                <div class="section-title-row">
+                    <h3 class="section-title"><span class="material-icons-outlined" style="font-size: 18px; vertical-align: middle;">lightbulb</span> 选题建议 <span class="section-hint">（点击选择一个话题）</span></h3>
+                </div>
                 ${topics.length > 0 ? `
                     <div class="topic-list">
                         ${topics.map((topic, index) => this.renderTopicItem(topic, index)).join('')}
@@ -489,7 +509,7 @@ class TrendsPage {
             <!-- 热点概览 (仅 JSON 模式) -->
             ${jsonData && sections.overview ? `
                 <div class="trends-section">
-                    <h3 class="section-title">🔥 热点概览</h3>
+                    <h3 class="section-title"><span class="material-icons-outlined" style="font-size: 18px; vertical-align: middle;">local_fire_department</span> 热点概览</h3>
                     <div class="section-content overview-content">
                         ${this.escapeHtml(sections.overview)}
                     </div>
@@ -499,7 +519,7 @@ class TrendsPage {
             <!-- 话题分类 (仅 JSON 模式) -->
             ${jsonData && sections.categories ? `
                 <div class="trends-section">
-                    <h3 class="section-title">📂 话题分类</h3>
+                    <h3 class="section-title"><span class="material-icons-outlined" style="font-size: 18px; vertical-align: middle;">folder</span> 话题分类</h3>
                     <div class="section-content categories-content">
                         ${this.renderCategoriesFromJSON(sections.categories)}
                     </div>
@@ -508,7 +528,9 @@ class TrendsPage {
 
             <!-- 选题建议（已合并高潜力话题分析） -->
             <div class="trends-section">
-                <h3 class="section-title">💡 选题建议 <span class="section-hint">（点击选择一个话题）</span></h3>
+                <div class="section-title-row">
+                    <h3 class="section-title"><span class="material-icons-outlined" style="font-size: 18px; vertical-align: middle;">lightbulb</span> 选题建议 <span class="section-hint">（点击选择一个话题）</span></h3>
+                </div>
                 ${topics.length > 0 ? `
                     <div class="topic-list">
                         ${topics.map((topic, index) => this.renderTopicItem(topic, index)).join('')}
@@ -526,6 +548,23 @@ class TrendsPage {
     }
 
     bindContentEvents(content, topics) {
+        // 绑定展开/折叠按钮事件
+        content.querySelectorAll('.topic-expand-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const index = btn.dataset.index;
+                const details = content.querySelector(`.topic-details[data-index="${index}"]`);
+                const icon = btn.querySelector('.material-icons-outlined');
+
+                if (details) {
+                    const isExpanded = details.style.display !== 'none';
+                    details.style.display = isExpanded ? 'none' : 'block';
+                    icon.textContent = isExpanded ? 'expand_more' : 'expand_less';
+                    btn.classList.toggle('expanded', !isExpanded);
+                }
+            });
+        });
+
         // 绑定话题选择事件
         content.querySelectorAll('.topic-item').forEach(item => {
             item.addEventListener('click', () => {
@@ -838,27 +877,27 @@ class TrendsPage {
 
     /**
      * 渲染单个话题项（合并高潜力分析和选题建议）
+     * 默认折叠，只显示标题、查看原帖、潜力分析
      */
     renderTopicItem(topic, index) {
+        // 检查是否有可折叠的详细内容
+        const hasDetails = topic.source || topic.angle || topic.meta || topic.direction;
+
         return `
             <div class="topic-item ${this.selectedTopic?.index === index ? 'selected' : ''}"
                  data-index="${index}">
+                <!-- 始终显示的部分 -->
                 <div class="topic-header">
                     <span class="topic-number">${index + 1}</span>
                     <span class="topic-title">${this.escapeHtml(topic.title)}</span>
-                    ${topic.score ? `<span class="topic-score score-${this.getScoreClass(topic.score)}">${this.escapeHtml(topic.score)}</span>` : ''}
+                    ${topic.score ? `<span class="topic-score score-${this.getScoreClass(topic.score)}" title="${this.getScoreTitle(topic.score)}">${this.getScoreFireIcons(topic.score)}</span>` : ''}
+                    ${hasDetails ? `<span class="topic-expand-btn" data-index="${index}" onclick="event.stopPropagation();"><span class="material-icons-outlined">expand_more</span></span>` : ''}
                 </div>
                 ${topic.link ? `
                     <div class="topic-field topic-link">
                         <a href="${this.escapeHtml(topic.link)}" target="_blank" rel="noopener noreferrer" class="topic-link-btn" onclick="event.stopPropagation();">
-                            🔗 查看原帖
+                            <span class="material-icons-outlined" style="font-size: 14px; vertical-align: middle;">link</span> 查看原帖
                         </a>
-                    </div>
-                ` : ''}
-                ${topic.source ? `
-                    <div class="topic-field topic-source">
-                        <span class="field-label">来源:</span>
-                        <span class="field-value source-tag">${this.escapeHtml(topic.source)}</span>
                     </div>
                 ` : ''}
                 ${topic.reason ? `
@@ -867,24 +906,37 @@ class TrendsPage {
                         <span class="field-value">${this.escapeHtml(topic.reason)}</span>
                     </div>
                 ` : ''}
-                ${topic.angle ? `
-                    <div class="topic-field">
-                        <span class="field-label">选题角度:</span>
-                        <span class="field-value">${this.escapeHtml(topic.angle)}</span>
+
+                <!-- 折叠的详细内容 -->
+                ${hasDetails ? `
+                    <div class="topic-details" data-index="${index}" style="display: none;">
+                        ${topic.source ? `
+                            <div class="topic-field topic-source">
+                                <span class="field-label">来源:</span>
+                                <span class="field-value source-tag">${this.escapeHtml(topic.source)}</span>
+                            </div>
+                        ` : ''}
+                        ${topic.angle ? `
+                            <div class="topic-field">
+                                <span class="field-label">选题角度:</span>
+                                <span class="field-value">${this.escapeHtml(topic.angle)}</span>
+                            </div>
+                        ` : ''}
+                        ${topic.meta ? `
+                            <div class="topic-field">
+                                <span class="field-label">为什么有效:</span>
+                                <span class="field-value">${this.escapeHtml(topic.meta)}</span>
+                            </div>
+                        ` : ''}
+                        ${topic.direction ? `
+                            <div class="topic-field">
+                                <span class="field-label">创作方向:</span>
+                                <div class="field-value direction-list">${topic.direction}</div>
+                            </div>
+                        ` : ''}
                     </div>
                 ` : ''}
-                ${topic.meta ? `
-                    <div class="topic-field">
-                        <span class="field-label">为什么有效:</span>
-                        <span class="field-value">${this.escapeHtml(topic.meta)}</span>
-                    </div>
-                ` : ''}
-                ${topic.direction ? `
-                    <div class="topic-field">
-                        <span class="field-label">创作方向:</span>
-                        <div class="field-value direction-list">${topic.direction}</div>
-                    </div>
-                ` : ''}
+
                 <div class="topic-action">
                     <button class="btn btn-primary btn-sm topic-next-btn" data-index="${index}" onclick="event.stopPropagation();">
                         下一步：生成内容 →
@@ -903,6 +955,33 @@ class TrendsPage {
         if (s.includes('高') || s.includes('high')) return 'high';
         if (s.includes('中') || s.includes('medium')) return 'medium';
         return 'low';
+    }
+
+    /**
+     * 根据评分返回火焰图标（高=3火，中=2火，低=1火）
+     */
+    getScoreFireIcons(score) {
+        const fireIcon = '<span class="material-icons-outlined fire-icon">local_fire_department</span>';
+        if (!score) return fireIcon;
+        const s = score.toLowerCase();
+        if (s.includes('高') || s.includes('high')) {
+            return fireIcon + fireIcon + fireIcon;
+        }
+        if (s.includes('中') || s.includes('medium')) {
+            return fireIcon + fireIcon;
+        }
+        return fireIcon;
+    }
+
+    /**
+     * 根据评分返回提示文字
+     */
+    getScoreTitle(score) {
+        if (!score) return '潜力: 低';
+        const s = score.toLowerCase();
+        if (s.includes('高') || s.includes('high')) return '潜力: 高';
+        if (s.includes('中') || s.includes('medium')) return '潜力: 中';
+        return '潜力: 低';
     }
 
     renderCategoriesFromJSON(categories) {

@@ -14,7 +14,6 @@ class GeneratorState {
             { id: 'trends', name: '热帖抓取', icon: '🔥', skippable: false },
             { id: 'content', name: '生成内容', icon: '✍️', skippable: false },
             { id: 'optimize', name: '优化内容', icon: '🚀', skippable: true },
-            { id: 'prompt', name: '图片描述', icon: '📝', skippable: true },
             { id: 'image', name: '生成图片', icon: '🖼️', skippable: true },
             { id: 'submit', name: '提交发布', icon: '📤', skippable: false }
         ];
@@ -96,10 +95,9 @@ class GeneratorState {
                 return !!(this.task.content_data?.versionC);
             case 'optimize':
                 return !!(this.task.optimize_data?.optimizedVersion);
-            case 'prompt':
-                return !!(this.task.prompt_data?.prompt);
             case 'image':
-                return !!(this.task.image_data?.imagePath);
+                // image 步骤完成条件：生成了图片 或 明确跳过了图片步骤
+                return !!(this.task.image_data?.imagePath || this.task.image_data?.skipped);
             case 'submit':
                 return this.task.status === 'completed';
             default:

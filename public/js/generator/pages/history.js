@@ -23,7 +23,7 @@ class HistoryPage {
         container.innerHTML = `
             <div class="history-page">
                 <div class="page-title">
-                    <span>📋</span> 历史记录
+                    <span class="material-icons-outlined">history</span> 历史记录
                 </div>
 
                 <div class="history-content" id="history-content">
@@ -51,7 +51,7 @@ class HistoryPage {
         container.innerHTML = `
             <div class="history-page">
                 <div class="page-title">
-                    <span>📋</span> 历史详情
+                    <span class="material-icons-outlined">article</span> 历史详情
                 </div>
 
                 <div class="history-content" id="history-content">
@@ -132,7 +132,7 @@ class HistoryPage {
         if (this.historyList.length === 0) {
             content.innerHTML = `
                 <div class="empty-state">
-                    <div class="empty-state-icon">📭</div>
+                    <div class="empty-state-icon"><span class="material-icons-outlined" style="font-size: 48px;">inbox</span></div>
                     <div class="empty-state-text">暂无历史记录</div>
                     <button class="btn btn-primary" style="margin-top: 20px;" onclick="window.postGenerator.navigate('home')">
                         开始创作
@@ -152,7 +152,7 @@ class HistoryPage {
                         </div>
                         <div class="history-item-preview">${item.content_preview || ''}</div>
                         ${item.viral_score ? `
-                            <div class="history-item-score">🔥 爆款评分: ${item.viral_score}/100</div>
+                            <div class="history-item-score"><span class="material-icons-outlined" style="font-size: 16px; vertical-align: middle; color: #f97316;">local_fire_department</span> 爆款评分: ${item.viral_score}/100</div>
                         ` : ''}
                     </div>
                 `).join('')}
@@ -185,7 +185,7 @@ class HistoryPage {
         if (!this.historyDetail) {
             content.innerHTML = `
                 <div class="empty-state">
-                    <div class="empty-state-icon">❌</div>
+                    <div class="empty-state-icon"><span class="material-icons-outlined" style="font-size: 48px; color: #ef4444;">error</span></div>
                     <div class="empty-state-text">记录不存在</div>
                 </div>
             `;
@@ -230,11 +230,11 @@ class HistoryPage {
 
                 <div style="margin-top: 24px; text-align: center;">
                     <button class="btn btn-secondary" id="copy-content-btn">
-                        📋 复制内容
+                        <span class="material-icons-outlined" style="font-size: 18px; vertical-align: middle;">content_copy</span> 复制内容
                     </button>
                     ${item.final_image_path ? `
                         <button class="btn btn-secondary" id="download-image-btn" style="margin-left: 12px;">
-                            ⬇️ 下载图片
+                            <span class="material-icons-outlined" style="font-size: 18px; vertical-align: middle;">download</span> 下载图片
                         </button>
                     ` : ''}
                 </div>

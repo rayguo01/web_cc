@@ -120,7 +120,11 @@ ${userInput}
     const TIMEOUT = 3 * 60 * 1000;
     let killed = false;
 
-    const child = spawn('claude', [
+    // Windows 兼容
+    const isWindows = process.platform === 'win32';
+    const claudeCmd = isWindows ? 'claude.cmd' : 'claude';
+
+    const child = spawn(claudeCmd, [
       '--output-format', 'text',
       '--allowedTools', 'WebSearch,WebFetch'
     ], {

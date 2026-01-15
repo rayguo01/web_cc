@@ -7,13 +7,13 @@ const { pool } = require('../config/database');
 
 class VoicePromptDbService {
     /**
-     * 保存生成的 Prompt（含 role 和 core_traits）
+     * 保存生成的 Prompt（含 role、core_traits 和 domains）
      */
     async save(userId, data) {
         const result = await pool.query(
             `INSERT INTO voice_prompts
-             (user_id, username, display_name, avatar_url, tweet_count, total_chars, prompt_content, sample_tweets, role, core_traits)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+             (user_id, username, display_name, avatar_url, tweet_count, total_chars, prompt_content, sample_tweets, role, core_traits, domains)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
              RETURNING *`,
             [
                 userId,
@@ -25,7 +25,8 @@ class VoicePromptDbService {
                 data.promptContent,
                 JSON.stringify(data.sampleTweets || []),
                 data.role || null,
-                data.coreTraits ? JSON.stringify(data.coreTraits) : null
+                data.coreTraits ? JSON.stringify(data.coreTraits) : null,
+                data.domains ? JSON.stringify(data.domains) : null
             ]
         );
         console.log(`[VoicePromptDb] 已保存 @${data.username} 的语气 Prompt`);
@@ -42,7 +43,7 @@ class VoicePromptDbService {
                 COALESCE(is_public, false) as is_public,
                 COALESCE(usage_count, 0) as usage_count,
                 COALESCE(subscriber_count, 0) as subscriber_count,
-                role, core_traits
+                role, core_traits, domains
              FROM voice_prompts
              WHERE user_id = $1
              ORDER BY created_at DESC`,
@@ -65,7 +66,7 @@ class VoicePromptDbService {
                 vp.id, vp.username, vp.display_name, vp.avatar_url,
                 COALESCE(vp.usage_count, 0) as usage_count,
                 COALESCE(vp.subscriber_count, 0) as subscriber_count,
-                vp.role, vp.core_traits, vp.created_at,
+                vp.role, vp.core_traits, vp.domains, vp.created_at,
                 CASE WHEN vps.id IS NOT NULL THEN true ELSE false END as is_subscribed,
                 CASE WHEN vp.user_id = $1 THEN true ELSE false END as is_owner
              FROM voice_prompts vp
@@ -95,7 +96,7 @@ class VoicePromptDbService {
                 vp.id, vp.username, vp.display_name, vp.avatar_url,
                 COALESCE(vp.usage_count, 0) as usage_count,
                 COALESCE(vp.subscriber_count, 0) as subscriber_count,
-                vp.role, vp.core_traits, vps.created_at as subscribed_at
+                vp.role, vp.core_traits, vp.domains, vps.created_at as subscribed_at
              FROM voice_prompt_subscriptions vps
              JOIN voice_prompts vp ON vp.id = vps.prompt_id
              WHERE vps.user_id = $1
@@ -287,7 +288,7 @@ class VoicePromptDbService {
         const result = await pool.query(
             `SELECT
                 vp.id, vp.username, vp.display_name, vp.avatar_url, vp.tweet_count, vp.total_chars,
-                vp.sample_tweets, vp.created_at, vp.is_public, vp.user_id, vp.role, vp.core_traits,
+                vp.sample_tweets, vp.created_at, vp.is_public, vp.user_id, vp.role, vp.core_traits, vp.domains,
                 COALESCE(vp.usage_count, 0) as usage_count,
                 COALESCE(vp.subscriber_count, 0) as subscriber_count,
                 CASE WHEN vp.user_id = $2 THEN vp.prompt_content ELSE NULL END as prompt_content,
@@ -340,13 +341,13 @@ class VoicePromptDbService {
     }
 
     /**
-     * 更新 Prompt（重新分析，含 role 和 core_traits）
+     * 更新 Prompt（重新分析，含 role、core_traits 和 domains）
      */
     async update(id, userId, data) {
         const result = await pool.query(
             `UPDATE voice_prompts
              SET tweet_count = $3, total_chars = $4, prompt_content = $5, sample_tweets = $6,
-                 role = $7, core_traits = $8
+                 role = $7, core_traits = $8, domains = $9
              WHERE id = $1 AND user_id = $2
              RETURNING *`,
             [
@@ -357,7 +358,8 @@ class VoicePromptDbService {
                 data.promptContent,
                 JSON.stringify(data.sampleTweets || []),
                 data.role || null,
-                data.coreTraits ? JSON.stringify(data.coreTraits) : null
+                data.coreTraits ? JSON.stringify(data.coreTraits) : null,
+                data.domains ? JSON.stringify(data.domains) : null
             ]
         );
         return result.rows[0];

@@ -44,6 +44,7 @@ interface AnalysisResult {
   sampleTweets: string[];
   role: string | null;
   coreTraits: string[] | null;
+  domains: string[] | null;
 }
 
 interface UserInfo {
@@ -114,11 +115,12 @@ function delay(ms: number): Promise<void> {
 }
 
 /**
- * 从 Markdown 中提取 Role 和 Core Traits
+ * 从 Markdown 中提取 Role、Core Traits 和 Domains
  */
-function extractRoleAndTraits(markdown: string): { role: string | null; coreTraits: string[] | null } {
+function extractRoleAndTraits(markdown: string): { role: string | null; coreTraits: string[] | null; domains: string[] | null } {
   let role: string | null = null;
   let coreTraits: string[] | null = null;
+  let domains: string[] | null = null;
 
   // 提取 Role（格式: # Role: XXX 或 # XXX）
   const roleMatch = markdown.match(/^#\s*(?:Role:\s*)?(.+?)$/m);
@@ -140,7 +142,19 @@ function extractRoleAndTraits(markdown: string): { role: string | null; coreTrai
     }
   }
 
-  return { role, coreTraits };
+  // 提取 Domains（在 ## Domains 或 ## 领域 标题下的列表项）
+  const domainsSection = markdown.match(/##\s*(?:\d+\.\s*)?(?:Domains?|领域)[:\s]*\n([\s\S]*?)(?=\n##|\n#|$)/i);
+  if (domainsSection) {
+    const domainsText = domainsSection[1];
+    const domainMatches = domainsText.match(/^[\s]*[-*•]\s*\*?\*?(.+?)(?:\*?\*?)$/gm);
+    if (domainMatches) {
+      domains = domainMatches.map(d => {
+        return d.replace(/^[\s]*[-*•]\s*/, '').replace(/\*\*/g, '').trim();
+      }).filter(d => d.length > 0);
+    }
+  }
+
+  return { role, coreTraits, domains };
 }
 
 /**
@@ -305,20 +319,22 @@ Start directly with "# Role: [Name/Archetype based on @${username}]".
 
 1. **Role Definition**: A concise archetype describing their online persona (e.g., "The Cynical Developer", "The Crypto Philosopher").
 
-2. **Core Traits**: 3-4 bullet points defining their personality as observed in the tweets.
+2. **Domains**: 1-3 bullet points listing the main content areas/fields this person focuses on (e.g., "Crypto/Web3", "AI/Machine Learning", "Startups", "Personal Development", "Finance", "Tech", "Gaming", etc.). Use short, concise labels.
 
-3. **Writing Style Guidelines**:
+3. **Core Traits**: 3-4 bullet points defining their personality as observed in the tweets.
+
+4. **Writing Style Guidelines**:
    - **Visual Structure**: How do they use line breaks? Do they write long paragraphs or short bursts?
    - **Sentence Structure**: Do they use fragments? Run-on sentences? Questions?
    - **Tone & Vocabulary**: Key slang, catchphrases, sentence endings (e.g., "~", "...", "！", emojis).
    - **Language Mix**: Do they mix languages (e.g., English/Chinese)?
 
-4. **Anti-AI Rules (CRITICAL)**:
+5. **Anti-AI Rules (CRITICAL)**:
    - 🚫 List specific phrases this person would NEVER use (e.g., "总而言之", "希望能帮到你", "作为AI")
    - 🚫 List writing patterns to avoid (e.g., overly formal explanations, complete grammatical sentences)
    - 🚫 List any generic AI tendencies that don't match this person's style
 
-5. **Few-Shot Examples**:
+6. **Few-Shot Examples**:
    - Include 3-5 of the BEST examples from the input tweets
    - Format as direct quotes that capture the essence of their style
 
@@ -385,9 +401,9 @@ async function run(username: string): Promise<AnalysisResult> {
   fs.writeFileSync(outputPath, promptContent);
   console.log(`\n✅ Prompt 已保存: ${outputPath}`);
 
-  // 5. 提取 Role 和 Core Traits
-  const { role, coreTraits } = extractRoleAndTraits(promptContent);
-  console.log(`📋 提取信息: Role="${role}", Traits=${coreTraits?.length || 0} 条`);
+  // 5. 提取 Role、Core Traits 和 Domains
+  const { role, coreTraits, domains } = extractRoleAndTraits(promptContent);
+  console.log(`📋 提取信息: Role="${role}", Traits=${coreTraits?.length || 0} 条, Domains=${domains?.length || 0} 个`);
 
   // 6. 构建返回结果
   const result: AnalysisResult = {
@@ -399,7 +415,8 @@ async function run(username: string): Promise<AnalysisResult> {
     promptContent,
     sampleTweets: selectedTweets.slice(0, 3).map(t => t.text),
     role,
-    coreTraits
+    coreTraits,
+    domains
   };
 
   // 输出 JSON 供 API 读取

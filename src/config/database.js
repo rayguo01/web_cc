@@ -223,6 +223,19 @@ async function initDatabase() {
             END $$;
         `);
 
+        // 添加 domains 字段（领域标签，JSON 格式）
+        await client.query(`
+            DO $$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns
+                    WHERE table_name = 'voice_prompts' AND column_name = 'domains'
+                ) THEN
+                    ALTER TABLE voice_prompts ADD COLUMN domains TEXT;
+                END IF;
+            END $$;
+        `);
+
         // 创建语气模仿订阅表
         await client.query(`
             CREATE TABLE IF NOT EXISTS voice_prompt_subscriptions (

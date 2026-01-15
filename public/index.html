@@ -1,328 +1,560 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="theme-color" content="#F0F4F8">
-    <meta name="format-detection" content="telephone=no">
-    <title>Viral-X</title>
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png">
-    <link rel="apple-touch-icon" href="/logo-200.png">
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com" rel="preconnect">
-    <link crossorigin href="https://fonts.gstatic.com" rel="preconnect">
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <!-- Material Icons -->
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Viral-X - 为蓝V新人打造的 AI 创作引擎</title>
+    <meta name="description" content="从热点追踪到一键发布，十分钟写出你的第一条爆款。AI 帮你追踪热点、生成内容、模仿大V风格。">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600&family=Noto+Sans+SC:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
     <script>
         tailwind.config = {
             darkMode: "class",
             theme: {
                 extend: {
                     colors: {
-                        primary: "#FFFFFF",
-                        "background-light": "#F0F4F8",
-                        "background-dark": "#0F172A",
-                        "panel-dark": "rgba(30, 41, 59, 0.4)",
-                        "panel-light": "rgba(255, 255, 255, 0.6)",
-                        "accent": "#d97757",
+                        primary: "#F8F8F8",
+                        secondary: "#1F2937",
+                        accent: "#e0e7ff",
+                        "background-light": "#F9FAFB",
+                        "background-dark": "#0B1120",
+                        "surface-glass": "rgba(255, 255, 255, 0.6)",
+                        "surface-glass-dark": "rgba(15, 23, 42, 0.6)",
                     },
                     fontFamily: {
-                        display: ["Playfair Display", "serif"],
-                        sans: ["Inter", "sans-serif"],
+                        display: ["Playfair Display", "SimHei", "Heiti SC", "Microsoft YaHei", "sans-serif"],
+                        sans: ["Inter", "SimHei", "Heiti SC", "Microsoft YaHei", "sans-serif"],
                     },
-                    borderRadius: {
-                        DEFAULT: "12px",
-                        'xl': "1rem",
-                        '2xl': "1.5rem",
-                    },
+                    boxShadow: {
+                        'glass': '0 8px 32px 0 rgba(31, 38, 135, 0.07)',
+                        'glass-dark': '0 8px 32px 0 rgba(0, 0, 0, 0.3)',
+                        'glow': '0 0 20px rgba(255, 255, 255, 0.5)',
+                    }
                 },
             },
         };
     </script>
     <style>
-        /* 覆盖旧 CSS 变量为浅色主题 */
-        :root {
-            /* 背景色 */
-            --bg-primary: #F0F4F8 !important;
-            --bg-secondary: #E2E8F0 !important;
-            --bg-deep: #F0F4F8 !important;
-            --bg-muted: rgba(255, 255, 255, 0.5) !important;
-
-            /* 表面/卡片 */
-            --surface-card: rgba(255, 255, 255, 0.6) !important;
-            --surface-elevated: rgba(255, 255, 255, 0.8) !important;
-            --surface-hover: rgba(255, 255, 255, 0.9) !important;
-
-            /* 文字 */
-            --text-primary: #0f172a !important;
-            --text-secondary: #475569 !important;
-            --text-muted: #94a3b8 !important;
-
-            /* 边框 */
-            --border-subtle: rgba(148, 163, 184, 0.2) !important;
-            --border-light: rgba(148, 163, 184, 0.3) !important;
-            --border-default: rgba(148, 163, 184, 0.4) !important;
-
-            /* 强调色 - 琥珀/橙色渐变 */
-            --accent: #f59e0b !important;
-            --accent-light: #fbbf24 !important;
-            --accent-dark: #d97706 !important;
-
-            /* 阴影 */
-            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
-            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03) !important;
-            --shadow-focus: 0 0 0 3px rgba(245, 158, 11, 0.15) !important;
-        }
-        /* 覆盖 body 背景为浅色 */
-        body {
-            background: #F0F4F8 !important;
-        }
-        /* 隐藏深色主题的背景装饰 */
-        body::before, body::after {
-            display: none !important;
-        }
-        /* 强制标题颜色为深色 */
-        h1, h2, h3, h4 {
-            color: #0f172a !important;
-        }
-        p, .text-slate-500 {
-            color: #64748b !important;
-        }
-        /* 保留 Material Icons 和自定义颜色的 span */
-        span:not(.material-icons-outlined):not([class*="text-orange"]):not([style*="color"]) {
-            color: #64748b;
-        }
         .glass-panel {
+            background: rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
-        .sidebar-glass {
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-right: 1px solid rgba(255, 255, 255, 0.05);
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
         }
-        /* 隐藏类 */
-        .hidden { display: none !important; }
-        /* 滚动条样式 */
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.3); border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(148, 163, 184, 0.5); }
-        /* 手机底部导航 */
-        @media (min-width: 768px) {
-            .bottom-nav { display: none !important; }
+        .dark .glass-card {
+            background: rgba(30, 41, 59, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
-        @media (max-width: 767px) {
-            .sidebar-nav { display: none !important; }
-            .main-content { padding-bottom: 80px; }
+        .text-shadow-sm {
+            text-shadow: 0 1px 2px rgba(0,0,0,0.1);
         }
+        .text-shadow-lg {
+            text-shadow: 0 4px 12px rgba(0,0,0,0.25);
+        }
+        .hero-gradient {
+            background: radial-gradient(circle at center, transparent 0%, rgba(15, 23, 42, 0.4) 100%);
+        }
+        html {
+            scroll-behavior: smooth;
+        }
+        @keyframes pulse-scale {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.15);
+            }
+        }
+        .animate-pulse-scale {
+            animation: pulse-scale 2s ease-in-out infinite;
+        }
+        /* Scroll animations */
+        .scroll-animate {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        }
+        .scroll-animate.animate-in {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .scroll-animate-left {
+            opacity: 0;
+            transform: translateX(-40px);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        }
+        .scroll-animate-left.animate-in {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        .scroll-animate-right {
+            opacity: 0;
+            transform: translateX(40px);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        }
+        .scroll-animate-right.animate-in {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        .scroll-animate-scale {
+            opacity: 0;
+            transform: scale(0.9);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        }
+        .scroll-animate-scale.animate-in {
+            opacity: 1;
+            transform: scale(1);
+        }
+        /* Staggered delays for children */
+        .stagger-1 { transition-delay: 0.1s; }
+        .stagger-2 { transition-delay: 0.2s; }
+        .stagger-3 { transition-delay: 0.3s; }
+        .stagger-4 { transition-delay: 0.4s; }
+        .stagger-5 { transition-delay: 0.5s; }
     </style>
-    <!-- 保留原有 CSS 用于特定组件 -->
-    <link rel="stylesheet" href="/css/style.css">
-    <link rel="stylesheet" href="/css/generator.css">
 </head>
-<body class="bg-background-light text-slate-800 font-sans antialiased h-screen overflow-hidden flex selection:bg-indigo-500 selection:text-white">
-    <!-- 背景图层 -->
-    <div class="fixed inset-0 z-0 w-full h-full bg-cover bg-center bg-no-repeat opacity-20 pointer-events-none" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDTfaQfOqrMlb2it9V2xDJ3dtn_2NpPvDP-X3Gh9DrsrkjBfqpnH5MakWrHFllP8Y3Ls6YWmmmdEY3taYZxjpRHPSO6ub0frBg5puJEKocRb8jgTywvV7YbkaZuukcB5GWHVO8KriFle08bXK75siYgJ_SHLYmvwokSMh-4uGAXc9QuZZxx-g_vmT9fGkeNqZg8iBfI40zHVO-utZQ1nsNtzavMfPCPaXVAq5ccURyc789Ng3Pb_WgBI7FbT7XK6rIb8Is-oik83S8');"></div>
-    <div class="fixed inset-0 z-0 bg-gradient-to-br from-slate-100/80 to-slate-200/90 pointer-events-none"></div>
+<body class="bg-background-light dark:bg-background-dark text-slate-800 dark:text-slate-100 font-sans antialiased transition-colors duration-300">
+    <!-- Hero with Background Image -->
+    <div class="relative min-h-screen flex flex-col">
+        <!-- Background Image -->
+        <div class="absolute inset-0 z-0 overflow-hidden">
+            <img alt="Misty mountains landscape" class="w-full h-full object-cover scale-105" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBUqIthFtPpguXwDOHC1fLDamv2xqlKxKHvCrPSwxXzkQjVXQ93urwbMQQEBAHRhqxyHaK9MyAdpc1EJqNwdAnY9u1eu21L8hmATLBbU9X9772_yCk8fXIPQbFBKaK1Q8ma_XO5B4WvwNA3pliN3xWrtJOoiVFRmWcMmghkF7WnlrNGX8CxujPD1lKNh4hs2SH57KSk43Q_FYd4ZehVOaEEhyBKxexpUcFJhcx_eTwP-nxFEJMTagesYQpMDUlXBSk42Se-sstjpsWG"/>
+            <div class="absolute inset-0 bg-slate-900/30 dark:bg-slate-950/50 mix-blend-multiply"></div>
+            <div class="absolute inset-0 bg-gradient-to-t from-background-light via-transparent to-slate-900/40 dark:from-background-dark dark:via-transparent dark:to-slate-950/60"></div>
+            <div class="absolute inset-0 hero-gradient"></div>
+        </div>
 
-    <div id="app" class="relative z-10 flex w-full h-full">
-        <!-- 登录页面 -->
-        <div id="auth-page" class="page absolute inset-0 z-50 flex items-center justify-center">
-            <!-- 登录页背景 -->
-            <div class="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat opacity-30 pointer-events-none" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDTfaQfOqrMlb2it9V2xDJ3dtn_2NpPvDP-X3Gh9DrsrkjBfqpnH5MakWrHFllP8Y3Ls6YWmmmdEY3taYZxjpRHPSO6ub0frBg5puJEKocRb8jgTywvV7YbkaZuukcB5GWHVO8KriFle08bXK75siYgJ_SHLYmvwokSMh-4uGAXc9QuZZxx-g_vmT9fGkeNqZg8iBfI40zHVO-utZQ1nsNtzavMfPCPaXVAq5ccURyc789Ng3Pb_WgBI7FbT7XK6rIb8Is-oik83S8');"></div>
-            <div class="absolute inset-0 bg-gradient-to-br from-slate-100/90 to-slate-200/95 pointer-events-none"></div>
-
-            <div class="relative z-10 glass-panel bg-white/70 rounded-2xl p-8 md:p-10 w-full max-w-md mx-4 shadow-xl">
-                <!-- Logo -->
-                <div class="flex flex-col items-center mb-8">
-                    <img src="/logo-100.png" alt="Viral-X" class="w-16 h-16 shadow-lg shadow-orange-500/30 mb-4">
-                    <h1 class="font-display text-3xl font-semibold tracking-tight text-slate-900">Viral-X</h1>
-                    <p class="text-slate-500 text-sm mt-2 font-light">AI 驱动的 X 爆款内容创作平台</p>
+        <!-- Navigation -->
+        <nav class="relative z-20 container mx-auto px-6 py-6 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-white/10 border border-white/20 backdrop-blur-md flex items-center justify-center shadow-glass overflow-hidden">
+                    <img src="/logo-100.png" alt="Viral-X" class="w-8 h-8 object-contain">
                 </div>
-
-                <!-- 登录/注册标签 -->
-                <div class="flex space-x-1 mb-6 p-1 bg-slate-200/60 rounded-xl">
-                    <button class="tab-btn flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all duration-200 bg-white text-slate-900 shadow-sm" data-tab="login">登录</button>
-                    <button class="tab-btn flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all duration-200 text-slate-500 hover:text-slate-900" data-tab="register">注册</button>
-                </div>
-
-                <!-- 登录表单 -->
-                <form id="login-form" class="auth-form space-y-4">
-                    <div class="relative">
-                        <span class="material-icons-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-xl">person</span>
-                        <input type="text" id="login-username" placeholder="用户名" required autocomplete="username"
-                               class="w-full pl-16 pr-4 py-3 bg-white/80 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-400/20 transition-all">
-                    </div>
-                    <div class="relative">
-                        <span class="material-icons-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-xl">lock</span>
-                        <input type="password" id="login-password" placeholder="密码" required autocomplete="current-password"
-                               class="w-full pl-16 pr-4 py-3 bg-white/80 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-400/20 transition-all">
-                    </div>
-                    <button type="submit" class="w-full py-3 bg-gradient-to-r from-amber-500 to-orange-600 text-white font-medium rounded-xl hover:from-amber-600 hover:to-orange-700 transition-all duration-200 shadow-lg shadow-orange-500/20">
-                        开始创作
-                    </button>
-                    <p class="error-msg text-red-500 text-sm text-center" id="login-error"></p>
-
-                    <div class="flex items-center my-6">
-                        <div class="flex-1 h-px bg-slate-200"></div>
-                        <span class="px-4 text-slate-400 text-sm">或</span>
-                        <div class="flex-1 h-px bg-slate-200"></div>
-                    </div>
-
-                    <button type="button" class="w-full py-3 flex items-center justify-center space-x-2 bg-black rounded-xl text-white hover:bg-gray-800 transition-all duration-200" id="twitter-login-btn">
-                        <span class="text-xl font-serif">𝕏</span>
-                        <span>使用 X 登录</span>
-                    </button>
-                </form>
-
-                <!-- 注册表单 -->
-                <form id="register-form" class="auth-form space-y-4 hidden">
-                    <div class="relative">
-                        <span class="material-icons-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-xl">person</span>
-                        <input type="text" id="register-username" placeholder="用户名" required autocomplete="username"
-                               class="w-full pl-16 pr-4 py-3 bg-white/80 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-400/20 transition-all">
-                    </div>
-                    <div class="relative">
-                        <span class="material-icons-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-xl">lock</span>
-                        <input type="password" id="register-password" placeholder="密码 (至少6位)" required autocomplete="new-password"
-                               class="w-full pl-16 pr-4 py-3 bg-white/80 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-400/20 transition-all">
-                    </div>
-                    <button type="submit" class="w-full py-3 bg-gradient-to-r from-amber-500 to-orange-600 text-white font-medium rounded-xl hover:from-amber-600 hover:to-orange-700 transition-all duration-200 shadow-lg shadow-orange-500/20">
-                        创建账号
-                    </button>
-                    <p class="error-msg text-red-500 text-sm text-center" id="register-error"></p>
-                </form>
+                <span class="text-white font-display font-bold text-2xl tracking-tight text-shadow-sm">Viral-X</span>
             </div>
-        </div>
+            <div class="hidden md:flex items-center space-x-10 text-white/90 text-sm font-medium tracking-wide">
+                <a class="hover:text-white hover:scale-105 transition duration-300" href="#features">功能</a>
+                <a class="hover:text-white hover:scale-105 transition duration-300" href="#testimonials">定价</a>
+                <a class="hover:text-white hover:scale-105 transition duration-300" href="#faq">FAQ</a>
+            </div>
+            <div class="flex items-center space-x-6">
+                <a class="text-white/90 text-sm font-medium hover:text-white hidden sm:block transition" href="/login.html">登录</a>
+                <a class="text-white px-6 py-2.5 rounded-full text-sm font-semibold hover:opacity-90 transition shadow-lg" style="background-color: #D25A33;" href="/login.html">免费试用</a>
+            </div>
+        </nav>
 
-        <!-- 主应用页面（含导航） -->
-        <div id="main-app" class="page hidden w-full h-full flex">
-            <!-- PC 侧边栏导航 -->
-            <aside class="sidebar-nav w-64 h-full flex flex-col justify-between sidebar-glass border-r border-slate-200/50 transition-all duration-300" style="background: rgba(255, 255, 255, 0.4) !important;">
-                <div>
-                    <!-- Logo -->
-                    <div class="p-8 flex items-center space-x-3">
-                        <img src="/logo-100.png" alt="Viral-X" class="w-10 h-10 rounded-full shadow-lg">
-                        <h1 class="font-display text-2xl font-semibold tracking-tight" style="color: #0f172a !important;">Viral-X</h1>
-                    </div>
-                    <!-- 导航菜单 -->
-                    <nav class="px-4 space-y-1">
-                        <a class="sidebar-item group flex items-center space-x-3 px-4 py-3 rounded-xl font-medium shadow-sm transition-all duration-200" href="#" data-nav="writing" style="background: rgba(15, 23, 42, 0.05) !important; color: #0f172a !important;">
-                            <span class="material-icons-outlined text-orange-600">edit_note</span>
-                            <span>写作</span>
-                        </a>
-                        <a class="sidebar-item group flex items-center space-x-3 px-4 py-3 rounded-xl hover:bg-white/40 transition-all duration-200" href="#" data-nav="tools" style="color: #64748b !important;">
-                            <span class="material-icons-outlined text-slate-400 group-hover:text-slate-600">handyman</span>
-                            <span>工具</span>
-                        </a>
-                        <a class="sidebar-item group flex items-center space-x-3 px-4 py-3 rounded-xl hover:bg-white/40 transition-all duration-200" href="#" data-nav="profile" style="color: #64748b !important;">
-                            <span class="material-icons-outlined text-slate-400 group-hover:text-slate-600">person</span>
-                            <span>我的</span>
-                        </a>
-                    </nav>
-                </div>
-                <!-- 底部退出按钮 -->
-                <div class="p-4" style="border-top: 1px solid rgba(148, 163, 184, 0.2);">
-                    <button class="group flex items-center space-x-3 px-4 py-3 rounded-xl hover:bg-red-50 transition-all duration-200 w-full" id="sidebar-logout-btn" style="color: #64748b !important;">
-                        <span class="material-icons-outlined">logout</span>
-                        <span>退出</span>
-                    </button>
-                </div>
-            </aside>
-
-            <!-- 主内容区域 -->
-            <main class="main-content flex-1 h-full overflow-y-auto p-8 lg:p-12">
-                <!-- 写作页面 -->
-                <div id="writing-page" class="nav-page active">
-                    <div class="max-w-6xl mx-auto space-y-8">
-                        <!-- 页面头部 -->
-                        <div id="generator-header" class="flex items-center justify-between mb-8">
-                            <div>
-                                <h2 class="text-4xl mb-2" style="color: #0f172a !important; font-family: 'Playfair Display', Georgia, serif; font-weight: 600;">X 爆款生成器</h2>
-                                <p class="font-light" style="color: #64748b;">AI 驱动的爆款内容创作工具</p>
-                            </div>
-                            <button class="flex items-center space-x-2 text-sm text-slate-500 hover:text-slate-900 transition-colors" id="history-btn">
-                                <span class="material-icons-outlined text-lg">history</span>
-                                <span>历史</span>
-                            </button>
-                        </div>
-
-                        <!-- 工作流程图 -->
-                        <div id="workflow-container" class="glass-panel bg-white/60 rounded-2xl p-8 shadow-sm"></div>
-
-                        <!-- 内容区域 -->
-                        <div class="generator-content glass-panel bg-white/40 rounded-2xl p-8 lg:p-10 shadow-sm" id="generator-content">
-                            <!-- 动态渲染的页面内容 -->
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 工具页面 -->
-                <div id="tools-page" class="nav-page hidden">
-                    <div class="max-w-6xl mx-auto space-y-8">
-                        <div class="mb-8">
-                            <h2 class="font-display text-4xl mb-2" style="color: #0f172a !important;">创作工具</h2>
-                            <p class="font-light" style="color: #64748b;">提升创作效率的专业工具集</p>
-                        </div>
-                        <div class="tools-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="tools-content">
-                            <!-- 工具卡片 -->
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 我的页面 -->
-                <div id="profile-page" class="nav-page hidden">
-                    <div class="max-w-6xl mx-auto space-y-8">
-                        <div class="mb-8">
-                            <h2 class="font-display text-4xl mb-2" style="color: #0f172a !important;">我的</h2>
-                            <p class="font-light" style="color: #64748b;">账户信息与设置</p>
-                        </div>
-                        <div class="profile-content" id="profile-content">
-                            <!-- 个人信息内容 -->
-                        </div>
-                    </div>
-                </div>
-            </main>
-
-            <!-- 手机底部导航 -->
-            <nav class="bottom-nav fixed bottom-0 left-0 right-0 z-50 glass-panel bg-white/80 border-t border-slate-200/50 px-4 py-2 flex justify-around items-center md:hidden">
-                <a href="#" class="bottom-nav-item flex flex-col items-center space-y-1 py-2 px-4 rounded-xl text-slate-900" data-nav="writing">
-                    <span class="material-icons-outlined text-orange-600">edit_note</span>
-                    <span class="text-xs font-medium">写作</span>
+        <!-- Hero Content -->
+        <main class="relative z-10 flex-grow flex flex-col justify-center items-center text-center px-4 sm:px-6 lg:px-8 pt-20 pb-32">
+            <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-md mb-8 animate-fade-in-up shadow-lg">
+                <svg class="w-5 h-5 animate-pulse-scale" viewBox="0 0 24 24" fill="#1D9BF0" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M22.5 12.5c0-1.58-.875-2.95-2.148-3.6.154-.435.238-.905.238-1.4 0-2.21-1.71-3.998-3.818-3.998-.47 0-.92.084-1.336.25C14.818 2.415 13.51 1.5 12 1.5s-2.816.917-3.437 2.25c-.415-.165-.866-.25-1.336-.25-2.11 0-3.818 1.79-3.818 4 0 .494.083.964.237 1.4-1.272.65-2.147 2.018-2.147 3.6 0 1.495.782 2.798 1.942 3.486-.02.17-.032.34-.032.514 0 2.21 1.708 4 3.818 4 .47 0 .92-.086 1.335-.25.62 1.334 1.926 2.25 3.437 2.25 1.512 0 2.818-.916 3.437-2.25.415.163.865.248 1.336.248 2.11 0 3.818-1.79 3.818-4 0-.174-.012-.344-.033-.513 1.158-.687 1.943-1.99 1.943-3.484zm-6.616-3.334l-4.334 6.5c-.145.217-.382.334-.625.334-.143 0-.288-.04-.416-.126l-.115-.094-2.415-2.415c-.293-.293-.293-.768 0-1.06s.768-.294 1.06 0l1.77 1.767 3.825-5.74c.23-.345.696-.436 1.04-.207.346.23.44.696.21 1.04z"/>
+                </svg>
+                <span class="text-sm font-medium text-white tracking-widest uppercase">为蓝V新人打造</span>
+            </div>
+            <h1 class="font-display text-white mb-8 leading-tight max-w-5xl mx-auto text-shadow-lg text-4xl md:text-5xl lg:text-6xl">
+                AI 爆款创作引擎
+            </h1>
+            <p class="text-lg md:text-xl text-blue-50/80 max-w-2xl mx-auto mb-12 font-light leading-relaxed tracking-wide">
+                不知道写什么？追不上热点？模仿不了大V？<br/>从热点追踪到一键发布，全程不超过 3 分钟。
+            </p>
+            <div class="flex flex-wrap justify-center items-center gap-8 text-white/60 text-sm mb-8">
+                <span class="flex items-center gap-2"><span class="material-symbols-outlined text-emerald-400 text-base">check_circle</span> 无需绑卡</span>
+                <span class="flex items-center gap-2"><span class="material-symbols-outlined text-emerald-400 text-base">check_circle</span> 3分钟上手</span>
+                <span class="flex items-center gap-2"><span class="material-symbols-outlined text-emerald-400 text-base">check_circle</span> 支持中英文创作</span>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-5 w-full justify-center items-center">
+                <a class="text-white px-10 py-4 rounded-full font-semibold text-lg hover:opacity-90 transition-all shadow-[0_0_40px_-10px_rgba(210,90,51,0.5)] hover:shadow-[0_0_60px_-15px_rgba(210,90,51,0.6)] transform hover:-translate-y-1" style="background-color: #D25A33;" href="/login.html">
+                    免费试用 7 天
                 </a>
-                <a href="#" class="bottom-nav-item flex flex-col items-center space-y-1 py-2 px-4 rounded-xl text-slate-500 hover:text-slate-900 transition-colors" data-nav="tools">
-                    <span class="material-icons-outlined">handyman</span>
-                    <span class="text-xs">工具</span>
+                <a class="glass-panel text-white px-10 py-4 rounded-full font-semibold text-lg hover:bg-white/15 transition flex items-center justify-center gap-3 group" href="#features">
+                    <span class="material-symbols-outlined group-hover:scale-110 transition-transform">play_circle</span>
+                    了解更多
                 </a>
-                <a href="#" class="bottom-nav-item flex flex-col items-center space-y-1 py-2 px-4 rounded-xl text-slate-500 hover:text-slate-900 transition-colors" data-nav="profile">
-                    <span class="material-icons-outlined">person</span>
-                    <span class="text-xs">我的</span>
-                </a>
-            </nav>
-        </div>
+            </div>
+        </main>
     </div>
 
-    <!-- 生成器模块 -->
-    <script src="/js/generator/state.js"></script>
-    <script src="/js/generator/workflow.js"></script>
-    <script src="/js/generator/pages/home.js"></script>
-    <script src="/js/generator/pages/trends.js"></script>
-    <script src="/js/generator/pages/content.js"></script>
-    <script src="/js/generator/pages/optimize.js"></script>
-    <script src="/js/generator/pages/prompt.js"></script>
-    <script src="/js/generator/pages/image.js"></script>
-    <script src="/js/generator/pages/submit.js"></script>
-    <script src="/js/generator/pages/history.js"></script>
-    <script src="/js/generator/pages/voice-mimicker.js"></script>
-    <script src="/js/generator/index.js"></script>
-    <script src="/js/app.js"></script>
+    <!-- Pain Points Section -->
+    <section class="py-32 bg-background-light dark:bg-background-dark relative overflow-hidden">
+        <div class="absolute top-0 left-1/4 w-96 h-96 bg-blue-200/20 dark:bg-blue-900/10 rounded-full blur-[100px] pointer-events-none"></div>
+        <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-indigo-200/20 dark:bg-indigo-900/10 rounded-full blur-[100px] pointer-events-none"></div>
+        <div class="container mx-auto px-6 relative z-10">
+            <div class="text-center mb-20 scroll-animate">
+                <h2 class="font-display text-4xl md:text-5xl text-slate-900 dark:text-white mb-6">刚开通蓝V，却发现...</h2>
+                <p class="text-slate-500 dark:text-slate-400 text-lg max-w-2xl mx-auto font-light">创作路上的困境，我们都懂。</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="p-10 rounded-[2rem] glass-card shadow-glass hover:shadow-glass-dark transition-all duration-500 group hover:-translate-y-2 scroll-animate-scale stagger-1">
+                    <div class="w-16 h-16 mb-8 rounded-2xl overflow-hidden relative shadow-lg">
+                        <img alt="Abstract knot 3D" class="w-full h-full object-cover transform scale-110 group-hover:scale-125 transition duration-700" src="https://lh3.googleusercontent.com/aida-public/AB6AXuALiTQhIUQChSecU0ww21zyDt7z-zi1C6bfX9VZV-G-Q-rA14vs8-VjGaQDoVxBOvIIw85sTYRwGxzMdCzTMYk4qDoGt9Pzetgnr68WJlRuilCLyQpeDRd9DQ0MAig7Lfe1_lfMokL-GWVJMeGUCYA6xNot3RGAOmGsYpGJz1iOPJmPO9jRHRxJMRPKRmfc8P6jU_NLnAeVvdanboEd-RL6nrI12hysg7fLxvKuc_3lS_W58LUwSrZK6WZPz_KHkb6WKyyCocpHR_Dy"/>
+                        <div class="absolute inset-0 ring-1 ring-inset ring-black/10 dark:ring-white/10 rounded-2xl"></div>
+                    </div>
+                    <h3 class="font-display text-2xl font-bold text-slate-900 dark:text-white mb-4">不知道写什么</h3>
+                    <p class="text-slate-600 dark:text-slate-400 leading-relaxed font-light">盯着空白输入框，热点已经过去了</p>
+                </div>
+                <div class="p-10 rounded-[2rem] glass-card shadow-glass hover:shadow-glass-dark transition-all duration-500 group hover:-translate-y-2 scroll-animate-scale stagger-2">
+                    <div class="w-16 h-16 mb-8 rounded-2xl overflow-hidden relative shadow-lg">
+                        <img alt="Abstract fluid 3D" class="w-full h-full object-cover transform scale-110 group-hover:scale-125 transition duration-700" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDQa1Xa5f43gCA5i6GLc0rKGa9kmhRlME6KnH92bcIIu26ly5VQklxRCgjXxVARmSRxbc3QpVurV1wNryHBR1PVJ9K8KiudxHbh7Bai29nMEhVCXkdvHUj5OFUBwQivHoltD_AxkZtcSTCwaQ7MLlWgNVR_jctFExHU_0PUUxeJn0fbI_VMNkHhQfEvOrq79H1c1r_-fS5S8POxiYZ4LqGhI2p-8Fr-pam8HiSCFH-5JYK9DX9p0xbsRYsm1Yi0_3FivQLuMcHx6LMg"/>
+                        <div class="absolute inset-0 ring-1 ring-inset ring-black/10 dark:ring-white/10 rounded-2xl"></div>
+                    </div>
+                    <h3 class="font-display text-2xl font-bold text-slate-900 dark:text-white mb-4">追热点太累</h3>
+                    <p class="text-slate-600 dark:text-slate-400 leading-relaxed font-light">X 上的、国内的、各个专业领域的，根本刷不过来</p>
+                </div>
+                <div class="p-10 rounded-[2rem] glass-card shadow-glass hover:shadow-glass-dark transition-all duration-500 group hover:-translate-y-2 scroll-animate-scale stagger-3">
+                    <div class="w-16 h-16 mb-8 rounded-2xl overflow-hidden relative shadow-lg">
+                        <img alt="Abstract geometric 3D" class="w-full h-full object-cover transform scale-110 group-hover:scale-125 transition duration-700" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD6oR6dBz6VybTh_PJALulydFVqZcI_XZVwI92P0PNmjrf_R8yxpAUFn71L81EnVKCAXTHM0aylWcwstZftib4XnOpgaaRYXGoP7m6ZPn95tLHtA3QNFyWuS9gVqHZi-EE7HLlZlek3IECyaIvv21rrky7PjG_OdLLNRVjWLp2ccjEAVXxp2ieCyhXCgDVnn8Ya_x6vbNS0DNhXAxVTfO_aldUshyW5gFSNpFkDhSbtckLsbUOOFMOOm2qp3wBYGEmo3dlcFTLrpV6R"/>
+                        <div class="absolute inset-0 ring-1 ring-inset ring-black/10 dark:ring-white/10 rounded-2xl"></div>
+                    </div>
+                    <h3 class="font-display text-2xl font-bold text-slate-900 dark:text-white mb-4">写出来没人看</h3>
+                    <p class="text-slate-600 dark:text-slate-400 leading-relaxed font-light">明明很用心，互动却寥寥无几</p>
+                </div>
+            </div>
+            <p class="text-center mt-16 font-display text-2xl text-slate-700 dark:text-slate-300 scroll-animate">你需要的不是更努力，而是更聪明的工具。</p>
+        </div>
+    </section>
+
+    <!-- Solution Workflow Section -->
+    <section class="py-24 border-y border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900/30">
+        <div class="container mx-auto px-6">
+            <div class="max-w-5xl mx-auto text-center">
+                <h2 class="font-display text-3xl md:text-4xl text-slate-900 dark:text-white mb-16 scroll-animate">从热点到发布，全自动一站搞定</h2>
+                <div class="flex flex-wrap justify-center gap-6 md:gap-12 relative scroll-animate">
+                    <div class="flex flex-col items-center group cursor-default">
+                        <div class="w-24 h-24 bg-white dark:bg-slate-800 rounded-[2rem] shadow-xl flex items-center justify-center mb-6 border border-white/50 dark:border-slate-700 group-hover:scale-110 transition duration-500 relative overflow-hidden">
+                            <div class="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition duration-500"></div>
+                            <span class="material-symbols-outlined text-4xl text-slate-700 dark:text-slate-200 group-hover:text-blue-500 transition-colors">radar</span>
+                        </div>
+                        <span class="text-sm font-semibold tracking-wide text-slate-600 dark:text-slate-300 uppercase">1. 追热点</span>
+                    </div>
+                    <div class="hidden md:flex items-center text-slate-300 dark:text-slate-700 pt-6">
+                        <span class="material-symbols-outlined text-2xl">arrow_forward</span>
+                    </div>
+                    <div class="flex flex-col items-center group cursor-default">
+                        <div class="w-24 h-24 bg-white dark:bg-slate-800 rounded-[2rem] shadow-xl flex items-center justify-center mb-6 border border-white/50 dark:border-slate-700 group-hover:scale-110 transition duration-500 relative overflow-hidden">
+                            <div class="absolute inset-0 bg-gradient-to-br from-amber-500/10 to-orange-500/10 opacity-0 group-hover:opacity-100 transition duration-500"></div>
+                            <span class="material-symbols-outlined text-4xl text-slate-700 dark:text-slate-200 group-hover:text-amber-500 transition-colors">edit_note</span>
+                        </div>
+                        <span class="text-sm font-semibold tracking-wide text-slate-600 dark:text-slate-300 uppercase">2. 写内容</span>
+                    </div>
+                    <div class="hidden md:flex items-center text-slate-300 dark:text-slate-700 pt-6">
+                        <span class="material-symbols-outlined text-2xl">arrow_forward</span>
+                    </div>
+                    <div class="flex flex-col items-center group cursor-default">
+                        <div class="w-24 h-24 bg-white dark:bg-slate-800 rounded-[2rem] shadow-xl flex items-center justify-center mb-6 border border-white/50 dark:border-slate-700 group-hover:scale-110 transition duration-500 relative overflow-hidden">
+                            <div class="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-teal-500/10 opacity-0 group-hover:opacity-100 transition duration-500"></div>
+                            <span class="material-symbols-outlined text-4xl text-slate-700 dark:text-slate-200 group-hover:text-emerald-500 transition-colors">auto_fix_high</span>
+                        </div>
+                        <span class="text-sm font-semibold tracking-wide text-slate-600 dark:text-slate-300 uppercase">3. 爆款优化</span>
+                    </div>
+                    <div class="hidden md:flex items-center text-slate-300 dark:text-slate-700 pt-6">
+                        <span class="material-symbols-outlined text-2xl">arrow_forward</span>
+                    </div>
+                    <div class="flex flex-col items-center group cursor-default">
+                        <div class="w-24 h-24 bg-white dark:bg-slate-800 rounded-[2rem] shadow-xl flex items-center justify-center mb-6 border border-white/50 dark:border-slate-700 group-hover:scale-110 transition duration-500 relative overflow-hidden">
+                            <div class="absolute inset-0 bg-gradient-to-br from-rose-500/10 to-pink-500/10 opacity-0 group-hover:opacity-100 transition duration-500"></div>
+                            <span class="material-symbols-outlined text-4xl text-slate-700 dark:text-slate-200 group-hover:text-rose-500 transition-colors">rocket_launch</span>
+                        </div>
+                        <span class="text-sm font-semibold tracking-wide text-slate-600 dark:text-slate-300 uppercase">4. 一键发布</span>
+                    </div>
+                </div>
+                <p class="mt-12 text-slate-600 dark:text-slate-400 text-lg max-w-2xl mx-auto font-light">
+                    AI 帮你追踪 X、国内、专业领域三大热点源，生成内容，模仿大V风格，优化成爆款，配上精美图片，一键发到你的推特。
+                </p>
+                <div class="mt-10">
+                    <span class="inline-block bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-8 py-3 rounded-full font-semibold shadow-lg">
+                        全程不超过 3 分钟
+                    </span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="py-32 bg-background-light dark:bg-background-dark overflow-hidden" id="features">
+        <div class="container mx-auto px-6 relative z-10">
+            <div class="text-center mb-20 max-w-3xl mx-auto scroll-animate">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-100/50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 text-xs font-bold uppercase tracking-widest mb-6">
+                    Why Viral-X?
+                </div>
+                <h2 class="font-display text-4xl md:text-5xl text-slate-900 dark:text-white mb-6">为什么选择我们？</h2>
+                <p class="text-slate-600 dark:text-slate-400 text-lg font-light">
+                    五大核心引擎，助你从零到爆款。
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-6 gap-6">
+                <!-- Feature 1: Large Card -->
+                <div class="group relative md:col-span-3 h-[480px] rounded-[2.5rem] overflow-hidden shadow-2xl transition-all duration-500 hover:-translate-y-2 scroll-animate-left stagger-1">
+                    <img alt="AI Generation" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBIUAZZH-D9jsyp44tYMDlHcCutYreyrWGesIuOcqfAYrj2kNrVMUVVlbyDolQmjIUWXH43SZ2AocpgwZ4St4Vl6i7-tT6pIDT-63cnkszmAMmf840trfQ8M5FAcsESlBJyyhxn4ner45pxTIFWEW9u6qLlQEjMiOmlkjhvchpcIQHO4FrPIZm5GsYUERgVuJO1Mdyvc1codKECQChHPX6qBPaTez1V8hXar9TsYtZZY2A9FaCacydbKJ4Wz8R3rRWatArvaCirajUN"/>
+                    <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/20 to-transparent opacity-90"></div>
+                    <div class="absolute bottom-0 left-0 p-8 md:p-10 w-full">
+                        <div class="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center mb-6 shadow-glow">
+                            <span class="material-symbols-outlined text-amber-300 text-2xl">local_fire_department</span>
+                        </div>
+                        <h3 class="font-display text-3xl text-white mb-3">追踪全网热点</h3>
+                        <p class="text-white/70 text-lg font-light leading-relaxed">
+                            X 24小时实时趋势 + 中国热点（微博、知乎、B站）+ 专业领域 KOL 动态。热点自动送到你面前。
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Feature 2: Large Card -->
+                <div class="group relative md:col-span-3 h-[480px] rounded-[2.5rem] overflow-hidden shadow-2xl transition-all duration-500 hover:-translate-y-2 scroll-animate-right stagger-2">
+                    <img alt="Efficiency" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD6oR6dBz6VybTh_PJALulydFVqZcI_XZVwI92P0PNmjrf_R8yxpAUFn71L81EnVKCAXTHM0aylWcwstZftib4XnOpgaaRYXGoP7m6ZPn95tLHtA3QNFyWuS9gVqHZi-EE7HLlZlek3IECyaIvv21rrky7PjG_OdLLNRVjWLp2ccjEAVXxp2ieCyhXCgDVnn8Ya_x6vbNS0DNhXAxVTfO_aldUshyW5gFSNpFkDhSbtckLsbUOOFMOOm2qp3wBYGEmo3dlcFTLrpV6R"/>
+                    <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/20 to-transparent opacity-90"></div>
+                    <div class="absolute bottom-0 left-0 p-8 md:p-10 w-full">
+                        <div class="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center mb-6 shadow-glow">
+                            <span class="material-symbols-outlined text-emerald-300 text-2xl">edit_note</span>
+                        </div>
+                        <h3 class="font-display text-3xl text-white mb-3">输入选题，输出成品</h3>
+                        <p class="text-white/70 text-lg font-light leading-relaxed">
+                            只需提供话题或素材，AI 直接生成可发布的推文。从空白到成品，几秒钟完成。
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Feature 3: Small Card -->
+                <div class="group relative md:col-span-2 h-[420px] rounded-[2.5rem] overflow-hidden shadow-2xl transition-all duration-500 hover:-translate-y-2 scroll-animate-scale stagger-1">
+                    <img alt="Voice Mimicking" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAx4SpyhARgLCOKn9NQQrNF7GFsyQdnWS4yUJZhe-YYow_j1L6ubNruiTQtjRnBKpGLalimSIXpnhwjNfJlsCm8o8-0UDdKPLymafmDwMXZ7PYnCzfSWAsUifJDHwbW6TJMVodyx1QVL1j7YdXGfItW0Kw8MYn80XoT5fwb7q5qdWF5UUsEgShN5HfwDO58gHgeIIQ8FgyEv4QIvy5gDSMQ8G7i3mbLBQ8YA4ZIbI020Pn5WOPva1eFQaZE2jaXuIWLHtgaugneG1Hh"/>
+                    <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/20 to-transparent opacity-90"></div>
+                    <div class="absolute bottom-0 left-0 p-8 w-full">
+                        <div class="w-10 h-10 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center mb-4 shadow-glow">
+                            <span class="material-symbols-outlined text-purple-300 text-xl">theater_comedy</span>
+                        </div>
+                        <h3 class="font-display text-2xl text-white mb-2">像大V一样写作</h3>
+                        <p class="text-white/70 text-sm font-light leading-relaxed">
+                            选择你欣赏的推主风格，AI 帮你模仿他们的语气。
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Feature 4: Small Card -->
+                <div class="group relative md:col-span-2 h-[420px] rounded-[2.5rem] overflow-hidden shadow-2xl transition-all duration-500 hover:-translate-y-2 scroll-animate-scale stagger-2">
+                    <img alt="Viral Optimization" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCjSDgD1s47ZqE-KyzuFZzGKKzqn5X08g0eBsKAwwiw6rUUy5fcXYeYVZWP3XWTU0I_26yMojs1uwIAe6doO-h3iF68FJOC_bYxeZhJfqkVEL9bmT6ppNOhm3bobnIvYH-TNIytcA9ko0vcSfs7c3tVDOUmrmHepkhETUeOXIVjQaBfDpdHSmbg_HMlXbz-Ts3BGgxCc9mWz6oQOUe7DD7zakrYmtJCR60QynqPYOiUPpbsbfxjSwgHOBki-c3NxmG4a9PvOpPVg1ay"/>
+                    <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/20 to-transparent opacity-90"></div>
+                    <div class="absolute bottom-0 left-0 p-8 w-full">
+                        <div class="w-10 h-10 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center mb-4 shadow-glow">
+                            <span class="material-symbols-outlined text-rose-300 text-xl">trending_up</span>
+                        </div>
+                        <h3 class="font-display text-2xl text-white mb-2">优化到能火为止</h3>
+                        <p class="text-white/70 text-sm font-light leading-relaxed">
+                            六维度评分分析，给出优化建议，自动生成配图。
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Feature 5: Small Card -->
+                <div class="group relative md:col-span-2 h-[420px] rounded-[2.5rem] overflow-hidden shadow-2xl transition-all duration-500 hover:-translate-y-2 scroll-animate-scale stagger-3">
+                    <img alt="One-Click Publish" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDQa1Xa5f43gCA5i6GLc0rKGa9kmhRlME6KnH92bcIIu26ly5VQklxRCgjXxVARmSRxbc3QpVurV1wNryHBR1PVJ9K8KiudxHbh7Bai29nMEhVCXkdvHUj5OFUBwQivHoltD_AxkZtcSTCwaQ7MLlWgNVR_jctFExHU_0PUUxeJn0fbI_VMNkHhQfEvOrq79H1c1r_-fS5S8POxiYZ4LqGhI2p-8Fr-pam8HiSCFH-5JYK9DX9p0xbsRYsm1Yi0_3FivQLuMcHx6LMg"/>
+                    <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/20 to-transparent opacity-90"></div>
+                    <div class="absolute bottom-0 left-0 p-8 w-full">
+                        <div class="w-10 h-10 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center mb-4 shadow-glow">
+                            <span class="material-symbols-outlined text-blue-300 text-xl">rocket_launch</span>
+                        </div>
+                        <h3 class="font-display text-2xl text-white mb-2">直达推特</h3>
+                        <p class="text-white/70 text-sm font-light leading-relaxed">
+                            不用复制粘贴，写完直接发。Twitter OAuth 授权，安全可靠。
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials Section -->
+    <section class="py-24 bg-slate-900 text-white relative overflow-hidden" id="testimonials">
+        <div class="absolute top-0 left-0 w-full h-full overflow-hidden">
+            <img alt="Night Sky" class="w-full h-full object-cover opacity-20 blur-sm" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBtT820RhHbD-DgUAcfz5kcfxdzvbfJCYUROt9Ko1BIzZgPrCbLo6kBY8RqxC41XUGNleFN6Bww7KcC8FsoSJuYyP8UfISPOQUt-FrIRe-dxUZ6VMs-TzRquvV4KDHmDpigRRnxb1T7t9lAtVUj-flT5AlozhUyK_KtFscLULWdRHkxc_oImwYtsPtO7KdOM16FpNfuWC2DKjMsjWqr8T1j8cuyFQKLOAs4bg9Fs3NMXLkWtCVUgWz5vMO_77tr8pBtk64--LXFithn"/>
+            <div class="absolute inset-0 bg-gradient-to-b from-slate-900 via-transparent to-slate-900"></div>
+        </div>
+        <div class="container mx-auto px-6 relative z-10">
+            <div class="text-center mb-20 scroll-animate">
+                <h2 class="font-display text-4xl mb-4 text-white">他们已经在用</h2>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-20">
+                <div class="bg-white/5 backdrop-blur-md border border-white/10 p-8 rounded-3xl text-center hover:bg-white/10 transition duration-300 scroll-animate-scale stagger-1">
+                    <div class="text-5xl font-display font-bold mb-3 text-blue-300">10k+</div>
+                    <div class="text-white/50 text-xs uppercase tracking-widest font-medium">篇内容已生成</div>
+                </div>
+                <div class="bg-white/5 backdrop-blur-md border border-white/10 p-8 rounded-3xl text-center hover:bg-white/10 transition duration-300 scroll-animate-scale stagger-2">
+                    <div class="text-5xl font-display font-bold mb-3 text-purple-300">500+</div>
+                    <div class="text-white/50 text-xs uppercase tracking-widest font-medium">创作者正在使用</div>
+                </div>
+                <div class="bg-white/5 backdrop-blur-md border border-white/10 p-8 rounded-3xl text-center hover:bg-white/10 transition duration-300 scroll-animate-scale stagger-3">
+                    <div class="text-5xl font-display font-bold mb-3 text-emerald-300">3 Min</div>
+                    <div class="text-white/50 text-xs uppercase tracking-widest font-medium">平均创作时间</div>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-slate-800/50 p-8 rounded-2xl border border-white/5 hover:border-white/20 transition duration-300 backdrop-blur-sm scroll-animate stagger-1">
+                    <p class="italic text-slate-300 mb-6 font-light leading-relaxed">"以前发一条推要想半天，现在从找热点到发布只要几分钟。"</p>
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full"></div>
+                        <div class="text-sm">
+                            <div class="font-bold text-white">新晋蓝V创作者</div>
+                            <div class="text-white/40 text-xs uppercase tracking-wide">@creator2024</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-slate-800/50 p-8 rounded-2xl border border-white/5 hover:border-white/20 transition duration-300 backdrop-blur-sm scroll-animate stagger-2">
+                    <p class="text-slate-300 mb-6 font-light leading-relaxed">"语气模仿器太神了，终于知道大V的帖子为什么火了。"</p>
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 bg-gradient-to-br from-purple-400 to-purple-600 rounded-full"></div>
+                        <div class="text-sm">
+                            <div class="font-bold text-white">Web3 内容创作者</div>
+                            <div class="text-white/40 text-xs uppercase tracking-wide">@web3writer</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-slate-800/50 p-8 rounded-2xl border border-white/5 hover:border-white/20 transition duration-300 backdrop-blur-sm scroll-animate stagger-3">
+                    <p class="text-slate-300 mb-6 font-light leading-relaxed">"中英文热点都能追，做跨境内容的福音。"</p>
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-full"></div>
+                        <div class="text-sm">
+                            <div class="font-bold text-white">跨境营销博主</div>
+                            <div class="text-white/40 text-xs uppercase tracking-wide">@globalmarketer</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="py-24 bg-background-light dark:bg-background-dark" id="faq">
+        <div class="container mx-auto px-6 max-w-3xl">
+            <h2 class="font-display text-4xl text-center text-slate-900 dark:text-white mb-16 scroll-animate">常见问题</h2>
+            <div class="space-y-4 scroll-animate" id="faq-list">
+                <div class="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden group faq-item">
+                    <button class="w-full px-8 py-5 text-left bg-white dark:bg-slate-900/40 flex justify-between items-center focus:outline-none transition group-hover:bg-slate-50 dark:group-hover:bg-slate-800/60 faq-question">
+                        <span class="font-medium text-slate-900 dark:text-white text-lg">需要自己写内容吗？</span>
+                        <span class="material-symbols-outlined text-slate-400 group-hover:text-slate-600 transition faq-icon">expand_more</span>
+                    </button>
+                    <div class="faq-answer hidden">
+                        <p class="px-8 pb-5 text-slate-600 dark:text-slate-400 font-light leading-relaxed">不需要。你只需选择感兴趣的热点话题，AI 会自动生成完整推文。当然，你也可以提供自己的素材让 AI 加工。</p>
+                    </div>
+                </div>
+                <div class="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden group faq-item">
+                    <button class="w-full px-8 py-5 text-left bg-white dark:bg-slate-900/40 flex justify-between items-center focus:outline-none transition group-hover:bg-slate-50 dark:group-hover:bg-slate-800/60 faq-question">
+                        <span class="font-medium text-slate-900 dark:text-white text-lg">可以模仿任何推主的风格吗？</span>
+                        <span class="material-symbols-outlined text-slate-400 group-hover:text-slate-600 transition faq-icon">expand_more</span>
+                    </button>
+                    <div class="faq-answer hidden">
+                        <p class="px-8 pb-5 text-slate-600 dark:text-slate-400 font-light leading-relaxed">可以。输入你喜欢的推主账号，系统会分析其写作风格并生成模仿 Prompt。你也可以从市场订阅其他用户分享的风格模板。</p>
+                    </div>
+                </div>
+                <div class="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden group faq-item">
+                    <button class="w-full px-8 py-5 text-left bg-white dark:bg-slate-900/40 flex justify-between items-center focus:outline-none transition group-hover:bg-slate-50 dark:group-hover:bg-slate-800/60 faq-question">
+                        <span class="font-medium text-slate-900 dark:text-white text-lg">支持发布到其他平台吗？</span>
+                        <span class="material-symbols-outlined text-slate-400 group-hover:text-slate-600 transition faq-icon">expand_more</span>
+                    </button>
+                    <div class="faq-answer hidden">
+                        <p class="px-8 pb-5 text-slate-600 dark:text-slate-400 font-light leading-relaxed">目前仅支持一键发布到 X（Twitter）。其他平台支持正在开发中。</p>
+                    </div>
+                </div>
+                <div class="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden group faq-item">
+                    <button class="w-full px-8 py-5 text-left bg-white dark:bg-slate-900/40 flex justify-between items-center focus:outline-none transition group-hover:bg-slate-50 dark:group-hover:bg-slate-800/60 faq-question">
+                        <span class="font-medium text-slate-900 dark:text-white text-lg">我的 Twitter 账号安全吗？</span>
+                        <span class="material-symbols-outlined text-slate-400 group-hover:text-slate-600 transition faq-icon">expand_more</span>
+                    </button>
+                    <div class="faq-answer hidden">
+                        <p class="px-8 pb-5 text-slate-600 dark:text-slate-400 font-light leading-relaxed">完全安全。我们使用 Twitter 官方 OAuth 2.0 授权，不会获取你的密码，你可以随时在 Twitter 设置中撤销授权。</p>
+                    </div>
+                </div>
+                <div class="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden group faq-item">
+                    <button class="w-full px-8 py-5 text-left bg-white dark:bg-slate-900/40 flex justify-between items-center focus:outline-none transition group-hover:bg-slate-50 dark:group-hover:bg-slate-800/60 faq-question">
+                        <span class="font-medium text-slate-900 dark:text-white text-lg">免费试用有什么限制？</span>
+                        <span class="material-symbols-outlined text-slate-400 group-hover:text-slate-600 transition faq-icon">expand_more</span>
+                    </button>
+                    <div class="faq-answer hidden">
+                        <p class="px-8 pb-5 text-slate-600 dark:text-slate-400 font-light leading-relaxed">试用期内可使用全部功能，无功能限制。试用结束后可选择订阅继续使用。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-32 bg-slate-100 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 relative overflow-hidden">
+        <div class="absolute inset-0 opacity-30 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
+        <div class="container mx-auto px-6 text-center relative z-10">
+            <h2 class="font-display text-5xl md:text-6xl text-slate-900 dark:text-white mb-8 tracking-tight scroll-animate">准备好写出你的第一条爆款了吗？</h2>
+            <p class="text-slate-600 dark:text-slate-400 text-xl mb-12 max-w-2xl mx-auto font-light scroll-animate stagger-1">免费试用 7 天，无需绑卡，随时取消。</p>
+            <a href="/login.html" class="inline-block text-white px-12 py-5 rounded-full font-bold text-lg shadow-2xl transition transform hover:-translate-y-1 hover:opacity-90 scroll-animate-scale stagger-2" style="background-color: #D25A33;">
+                立即免费试用
+            </a>
+            <p class="mt-8 text-sm text-slate-500 dark:text-slate-500 flex justify-center gap-8 flex-wrap">
+                <span class="flex items-center"><span class="material-symbols-outlined text-sm mr-2 text-emerald-500">check</span> 3分钟完成注册</span>
+                <span class="flex items-center"><span class="material-symbols-outlined text-sm mr-2 text-emerald-500">check</span> 支持 Twitter 一键登录</span>
+                <span class="flex items-center"><span class="material-symbols-outlined text-sm mr-2 text-emerald-500">check</span> 试用期全部功能</span>
+            </p>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-background-light dark:bg-slate-950 py-16 border-t border-slate-200 dark:border-slate-900">
+        <div class="container mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8">
+            <div class="flex items-center gap-2">
+                <img src="/logo-100.png" alt="Viral-X" class="w-6 h-6 object-contain">
+                <span class="font-display font-bold text-xl text-slate-900 dark:text-white">Viral-X</span>
+            </div>
+            <div class="flex gap-10 text-sm font-medium text-slate-600 dark:text-slate-400">
+                <a class="hover:text-slate-900 dark:hover:text-white transition" href="#features">功能</a>
+                <a class="hover:text-slate-900 dark:hover:text-white transition" href="#testimonials">定价</a>
+                <a class="hover:text-slate-900 dark:hover:text-white transition" href="#faq">FAQ</a>
+                <a class="hover:text-slate-900 dark:hover:text-white transition" href="#">联系我们</a>
+            </div>
+            <div class="text-xs text-slate-400 dark:text-slate-600">
+                © 2026 Viral-X. All rights reserved.
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // FAQ Accordion
+        document.querySelectorAll('.faq-question').forEach(button => {
+            button.addEventListener('click', () => {
+                const item = button.parentElement;
+                const answer = item.querySelector('.faq-answer');
+                const icon = item.querySelector('.faq-icon');
+                const isOpen = !answer.classList.contains('hidden');
+
+                // Close all
+                document.querySelectorAll('.faq-answer').forEach(a => a.classList.add('hidden'));
+                document.querySelectorAll('.faq-icon').forEach(i => i.style.transform = 'rotate(0deg)');
+
+                // Toggle current
+                if (!isOpen) {
+                    answer.classList.remove('hidden');
+                    icon.style.transform = 'rotate(180deg)';
+                }
+            });
+        });
+
+        // Scroll Animation with Intersection Observer
+        const scrollAnimateElements = document.querySelectorAll('.scroll-animate, .scroll-animate-left, .scroll-animate-right, .scroll-animate-scale');
+
+        const observerOptions = {
+            root: null,
+            rootMargin: '0px',
+            threshold: 0.15
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('animate-in');
+                }
+            });
+        }, observerOptions);
+
+        scrollAnimateElements.forEach(el => observer.observe(el));
+    </script>
 </body>
 </html>

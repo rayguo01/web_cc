@@ -44,7 +44,6 @@ class WorkflowComponent {
             '🔥': 'local_fire_department',  // 热帖抓取
             '✍️': 'edit',                   // 生成内容
             '🚀': 'auto_fix_high',          // 优化内容
-            '📝': 'lightbulb',              // 图片描述
             '🖼️': 'image',                  // 生成图片
             '📤': 'send'                    // 提交发布
         };

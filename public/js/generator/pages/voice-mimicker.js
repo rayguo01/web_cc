@@ -22,7 +22,7 @@ class VoiceMimickerPage {
                         ← 返回
                     </button>
                     <div class="page-title">
-                        <span>🎭</span> 语气模仿器
+                        <span class="material-icons-outlined" style="color: #f97316;">theater_comedy</span> 语气模仿器
                     </div>
                 </div>
 
@@ -64,10 +64,54 @@ class VoiceMimickerPage {
                     </div>
                     <div class="modal-footer" id="modal-footer">
                         <button class="btn btn-ghost" id="copy-prompt-btn">
-                            📋 复制 Prompt
+                            <span class="material-icons-outlined" style="font-size: 18px; vertical-align: middle;">content_copy</span> 复制 Prompt
                         </button>
                         <button class="btn btn-danger" id="delete-prompt-btn">
-                            🗑️ 删除
+                            <span class="material-icons-outlined" style="font-size: 18px; vertical-align: middle;">delete</span> 删除
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 创建生成器弹窗 -->
+            <div class="create-modal hidden" id="create-modal">
+                <div class="modal-overlay"></div>
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <div class="modal-title">
+                            <span class="material-icons-outlined" style="color: #f97316; margin-right: 8px;">auto_awesome</span>
+                            创建新语气模仿器
+                        </div>
+                        <button class="modal-close" id="create-modal-close">×</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="create-form" id="create-form">
+                            <p class="form-description">输入 Twitter 用户名，将抓取该用户最近的推文并分析其写作风格</p>
+                            <div class="input-row">
+                                <div class="input-wrapper">
+                                    <span class="input-prefix">@</span>
+                                    <input type="text"
+                                           id="twitter-username"
+                                           class="username-input"
+                                           placeholder="输入 Twitter 用户名"
+                                           autocomplete="off">
+                                </div>
+                            </div>
+                        </div>
+                        <!-- 分析进度 -->
+                        <div class="analyze-progress hidden" id="analyze-progress">
+                            <div class="progress-header">
+                                <div class="loading-spinner"></div>
+                                <span id="progress-text">正在分析...</span>
+                            </div>
+                            <div class="log-output" id="analyze-log"></div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-ghost" id="create-modal-cancel">取消</button>
+                        <button class="btn btn-primary" id="analyze-btn">
+                            <span class="material-icons-outlined" style="font-size: 18px; vertical-align: middle;">psychology</span>
+                            开始分析
                         </button>
                     </div>
                 </div>
@@ -79,9 +123,8 @@ class VoiceMimickerPage {
     }
 
     bindEvents(container) {
-        // 返回按钮 - 返回到工具页面并更新导航
+        // 返回按钮 - 返回到创作工具页面
         container.querySelector('#back-to-home').addEventListener('click', () => {
-            // 更新导航到工具页面
             if (window.app) {
                 window.app.navigateTo('tools');
             }
@@ -102,12 +145,35 @@ class VoiceMimickerPage {
             });
         });
 
-        // 弹窗关闭
+        // Prompt 详情弹窗关闭
         container.querySelector('#modal-close').addEventListener('click', () => {
             this.closeModal();
         });
-        container.querySelector('.modal-overlay').addEventListener('click', () => {
+        container.querySelector('#prompt-modal .modal-overlay').addEventListener('click', () => {
             this.closeModal();
+        });
+
+        // 创建弹窗事件
+        container.querySelector('#create-modal-close').addEventListener('click', () => {
+            this.closeCreateModal();
+        });
+        container.querySelector('#create-modal-cancel').addEventListener('click', () => {
+            this.closeCreateModal();
+        });
+        container.querySelector('#create-modal .modal-overlay').addEventListener('click', () => {
+            if (!this.isAnalyzing) {
+                this.closeCreateModal();
+            }
+        });
+
+        // 分析按钮
+        container.querySelector('#analyze-btn').addEventListener('click', () => {
+            this.startAnalysis();
+        });
+        container.querySelector('#twitter-username').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                this.startAnalysis();
+            }
         });
     }
 
@@ -186,7 +252,7 @@ class VoiceMimickerPage {
         if (items.length === 0) {
             grid.innerHTML = `
                 <div class="empty-market">
-                    <span class="empty-icon">🏪</span>
+                    <span class="empty-icon"><span class="material-icons-outlined" style="font-size: 48px;">storefront</span></span>
                     <p>市场暂无内容</p>
                     <p class="empty-hint">成为第一个开放语气模仿器的人吧！</p>
                 </div>
@@ -221,6 +287,8 @@ class VoiceMimickerPage {
         const role = item.role || '风格模仿器';
         const traits = item.core_traits ? (typeof item.core_traits === 'string' ? JSON.parse(item.core_traits) : item.core_traits) : [];
         const traitsHtml = traits.slice(0, 3).map(t => `<span class="trait-tag">${t}</span>`).join('');
+        const domains = item.domains ? (typeof item.domains === 'string' ? JSON.parse(item.domains) : item.domains) : [];
+        const domainsHtml = domains.map(d => `<span class="domain-tag">${d}</span>`).join('');
 
         const isOwner = item.is_owner;
         const isSubscribed = item.is_subscribed;
@@ -238,6 +306,7 @@ class VoiceMimickerPage {
                             <span class="card-role">${role}</span>
                         </div>
                     </div>
+                    ${domainsHtml ? `<div class="card-domains">${domainsHtml}</div>` : ''}
                     <div class="card-traits">${traitsHtml || '<span class="trait-tag">暂无特质</span>'}</div>
                     <div class="card-stats">
                         <span>使用 ${item.usage_count || 0} 次</span>
@@ -287,44 +356,15 @@ class VoiceMimickerPage {
         const content = document.getElementById('vm-content');
         content.innerHTML = `
             <div class="vm-mine">
-                <!-- 创建新生成器 -->
-                <div class="create-section">
-                    <div class="section-header">
-                        <span class="section-icon">✨</span>
-                        <span class="section-title">创建新生成器</span>
-                    </div>
-                    <div class="input-row">
-                        <div class="input-wrapper">
-                            <span class="input-prefix">@</span>
-                            <input type="text"
-                                   id="twitter-username"
-                                   class="username-input"
-                                   placeholder="输入 Twitter 用户名"
-                                   autocomplete="off">
-                        </div>
-                        <button class="btn btn-primary" id="analyze-btn">
-                            开始分析
-                        </button>
-                    </div>
-                    <p class="input-hint">
-                        将抓取该用户最近的推文，分析其写作风格
-                    </p>
-                </div>
-
-                <!-- 分析进度 -->
-                <div class="analyze-progress hidden" id="analyze-progress">
-                    <div class="progress-header">
-                        <div class="loading-spinner"></div>
-                        <span id="progress-text">正在分析...</span>
-                    </div>
-                    <div class="log-output" id="analyze-log"></div>
-                </div>
-
                 <!-- 我的生成器列表 -->
                 <div class="my-prompts-section">
                     <div class="section-header">
-                        <span class="section-icon">📚</span>
-                        <span class="section-title">我的生成器</span>
+                        <span class="section-icon"><span class="material-icons-outlined" style="font-size: 20px; vertical-align: middle;">collections_bookmark</span></span>
+                        <span class="section-title">我的语气模仿器</span>
+                        <button class="btn btn-sm btn-create-voice" id="create-generator-btn">
+                            <span class="material-icons-outlined" style="font-size: 16px; vertical-align: middle;">add</span>
+                            创建语气模仿器
+                        </button>
                     </div>
                     <div class="my-prompts-grid" id="my-prompts-grid">
                         <div class="loading-state">
@@ -337,7 +377,7 @@ class VoiceMimickerPage {
                 <!-- 我订阅的 -->
                 <div class="subscribed-section">
                     <div class="section-header">
-                        <span class="section-icon">⭐</span>
+                        <span class="section-icon"><span class="material-icons-outlined" style="font-size: 20px; vertical-align: middle; color: #f59e0b;">star</span></span>
                         <span class="section-title">我订阅的</span>
                     </div>
                     <div class="subscribed-grid" id="subscribed-grid">
@@ -350,14 +390,9 @@ class VoiceMimickerPage {
             </div>
         `;
 
-        // 绑定分析事件
-        document.getElementById('analyze-btn').addEventListener('click', () => {
-            this.startAnalysis();
-        });
-        document.getElementById('twitter-username').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                this.startAnalysis();
-            }
+        // 绑定创建按钮点击事件
+        document.getElementById('create-generator-btn').addEventListener('click', () => {
+            this.openCreateModal();
         });
 
         await Promise.all([
@@ -384,11 +419,15 @@ class VoiceMimickerPage {
         if (this.myPrompts.length === 0) {
             grid.innerHTML = `
                 <div class="empty-prompts">
-                    <span class="empty-icon">📝</span>
-                    <p>还没有创建生成器</p>
-                    <p class="empty-hint">输入推主用户名开始分析</p>
+                    <span class="empty-icon"><span class="material-icons-outlined" style="font-size: 48px;">edit_note</span></span>
+                    <p>还没有创建语气模仿器</p>
+                    <p class="empty-hint">点击 <a href="javascript:void(0)" class="create-link" id="empty-create-btn">+</a> 开始创建</p>
                 </div>
             `;
+            // 绑定空状态的创建链接点击事件
+            grid.querySelector('#empty-create-btn')?.addEventListener('click', () => {
+                this.openCreateModal();
+            });
             return;
         }
 
@@ -428,6 +467,8 @@ class VoiceMimickerPage {
         const role = item.role || '风格模仿器';
         const traits = item.core_traits ? (typeof item.core_traits === 'string' ? JSON.parse(item.core_traits) : item.core_traits) : [];
         const traitsHtml = traits.slice(0, 3).map(t => `<span class="trait-tag">${t}</span>`).join('');
+        const domains = item.domains ? (typeof item.domains === 'string' ? JSON.parse(item.domains) : item.domains) : [];
+        const domainsHtml = domains.map(d => `<span class="domain-tag">${d}</span>`).join('');
 
         return `
             <div class="my-prompt-card" data-id="${item.id}">
@@ -443,6 +484,7 @@ class VoiceMimickerPage {
                         </div>
                         ${isPublic ? '<span class="public-status">已开放</span>' : ''}
                     </div>
+                    ${domainsHtml ? `<div class="card-domains">${domainsHtml}</div>` : ''}
                     <div class="card-traits">${traitsHtml || '<span class="trait-tag">暂无特质</span>'}</div>
                     <div class="card-stats">
                         <span>使用 ${item.usage_count || 0} 次</span>
@@ -498,7 +540,7 @@ class VoiceMimickerPage {
         if (this.subscribedPrompts.length === 0) {
             grid.innerHTML = `
                 <div class="empty-prompts">
-                    <span class="empty-icon">⭐</span>
+                    <span class="empty-icon"><span class="material-icons-outlined" style="font-size: 48px; color: #f59e0b;">star</span></span>
                     <p>还没有订阅</p>
                     <p class="empty-hint">
                         <a href="javascript:void(0)" class="link-to-market" id="go-to-market">去市场看看 →</a>
@@ -537,6 +579,8 @@ class VoiceMimickerPage {
         const role = item.role || '风格模仿器';
         const traits = item.core_traits ? (typeof item.core_traits === 'string' ? JSON.parse(item.core_traits) : item.core_traits) : [];
         const traitsHtml = traits.slice(0, 3).map(t => `<span class="trait-tag">${t}</span>`).join('');
+        const domains = item.domains ? (typeof item.domains === 'string' ? JSON.parse(item.domains) : item.domains) : [];
+        const domainsHtml = domains.map(d => `<span class="domain-tag">${d}</span>`).join('');
 
         return `
             <div class="subscribed-card" data-id="${item.id}">
@@ -551,6 +595,7 @@ class VoiceMimickerPage {
                             <span class="card-role">${role}</span>
                         </div>
                     </div>
+                    ${domainsHtml ? `<div class="card-domains">${domainsHtml}</div>` : ''}
                     <div class="card-traits">${traitsHtml || '<span class="trait-tag">暂无特质</span>'}</div>
                     <div class="card-stats">
                         <span>使用 ${item.usage_count || 0} 次</span>
@@ -592,10 +637,13 @@ class VoiceMimickerPage {
         this.isAnalyzing = true;
         const analyzeBtn = document.getElementById('analyze-btn');
         analyzeBtn.disabled = true;
-        analyzeBtn.textContent = '分析中...';
+        analyzeBtn.innerHTML = '<span class="loading-spinner-small"></span> 分析中...';
 
+        // 隐藏表单，显示进度
+        const form = document.getElementById('create-form');
         const progressSection = document.getElementById('analyze-progress');
         const logOutput = document.getElementById('analyze-log');
+        form.classList.add('hidden');
         progressSection.classList.remove('hidden');
         logOutput.innerHTML = '';
 
@@ -637,7 +685,7 @@ class VoiceMimickerPage {
         } finally {
             this.isAnalyzing = false;
             analyzeBtn.disabled = false;
-            analyzeBtn.textContent = '开始分析';
+            analyzeBtn.innerHTML = '<span class="material-icons-outlined" style="font-size: 18px; vertical-align: middle;">psychology</span> 开始分析';
         }
     }
 
@@ -657,24 +705,21 @@ class VoiceMimickerPage {
 
             case 'done':
                 progressText.textContent = '分析完成！';
-                this.appendLog('✅ ' + data.message, 'success');
+                this.appendLog('[完成] ' + data.message, 'success');
                 this.generator.showToast('分析完成！', 'success');
 
                 // 刷新我的列表
                 this.loadMyPrompts();
 
-                // 清空输入框
-                document.getElementById('twitter-username').value = '';
-
-                // 隐藏进度区域
+                // 延迟关闭弹窗
                 setTimeout(() => {
-                    document.getElementById('analyze-progress').classList.add('hidden');
-                }, 2000);
+                    document.getElementById('create-modal').classList.add('hidden');
+                }, 1500);
                 break;
 
             case 'error':
                 progressText.textContent = '分析失败';
-                this.appendLog('❌ ' + data.message, 'error');
+                this.appendLog('[错误] ' + data.message, 'error');
                 this.generator.showToast(data.message, 'error');
                 break;
         }
@@ -716,7 +761,7 @@ class VoiceMimickerPage {
             if (isPublicPrompt && !prompt.prompt_content) {
                 promptContent.innerHTML = `
                     <div class="public-prompt-notice">
-                        <span class="notice-icon">🔒</span>
+                        <span class="notice-icon"><span class="material-icons-outlined" style="font-size: 24px;">lock</span></span>
                         <p>这是公共语气模板，你可以在创作时使用它，但无法查看详细的 Prompt 内容。</p>
                         ${prompt.role ? `<p class="notice-role"><strong>角色：</strong>${prompt.role}</p>` : ''}
                     </div>
@@ -725,8 +770,8 @@ class VoiceMimickerPage {
             } else {
                 promptContent.textContent = prompt.prompt_content || '';
                 footer.innerHTML = `
-                    <button class="btn btn-ghost" id="copy-prompt-btn">📋 复制 Prompt</button>
-                    <button class="btn btn-danger" id="delete-prompt-btn">🗑️ 删除</button>
+                    <button class="btn btn-ghost" id="copy-prompt-btn"><span class="material-icons-outlined" style="font-size: 18px; vertical-align: middle;">content_copy</span> 复制 Prompt</button>
+                    <button class="btn btn-danger" id="delete-prompt-btn"><span class="material-icons-outlined" style="font-size: 18px; vertical-align: middle;">delete</span> 删除</button>
                 `;
 
                 footer.querySelector('#copy-prompt-btn').addEventListener('click', () => {
@@ -746,6 +791,39 @@ class VoiceMimickerPage {
 
     closeModal() {
         document.getElementById('prompt-modal').classList.add('hidden');
+    }
+
+    // ========== 创建弹窗 ==========
+    openCreateModal() {
+        const modal = document.getElementById('create-modal');
+        const form = document.getElementById('create-form');
+        const progress = document.getElementById('analyze-progress');
+
+        // 重置状态
+        document.getElementById('twitter-username').value = '';
+        form.classList.remove('hidden');
+        progress.classList.add('hidden');
+        document.getElementById('analyze-log').innerHTML = '';
+
+        // 重置按钮状态
+        const analyzeBtn = document.getElementById('analyze-btn');
+        analyzeBtn.disabled = false;
+        analyzeBtn.innerHTML = '<span class="material-icons-outlined" style="font-size: 18px; vertical-align: middle;">psychology</span> 开始分析';
+
+        modal.classList.remove('hidden');
+
+        // 聚焦输入框
+        setTimeout(() => {
+            document.getElementById('twitter-username').focus();
+        }, 100);
+    }
+
+    closeCreateModal() {
+        if (this.isAnalyzing) {
+            this.generator.showToast('分析进行中，请等待完成', 'warning');
+            return;
+        }
+        document.getElementById('create-modal').classList.add('hidden');
     }
 
     async copyPrompt() {

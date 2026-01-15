@@ -74,8 +74,11 @@ class ContentPage {
 
         container.innerHTML = `
             <div class="content-page">
-                <div class="page-title">
-                    <span>✍️</span> 生成内容
+                <div class="page-header">
+                    <div class="page-title">
+                        <span class="material-icons-outlined" style="color: #f97316;">edit_note</span> 生成内容
+                    </div>
+                    <p class="page-subtitle">AI 根据创作素材中的内容，叠加上你选择的写作风格，自动生成推文内容供你修改，请注意AI的优化建议，可以作为后续优化的方向</p>
                 </div>
 
                 <div class="content-area" id="content-area">
@@ -92,10 +95,7 @@ class ContentPage {
                         </button>
                     </div>
                     <div class="action-right">
-                        <button class="btn btn-ghost" id="skip-btn" ${!this.versionC ? 'disabled' : ''}>
-                            跳过优化
-                        </button>
-                        <button class="btn btn-primary" id="next-btn" ${!this.versionC ? 'disabled' : ''}>
+                        <button class="btn btn-secondary" id="next-btn" ${!this.versionC ? 'disabled title="请先生成内容"' : ''}>
                             下一步: 优化 →
                         </button>
                     </div>
@@ -184,9 +184,9 @@ class ContentPage {
 
         return `
             <div class="voice-columns-horizontal">
-                ${renderColumn('🔥 热门', popularWithDefault, '暂无热门', null, null)}
-                ${renderColumn('⭐ 订阅', data.subscribed, '还没订阅', '#voice-mimicker/market', '去市场 →')}
-                ${renderColumn('📚 我的', data.mine, '还没创建', '#voice-mimicker/mine', '去创建 →')}
+                ${renderColumn('<span class="material-icons-outlined" style="font-size: 16px; vertical-align: middle;">local_fire_department</span> 热门', popularWithDefault, '暂无热门', null, null)}
+                ${renderColumn('<span class="material-icons-outlined" style="font-size: 16px; vertical-align: middle;">star</span> 订阅', data.subscribed, '还没订阅', '#voice-mimicker/market', '去市场 →')}
+                ${renderColumn('<span class="material-icons-outlined" style="font-size: 16px; vertical-align: middle;">menu_book</span> 我的', data.mine, '还没创建', '#voice-mimicker/mine', '去创建 →')}
             </div>
         `;
     }
@@ -269,25 +269,30 @@ class ContentPage {
             return `
                 <div class="input-section">
                     <div class="input-header">
-                        <div class="input-title">📝 创作素材</div>
-                        <div class="input-hint">编辑以下内容作为创作输入，你可以选择一个创作方向；完成后点击生成</div>
+                        <div class="input-title"><span class="material-icons-outlined" style="font-size: 18px; vertical-align: middle;">edit_note</span> 创作素材</div>
+                        <div class="input-hint">编辑以下内容作为创作输入，可以提供更多内容，比如推文原文等，同时建议从AI推荐的创作方向中选择一个方向，删除其他方向，让AI可以更注重产出内容；</div>
                     </div>
                     <textarea class="content-textarea input-textarea" id="input-text" placeholder="输入你的创作素材...">${this.escapeHtml(this.inputText)}</textarea>
 
                     <div class="voice-style-section">
                         <div class="voice-style-header">
-                            <div class="voice-style-title">🎭 写作风格模拟</div>
-                            <div class="voice-style-hint">选择一个语气风格，让AI模仿该风格进行创作</div>
+                            <div class="voice-style-title"><span class="material-icons-outlined" style="font-size: 18px; vertical-align: middle;">theater_comedy</span> 写作风格模拟</div>
+                            <div class="voice-style-hint">选择一个语气风格，让AI模仿该风格进行创作；也可以根据你喜爱的推主名，制作模仿其风格的模拟器</div>
                         </div>
                         <div class="voice-style-selector" id="voice-style-selector">
                             ${this.renderVoiceStyleOptions()}
                         </div>
                     </div>
 
-                    <div class="input-actions">
+                    <div class="input-actions" style="display: flex; justify-content: center; gap: 16px;">
                         <button class="btn btn-primary btn-large" id="generate-btn">
-                            ✨ 生成内容
+                            <span class="material-icons-outlined" style="font-size: 18px; vertical-align: middle;">auto_awesome</span> 生成内容
                         </button>
+                        ${this.versionC ? `
+                        <button class="btn btn-secondary" id="view-content-btn">
+                            <span class="material-icons-outlined" style="font-size: 18px; vertical-align: middle;">visibility</span> 查看生成内容
+                        </button>
+                        ` : ''}
                     </div>
                 </div>
             `;
@@ -297,7 +302,7 @@ class ContentPage {
         return `
             <div class="content-editor">
                 <div class="editor-label">
-                    <span>🌟</span> 生成结果
+                    <span class="material-icons-outlined" style="font-size: 18px; vertical-align: middle;">star</span> 生成结果
                 </div>
                 <textarea class="content-textarea" id="content-input">${this.escapeHtml(this.versionC)}</textarea>
                 <div class="char-count">${this.versionC.length} 字</div>
@@ -329,17 +334,17 @@ class ContentPage {
 
             ${this.suggestions ? `
                 <div class="suggestions">
-                    <div class="suggestions-title">💡 优化建议</div>
+                    <div class="suggestions-title"><span class="material-icons-outlined" style="font-size: 18px; vertical-align: middle;">lightbulb</span> 优化建议</div>
                     <div class="suggestions-content">${this.generator.formatMarkdown(this.suggestions)}</div>
                 </div>
             ` : ''}
 
             <div class="regenerate-section">
                 <button class="btn btn-secondary" id="edit-input-btn">
-                    ✏️ 修改输入
+                    <span class="material-icons-outlined" style="font-size: 18px; vertical-align: middle; font-weight: bold;">arrow_back</span> 修改输入话题内容
                 </button>
                 <button class="btn btn-primary" id="regenerate-btn">
-                    🔄 重新生成
+                    <span class="material-icons-outlined" style="font-size: 16px; vertical-align: middle;">refresh</span> 重新生成
                 </button>
             </div>
         `;
@@ -367,17 +372,6 @@ class ContentPage {
         // 放弃任务
         container.querySelector('#abandon-btn').addEventListener('click', () => {
             this.generator.abandonTask();
-        });
-
-        // 跳过优化
-        container.querySelector('#skip-btn').addEventListener('click', async () => {
-            await this.saveContent();
-            try {
-                await this.generator.updateTask('skipStep', { step: 'optimize' });
-                this.generator.navigate('image');
-            } catch (error) {
-                console.error('跳过失败:', error);
-            }
         });
 
         // 下一步
@@ -410,6 +404,15 @@ class ContentPage {
         if (editInputBtn) {
             editInputBtn.addEventListener('click', () => {
                 this.isEditing = true;
+                this.updateContentArea();
+            });
+        }
+
+        // 查看生成内容按钮
+        const viewContentBtn = container.querySelector('#view-content-btn');
+        if (viewContentBtn) {
+            viewContentBtn.addEventListener('click', () => {
+                this.isEditing = false;
                 this.updateContentArea();
             });
         }
@@ -668,11 +671,11 @@ class ContentPage {
     }
 
     updateButtons() {
-        const skipBtn = document.getElementById('skip-btn');
         const nextBtn = document.getElementById('next-btn');
-
-        if (skipBtn) skipBtn.disabled = !this.versionC;
-        if (nextBtn) nextBtn.disabled = !this.versionC;
+        if (nextBtn) {
+            nextBtn.disabled = !this.versionC;
+            nextBtn.title = !this.versionC ? '请先生成内容' : '';
+        }
     }
 
     escapeHtml(text) {

@@ -407,7 +407,7 @@ class App {
                 <div class="absolute top-0 right-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity">
                     <span class="material-icons-outlined text-purple-400">arrow_forward</span>
                 </div>
-                <div class="relative z-10 mb-4 w-12 h-12 flex items-center justify-center rounded-xl bg-purple-50 text-purple-500 text-2xl">🎭</div>
+                <div class="relative z-10 mb-4 w-12 h-12 flex items-center justify-center rounded-xl bg-purple-50 text-purple-500"><span class="material-icons-outlined text-2xl">theater_comedy</span></div>
                 <h4 class="relative z-10 font-display text-xl text-slate-900 mb-3">语气模仿器</h4>
                 <p class="relative z-10 text-sm text-slate-500 leading-relaxed">分析任意推主的写作风格，生成模仿 Prompt，让 AI 用他们的语气写作</p>
             </div>

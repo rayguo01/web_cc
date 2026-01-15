@@ -41,8 +41,11 @@ class OptimizePage {
 
         container.innerHTML = `
             <div class="optimize-page">
-                <div class="page-title">
-                    <span>🚀</span> 优化内容
+                <div class="page-header">
+                    <div class="page-title">
+                        <span class="material-icons-outlined" style="color: #f97316;">rocket_launch</span> 优化内容 （ 可选 ）
+                    </div>
+                    <p class="page-subtitle">AI 会从六个维度评价该推文的传播影响力，并针对传播弱点进行修改，提升内容的爆款潜力；AI也会重点考虑你输入的优化建议一并修改</p>
                 </div>
 
                 <div class="optimize-area" id="optimize-area">
@@ -51,19 +54,16 @@ class OptimizePage {
 
                 <div class="page-actions">
                     <div class="action-left">
-                        <button class="btn btn-primary" id="back-btn">
-                            ← 返回编辑
+                        <button class="btn btn-secondary" id="back-btn">
+                            ← ${this.optimizedVersion ? '返回编辑' : '返回内容生成'}
                         </button>
                         <button class="btn btn-danger" id="abandon-btn">
                             放弃任务
                         </button>
                     </div>
                     <div class="action-right">
-                        <button class="btn btn-ghost" id="skip-btn">
-                            跳过图片
-                        </button>
-                        <button class="btn btn-primary" id="next-btn" ${!this.optimizedVersion ? 'disabled' : ''}>
-                            下一步: 图片描述 →
+                        <button class="btn btn-secondary" id="next-btn" ${!this.optimizedVersion ? 'disabled title="请先进行爆款优化"' : ''}>
+                            下一步: 生成图片 →
                         </button>
                     </div>
                 </div>
@@ -99,7 +99,7 @@ class OptimizePage {
 
                 <div class="user-suggestion-section">
                     <div class="editor-label">
-                        <span>💡</span> 优化意见（可选）
+                        <span class="material-icons-outlined">lightbulb</span> 更多优化意见（可选）
                     </div>
                     <textarea
                         class="content-textarea suggestion-input"
@@ -110,9 +110,12 @@ class OptimizePage {
                     <div class="suggestion-hint">AI 会根据你的意见进行针对性优化</div>
                 </div>
 
-                <div style="text-align: center; margin-top: 24px;">
-                    <button class="btn btn-primary" id="verify-btn">
-                        🧪 开始爆款优化
+                <div style="display: flex; justify-content: center; gap: 16px; margin-top: 24px;">
+                    <button class="btn btn-primary btn-large" id="verify-btn">
+                        <span class="material-icons-outlined" style="font-size: 18px; vertical-align: middle;">science</span> 开始爆款优化
+                    </button>
+                    <button class="btn btn-secondary" id="skip-optimize-btn">
+                        <span class="material-icons-outlined" style="font-size: 18px; vertical-align: middle;">skip_next</span> 跳过优化
                     </button>
                 </div>
             `;
@@ -138,10 +141,10 @@ class OptimizePage {
             <div class="version-compare-section">
                 <div class="version-tabs">
                     <button class="version-tab ${this.activeTab === 'optimized' ? 'active' : ''}" data-tab="optimized">
-                        🚀 优化后版本
+                        <span class="material-icons-outlined" style="font-size: 16px; vertical-align: middle;">rocket_launch</span> 优化后版本
                     </button>
                     <button class="version-tab ${this.activeTab === 'original' ? 'active' : ''}" data-tab="original">
-                        📝 优化前版本
+                        <span class="material-icons-outlined" style="font-size: 16px; vertical-align: middle;">edit_note</span> 优化前版本
                     </button>
                 </div>
 
@@ -163,7 +166,7 @@ class OptimizePage {
 
             <div class="regenerate-section">
                 <button class="btn btn-primary" id="reverify-btn">
-                    🔄 重新验证
+                    <span class="material-icons-outlined" style="font-size: 16px; vertical-align: middle;">refresh</span> 重新优化
                 </button>
             </div>
         `;
@@ -174,7 +177,7 @@ class OptimizePage {
         if (!score) return '';
 
         const scoreLevel = score >= 80 ? 'high' : score >= 60 ? 'medium' : 'low';
-        const scoreEmoji = score >= 80 ? '🔥' : score >= 60 ? '👍' : '💪';
+        const scoreIcon = score >= 80 ? 'local_fire_department' : score >= 60 ? 'thumb_up' : 'fitness_center';
         const scoreLabel = score >= 80 ? '爆款潜力极高' : score >= 60 ? '有爆款潜力' : '需要优化';
 
         return `
@@ -184,7 +187,7 @@ class OptimizePage {
                     <span class="score-unit">分</span>
                 </div>
                 <div class="score-info">
-                    <div class="score-label">${scoreEmoji} ${scoreLabel}</div>
+                    <div class="score-label"><span class="material-icons-outlined" style="font-size: 18px; vertical-align: middle;">${scoreIcon}</span> ${scoreLabel}</div>
                     <div class="score-desc">爆款潜力评分</div>
                 </div>
             </div>
@@ -197,7 +200,7 @@ class OptimizePage {
         return `
             <div class="verify-section">
                 <div class="section-header">
-                    <span class="section-icon">📊</span>
+                    <span class="section-icon material-icons-outlined">analytics</span>
                     <span class="section-title">六维评分</span>
                 </div>
                 <div class="score-grid">
@@ -230,14 +233,14 @@ class OptimizePage {
         return `
             <div class="verify-section">
                 <div class="section-header">
-                    <span class="section-icon">🔍</span>
+                    <span class="section-icon material-icons-outlined">search</span>
                     <span class="section-title">深度分析</span>
                 </div>
                 <div class="analysis-grid">
                     ${this.parsedReport.strengths.length ? `
                         <div class="analysis-card strengths">
                             <div class="analysis-card-header">
-                                <span class="analysis-icon">✅</span>
+                                <span class="analysis-icon material-icons-outlined" style="color: #22c55e;">check_circle</span>
                                 <span class="analysis-label">优点</span>
                             </div>
                             <ul class="analysis-list">
@@ -248,7 +251,7 @@ class OptimizePage {
                     ${this.parsedReport.weaknesses.length ? `
                         <div class="analysis-card weaknesses">
                             <div class="analysis-card-header">
-                                <span class="analysis-icon">❌</span>
+                                <span class="analysis-icon material-icons-outlined" style="color: #ef4444;">cancel</span>
                                 <span class="analysis-label">待改进</span>
                             </div>
                             <ul class="analysis-list">
@@ -267,7 +270,7 @@ class OptimizePage {
         return `
             <div class="verify-section">
                 <div class="section-header">
-                    <span class="section-icon">💡</span>
+                    <span class="section-icon material-icons-outlined">lightbulb</span>
                     <span class="section-title">优化策略</span>
                 </div>
                 <div class="strategies-list">
@@ -287,7 +290,7 @@ class OptimizePage {
 
         return `
             <div class="optimization-notes">
-                <div class="notes-header">📝 优化说明</div>
+                <div class="notes-header"><span class="material-icons-outlined" style="font-size: 16px; vertical-align: middle;">edit_note</span> 优化说明</div>
                 <ul class="notes-list">
                     ${this.parsedReport.optimizationNotes.map(n => `<li>${n}</li>`).join('')}
                 </ul>
@@ -319,21 +322,10 @@ class OptimizePage {
             this.generator.abandonTask();
         });
 
-        // 跳过图片
-        container.querySelector('#skip-btn').addEventListener('click', async () => {
-            await this.saveOptimize();
-            try {
-                await this.generator.updateTask('skipStep', { step: 'image' });
-                this.generator.navigate('submit');
-            } catch (error) {
-                console.error('跳过失败:', error);
-            }
-        });
-
         // 下一步
         container.querySelector('#next-btn').addEventListener('click', async () => {
             await this.saveOptimize();
-            this.generator.navigate('prompt');
+            this.generator.navigate('image');
         });
 
         this.bindOptimizeEvents();
@@ -348,6 +340,19 @@ class OptimizePage {
         if (suggestionInput) {
             suggestionInput.addEventListener('input', (e) => {
                 this.userSuggestion = e.target.value;
+            });
+        }
+
+        // 跳过优化按钮
+        const skipOptimizeBtn = container.querySelector('#skip-optimize-btn');
+        if (skipOptimizeBtn) {
+            skipOptimizeBtn.addEventListener('click', async () => {
+                try {
+                    await this.generator.updateTask('skipStep', { step: 'optimize' });
+                    this.generator.navigate('image');
+                } catch (error) {
+                    console.error('跳过失败:', error);
+                }
             });
         }
 
@@ -721,7 +726,15 @@ class OptimizePage {
 
     updateButtons() {
         const nextBtn = document.getElementById('next-btn');
-        if (nextBtn) nextBtn.disabled = !this.optimizedVersion;
+        if (nextBtn) {
+            nextBtn.disabled = !this.optimizedVersion;
+            nextBtn.title = !this.optimizedVersion ? '请先进行爆款优化' : '';
+        }
+
+        const backBtn = document.getElementById('back-btn');
+        if (backBtn) {
+            backBtn.innerHTML = `← ${this.optimizedVersion ? '返回编辑' : '返回内容生成'}`;
+        }
     }
 
     escapeHtml(text) {

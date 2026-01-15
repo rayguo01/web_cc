@@ -13,10 +13,10 @@ class HomePage {
                 <!-- 开始创作区块 -->
                 <div class="mb-10">
                     <div class="flex items-center space-x-3 mb-4">
-                        <span class="text-2xl">🚀</span>
+                        <span class="material-icons-outlined text-2xl text-orange-500">rocket_launch</span>
                         <h3 class="font-display text-3xl" style="color: #0f172a !important;">开始创作</h3>
                     </div>
-                    <p class="max-w-xl text-lg font-light leading-relaxed" style="color: #64748b;">
+                    <p class="text-lg font-light leading-relaxed" style="color: #64748b;">
                         选择一个热点数据源，开始你的内容创作之旅。AI 分析海量数据，助你产出高互动内容。
                     </p>
                 </div>
@@ -40,7 +40,7 @@ class HomePage {
                         <div class="absolute top-0 right-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity">
                             <span class="material-icons-outlined text-orange-400">arrow_forward</span>
                         </div>
-                        <div class="relative z-10 mb-6 w-12 h-12 flex items-center justify-center rounded-xl bg-orange-50 text-orange-500 text-2xl">🔥</div>
+                        <div class="relative z-10 mb-6 w-12 h-12 flex items-center justify-center rounded-xl bg-orange-50 text-orange-500"><span class="material-icons-outlined text-2xl">local_fire_department</span></div>
                         <h4 class="relative z-10 font-display text-xl mb-3" style="color: #0f172a !important;">TopHub 热榜</h4>
                         <p class="relative z-10 text-sm leading-relaxed" style="color: #64748b;">
                             聚合各大平台热门内容榜单，跨平台灵感碰撞，捕捉下一个爆款话题。
@@ -53,27 +53,11 @@ class HomePage {
                         <div class="absolute top-0 right-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity">
                             <span class="material-icons-outlined text-purple-400">arrow_forward</span>
                         </div>
-                        <div class="relative z-10 mb-6 w-12 h-12 flex items-center justify-center rounded-xl bg-purple-50 text-purple-500 text-2xl">🎯</div>
+                        <div class="relative z-10 mb-6 w-12 h-12 flex items-center justify-center rounded-xl bg-purple-50 text-purple-500"><span class="material-icons-outlined text-2xl">track_changes</span></div>
                         <h4 class="relative z-10 font-display text-xl mb-3" style="color: #0f172a !important;">领域聚焦</h4>
                         <p class="relative z-10 text-sm leading-relaxed" style="color: #64748b;">
                             深入 Web3、AI、金融等垂直领域，为专业受众定制精准洞察。
                         </p>
-                    </div>
-                </div>
-
-                <!-- 底部统计 -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8 border-t border-slate-200">
-                    <div class="p-4">
-                        <p class="text-xs uppercase tracking-widest mb-2" style="color: #94a3b8;">生成速度</p>
-                        <p class="font-display text-5xl font-light" style="color: #0f172a;">&lt; 2s</p>
-                    </div>
-                    <div class="p-4 md:border-l border-slate-200">
-                        <p class="text-xs uppercase tracking-widest mb-2" style="color: #94a3b8;">支持平台</p>
-                        <div class="flex items-center space-x-6" style="color: #94a3b8;">
-                            <span class="hover:text-slate-600 transition-colors cursor-default">Twitter/X</span>
-                            <span class="hover:text-slate-600 transition-colors cursor-default">LinkedIn</span>
-                            <span class="hover:text-slate-600 transition-colors cursor-default">Threads</span>
-                        </div>
                     </div>
                 </div>
 
@@ -89,7 +73,7 @@ class HomePage {
         const stepName = this.state.workflowSteps.find(s => s.id === task.current_step)?.name || task.current_step;
 
         return `
-            <div class="glass-panel bg-amber-50 rounded-2xl p-6 border border-amber-200 mt-6">
+            <div class="glass-panel bg-amber-50 rounded-2xl p-6 border border-amber-200 mt-6" style="max-width: calc(33.333% - 16px);">
                 <div class="flex items-center justify-between mb-4">
                     <div class="flex items-center space-x-2">
                         <span class="material-icons-outlined text-amber-600">pending_actions</span>
@@ -97,8 +81,8 @@ class HomePage {
                     </div>
                     <span class="text-sm text-slate-500">当前: ${stepName}</span>
                 </div>
-                <div class="flex space-x-3">
-                    <button class="flex-1 py-2.5 bg-gradient-to-r from-amber-500 to-orange-600 text-white font-medium rounded-xl hover:from-amber-600 hover:to-orange-700 transition-all duration-200" id="continue-task-btn">继续任务</button>
+                <div class="flex justify-center space-x-3">
+                    <button class="px-6 py-2.5 bg-gradient-to-r from-amber-500 to-orange-600 text-white font-medium rounded-xl hover:from-amber-600 hover:to-orange-700 transition-all duration-200" id="continue-task-btn">继续任务</button>
                     <button class="px-6 py-2.5 bg-white border border-slate-200 text-red-600 rounded-xl hover:bg-red-50 transition-all duration-200" id="abandon-task-btn">放弃</button>
                 </div>
             </div>
