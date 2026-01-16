@@ -32,8 +32,11 @@ app.get(['/', '/login.html'], (req, res, next) => {
     const fromMobile = req.query.from === 'mobile';
 
     if (isMobile && !fromMobile) {
-        // 移动设备首次访问登录页，重定向到移动端登录页
-        return res.redirect('/login-mobile.html');
+        // 移动设备首次访问登录页，重定向到移动端登录页（保留查询参数）
+        const queryString = Object.keys(req.query).length > 0
+            ? '?' + new URLSearchParams(req.query).toString()
+            : '';
+        return res.redirect('/login-mobile.html' + queryString);
     }
 
     // 根路径需要转发到 login.html

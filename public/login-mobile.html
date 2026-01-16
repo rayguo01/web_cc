@@ -527,6 +527,33 @@
             }
         });
 
+        // 处理 Twitter 登录回调
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('twitter_login') === 'success') {
+            const token = urlParams.get('token');
+            const username = urlParams.get('username');
+            if (token) {
+                localStorage.setItem('token', token);
+                if (username) {
+                    localStorage.setItem('username', username);
+                }
+                // 登录成功，跳转到主页面
+                window.location.href = '/login.html?from=mobile';
+                return;
+            }
+        }
+
+        // 处理 Twitter 登录错误
+        if (urlParams.get('twitter_error')) {
+            const errorMessages = {
+                'token_exchange_failed': 'Twitter 授权失败，请重试',
+                'server_error': '服务器错误，请稍后重试',
+                'access_denied': '授权被拒绝'
+            };
+            const errorCode = urlParams.get('twitter_error');
+            document.getElementById('login-error').textContent = errorMessages[errorCode] || 'Twitter 登录失败';
+        }
+
         // 检查是否已登录
         const token = localStorage.getItem('token');
         if (token) {
