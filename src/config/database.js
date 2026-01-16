@@ -5,15 +5,31 @@ const dbUrl = process.env.DATABASE_URL || '';
 const schemaMatch = dbUrl.match(/[?&]schema=([^&]+)/);
 const schema = schemaMatch ? schemaMatch[1] : 'public';
 
-const pool = new Pool({
+const basePool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: { rejectUnauthorized: false }
 });
 
-// 设置默认 search_path 为指定的 schema
-pool.on('connect', (client) => {
-    client.query(`SET search_path TO ${schema}`);
-});
+// 创建一个包装器，确保每次查询前都设置 search_path
+const pool = {
+    async query(text, params) {
+        const client = await basePool.connect();
+        try {
+            await client.query(`SET search_path TO ${schema}`);
+            return await client.query(text, params);
+        } finally {
+            client.release();
+        }
+    },
+    async connect() {
+        const client = await basePool.connect();
+        await client.query(`SET search_path TO ${schema}`);
+        return client;
+    },
+    end() {
+        return basePool.end();
+    }
+};
 
 async function initDatabase() {
     const client = await pool.connect();
