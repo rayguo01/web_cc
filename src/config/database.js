@@ -5,6 +5,12 @@ const dbUrl = process.env.DATABASE_URL || '';
 const schemaMatch = dbUrl.match(/[?&]schema=([^&]+)/);
 const schema = schemaMatch ? schemaMatch[1] : 'public';
 
+// 启动时打印 schema 信息（调试用）
+console.log(`[Database] 使用 schema: ${schema}`);
+if (schema === 'public') {
+    console.warn('[Database] 警告: 正在使用 public schema，请检查 DATABASE_URL 是否包含 schema=web_cc 参数');
+}
+
 const basePool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: { rejectUnauthorized: false }
