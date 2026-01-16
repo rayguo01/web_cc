@@ -262,17 +262,11 @@ class ContentPage {
             });
         });
 
-        // 语气项选择事件
+        // 语气项选择事件（PC和移动端都显示弹窗确认）
         const items = document.querySelectorAll('.voice-style-item');
         items.forEach(item => {
             item.addEventListener('click', () => {
-                if (this.isMobile()) {
-                    // 移动端：显示详情弹窗
-                    this.showVoiceDetailModal(item);
-                } else {
-                    // PC端：直接选中
-                    this.selectVoiceStyle(item);
-                }
+                this.showVoiceDetailModal(item);
             });
         });
     }

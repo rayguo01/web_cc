@@ -5943,12 +5943,19 @@
 .voice-detail-content {
     position: relative;
     width: 90%;
-    max-width: 340px;
+    max-width: 420px;
     background: white;
     border-radius: 20px;
-    padding: 24px;
+    padding: 28px 32px;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
     animation: voiceDetailSlideUp 0.3s ease;
+}
+
+@media (max-width: 768px) {
+    .voice-detail-content {
+        max-width: 340px;
+        padding: 24px;
+    }
 }
 
 @keyframes voiceDetailSlideUp {
