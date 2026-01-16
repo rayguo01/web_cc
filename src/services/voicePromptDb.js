@@ -113,7 +113,7 @@ class VoicePromptDbService {
         // 市场热门 Top 5
         const popularResult = await pool.query(
             `SELECT
-                vp.id, vp.username, vp.display_name, vp.avatar_url, vp.role,
+                vp.id, vp.username, vp.display_name, vp.avatar_url, vp.role, vp.core_traits,
                 COALESCE(vp.usage_count, 0) as usage_count
              FROM voice_prompts vp
              WHERE vp.is_public = true
@@ -124,7 +124,7 @@ class VoicePromptDbService {
         // 我创建的
         const mineResult = await pool.query(
             `SELECT
-                id, username, display_name, avatar_url, role,
+                id, username, display_name, avatar_url, role, core_traits,
                 COALESCE(usage_count, 0) as usage_count
              FROM voice_prompts
              WHERE user_id = $1
@@ -135,7 +135,7 @@ class VoicePromptDbService {
         // 我订阅的
         const subscribedResult = await pool.query(
             `SELECT
-                vp.id, vp.username, vp.display_name, vp.avatar_url, vp.role,
+                vp.id, vp.username, vp.display_name, vp.avatar_url, vp.role, vp.core_traits,
                 COALESCE(vp.usage_count, 0) as usage_count
              FROM voice_prompt_subscriptions vps
              JOIN voice_prompts vp ON vp.id = vps.prompt_id
