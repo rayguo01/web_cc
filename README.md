@@ -25,6 +25,9 @@
 - **AI 智能配图** - Gemini 生成与内容匹配的配图
 - **一键发布** - OAuth 授权后直接发布到 X 平台
 
+## 技术特点
+- 调用claude cli进行通信，没有使用claude api
+
 ## 演示
 
 ### 工作流程
@@ -60,7 +63,7 @@
 ```bash
 # 克隆仓库
 git clone https://github.com/rayguo01/viral-x.git
-cd web-cc
+cd viral-x
 
 # 安装依赖
 npm install
@@ -100,7 +103,8 @@ npm run dev
 npm start
 ```
 
-访问 http://localhost:3000
+用户访问 http://localhost:3000
+管理员访问 http://localhost:3000/admin
 
 ## 技术栈
 
