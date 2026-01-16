@@ -117,6 +117,6 @@ web-cc/
 ## 联系方式 | Contact
 
 - GitHub Issues: 技术问题和功能建议
-- X/Twitter: [@rayguo17](https://x.com/rayguo17)
+- X/Twitter: [@anthropics](https://x.com/anthropics)
 
 感谢你的贡献！

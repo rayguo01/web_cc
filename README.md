@@ -8,7 +8,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org/)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/rayguo17/viral-x/pulls)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/rayguo01/viral-x/pulls)
 
 [在线体验](https://viral-x.app) · [English](#english)
 
@@ -59,7 +59,7 @@
 
 ```bash
 # 克隆仓库
-git clone https://github.com/rayguo17/viral-x.git
+git clone https://github.com/rayguo01/viral-x.git
 cd web-cc
 
 # 安装依赖
@@ -219,7 +219,7 @@ Select Topic → Generate Content → Viral Optimization → Generate Image → 
 
 ```bash
 # Clone
-git clone https://github.com/rayguo17/viral-x.git
+git clone https://github.com/rayguo01/viral-x.git
 cd viral-x
 
 # Install dependencies
