@@ -151,7 +151,7 @@ class PostGenerator {
             return;
         }
 
-        // 工具页面（如语气模仿器）隐藏标题和流程图，并激活工具导航
+        // 工具页面（如写作风格模仿器）隐藏标题和流程图，并激活工具导航
         const isToolPage = ['voice-mimicker'].includes(pageName);
         const header = document.getElementById('generator-header');
         const workflow = document.getElementById('workflow-container');

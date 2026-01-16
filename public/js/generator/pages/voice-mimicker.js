@@ -1,5 +1,5 @@
 /**
- * 语气模仿器页面 - 支持市场和我的生成器子路由
+ * 写作风格模仿器页面 - 支持市场和我的生成器子路由
  */
 class VoiceMimickerPage {
     constructor(generator, params) {
@@ -22,7 +22,7 @@ class VoiceMimickerPage {
                         ← 返回
                     </button>
                     <div class="page-title">
-                        <span class="material-icons-outlined" style="color: #f97316;">theater_comedy</span> 语气模仿器
+                        <span class="material-icons-outlined" style="color: #f97316;">theater_comedy</span> 写作风格模仿器
                     </div>
                 </div>
 
@@ -80,7 +80,7 @@ class VoiceMimickerPage {
                     <div class="modal-header">
                         <div class="modal-title">
                             <span class="material-icons-outlined" style="color: #f97316; margin-right: 8px;">auto_awesome</span>
-                            创建新语气模仿器
+                            创建新写作风格模仿器
                         </div>
                         <button class="modal-close" id="create-modal-close">×</button>
                     </div>
@@ -254,7 +254,7 @@ class VoiceMimickerPage {
                 <div class="empty-market">
                     <span class="empty-icon"><span class="material-icons-outlined" style="font-size: 48px;">storefront</span></span>
                     <p>市场暂无内容</p>
-                    <p class="empty-hint">成为第一个开放语气模仿器的人吧！</p>
+                    <p class="empty-hint">成为第一个开放写作风格模仿器的人吧！</p>
                 </div>
             `;
             return;
@@ -360,10 +360,10 @@ class VoiceMimickerPage {
                 <div class="my-prompts-section">
                     <div class="section-header">
                         <span class="section-icon"><span class="material-icons-outlined" style="font-size: 20px; vertical-align: middle;">collections_bookmark</span></span>
-                        <span class="section-title">我的语气模仿器</span>
+                        <span class="section-title">我的写作风格模仿器</span>
                         <button class="btn btn-sm btn-create-voice" id="create-generator-btn">
                             <span class="material-icons-outlined" style="font-size: 16px; vertical-align: middle;">add</span>
-                            创建语气模仿器
+                            创建写作风格模仿器
                         </button>
                     </div>
                     <div class="my-prompts-grid" id="my-prompts-grid">
@@ -420,7 +420,7 @@ class VoiceMimickerPage {
             grid.innerHTML = `
                 <div class="empty-prompts">
                     <span class="empty-icon"><span class="material-icons-outlined" style="font-size: 48px;">edit_note</span></span>
-                    <p>还没有创建语气模仿器</p>
+                    <p>还没有创建写作风格模仿器</p>
                     <p class="empty-hint">点击 <a href="javascript:void(0)" class="create-link" id="empty-create-btn">+</a> 开始创建</p>
                 </div>
             `;

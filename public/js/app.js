@@ -389,7 +389,7 @@ class App {
             const workflow = document.getElementById('workflow-container');
             if (header) header.style.display = '';
             if (workflow) workflow.style.display = '';
-            // 如果当前在工具页面（如语气模仿器），跳转到首页
+            // 如果当前在工具页面（如写作风格模仿器），跳转到首页
             const currentHash = window.location.hash;
             if (currentHash.includes('voice-mimicker')) {
                 window.location.hash = '#/home';
@@ -411,7 +411,7 @@ class App {
                 <div class="flex items-center md:block">
                     <div class="relative z-10 mb-0 md:mb-4 mr-3 md:mr-0 w-10 h-10 md:w-12 md:h-12 flex-shrink-0 flex items-center justify-center rounded-lg md:rounded-xl bg-purple-50 text-purple-500"><span class="material-icons-outlined text-xl md:text-2xl">theater_comedy</span></div>
                     <div class="flex-1 min-w-0 relative z-10">
-                        <h4 class="font-display text-lg md:text-xl text-slate-900 mb-1 md:mb-3">语气模仿器</h4>
+                        <h4 class="font-display text-lg md:text-xl text-slate-900 mb-1 md:mb-3">写作风格模仿器</h4>
                         <p class="text-xs md:text-sm text-slate-500 leading-relaxed line-clamp-2 md:line-clamp-none">分析推主写作风格，生成模仿 Prompt</p>
                     </div>
                 </div>
@@ -432,7 +432,7 @@ class App {
                     const writingPage = document.getElementById('writing-page');
                     writingPage.classList.remove('hidden');
                     writingPage.classList.add('active');
-                    // 跳转到语气模仿器
+                    // 跳转到写作风格模仿器
                     window.location.hash = '#/voice-mimicker';
                 }
             });
