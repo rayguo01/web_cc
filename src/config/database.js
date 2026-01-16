@@ -127,6 +127,13 @@ async function initDatabase() {
         await client.query(`
             ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url VARCHAR(500)
         `);
+        // 添加 Premium 会员标识（Twitter Blue/Premium 订阅用户）
+        await client.query(`
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS is_premium BOOLEAN DEFAULT FALSE
+        `);
+        await client.query(`
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS verified_type VARCHAR(20)
+        `);
         // 允许 password_hash 为空（Twitter 登录用户不需要密码）
         await client.query(`
             ALTER TABLE users ALTER COLUMN password_hash DROP NOT NULL

@@ -143,18 +143,21 @@ router.get('/callback', async (req, res) => {
         const tokenData = await tokenResponse.json();
         const { access_token, refresh_token, expires_in } = tokenData;
 
-        // 获取用户信息（包含头像）
-        const userResponse = await fetch(`${TWITTER_USER_URL}?user.fields=profile_image_url`, {
+        // 获取用户信息（包含头像和认证类型）
+        const userResponse = await fetch(`${TWITTER_USER_URL}?user.fields=profile_image_url,verified_type`, {
             headers: {
                 'Authorization': `Bearer ${access_token}`
             }
         });
 
-        let twitterUser = { id: null, username: null, profile_image_url: null };
+        let twitterUser = { id: null, username: null, profile_image_url: null, verified_type: null };
         if (userResponse.ok) {
             const userData = await userResponse.json();
             twitterUser = userData.data;
         }
+
+        // 判断是否为 Premium 会员（verified_type 为 'blue' 表示 Premium）
+        const isPremium = twitterUser.verified_type === 'blue';
 
         // 计算过期时间
         const expiresAt = expires_in
@@ -164,21 +167,21 @@ router.get('/callback', async (req, res) => {
         // 根据模式处理
         if (stateData.mode === 'login') {
             // 登录模式：创建或查找用户，返回 JWT
-            const result = await handleTwitterLogin(twitterUser, access_token, refresh_token, expiresAt);
+            const result = await handleTwitterLogin(twitterUser, access_token, refresh_token, expiresAt, isPremium);
 
-            // 生成 JWT token
+            // 生成 JWT token（包含 Premium 状态）
             const token = jwt.sign(
-                { userId: result.userId, username: result.username },
+                { userId: result.userId, username: result.username, isPremium: result.isPremium },
                 process.env.JWT_SECRET,
                 { expiresIn: '7d' }
             );
 
-            // 重定向到前端，带上 token
-            res.redirect(`/login.html?twitter_login=success&token=${encodeURIComponent(token)}&username=${encodeURIComponent(result.username)}`);
+            // 重定向到前端，带上 token 和 Premium 状态
+            res.redirect(`/login.html?twitter_login=success&token=${encodeURIComponent(token)}&username=${encodeURIComponent(result.username)}&is_premium=${result.isPremium}`);
         } else {
             // 绑定模式：保存 token 到已登录用户
-            await saveTwitterCredentials(stateData.userId, twitterUser, access_token, refresh_token, expiresAt);
-            res.redirect('/login.html?twitter_connected=true&twitter_username=' + encodeURIComponent(twitterUser.username || ''));
+            await saveTwitterCredentials(stateData.userId, twitterUser, access_token, refresh_token, expiresAt, isPremium);
+            res.redirect('/login.html?twitter_connected=true&twitter_username=' + encodeURIComponent(twitterUser.username || '') + '&is_premium=' + isPremium);
         }
     } catch (err) {
         console.error('OAuth callback error:', err);
@@ -187,7 +190,7 @@ router.get('/callback', async (req, res) => {
 });
 
 // 处理 Twitter 登录
-async function handleTwitterLogin(twitterUser, accessToken, refreshToken, expiresAt) {
+async function handleTwitterLogin(twitterUser, accessToken, refreshToken, expiresAt, isPremium) {
     const client = await pool.connect();
 
     try {
@@ -195,24 +198,23 @@ async function handleTwitterLogin(twitterUser, accessToken, refreshToken, expire
 
         // 查找是否已有该 Twitter 用户
         let result = await client.query(
-            'SELECT id, username FROM users WHERE twitter_id = $1',
+            'SELECT id, username, is_premium FROM users WHERE twitter_id = $1',
             [twitterUser.id]
         );
 
-        let userId, username;
+        let userId, username, userIsPremium;
 
         if (result.rows.length > 0) {
             // 用户已存在，更新信息
             userId = result.rows[0].id;
             username = result.rows[0].username;
 
-            // 更新头像
-            if (twitterUser.profile_image_url) {
-                await client.query(
-                    'UPDATE users SET avatar_url = $1 WHERE id = $2',
-                    [twitterUser.profile_image_url, userId]
-                );
-            }
+            // 更新头像和 Premium 状态
+            await client.query(
+                'UPDATE users SET avatar_url = $1, is_premium = $2, verified_type = $3 WHERE id = $4',
+                [twitterUser.profile_image_url, isPremium, twitterUser.verified_type || null, userId]
+            );
+            userIsPremium = isPremium;
         } else {
             // 创建新用户
             username = twitterUser.username;
@@ -229,12 +231,13 @@ async function handleTwitterLogin(twitterUser, accessToken, refreshToken, expire
             }
 
             result = await client.query(
-                `INSERT INTO users (username, twitter_id, avatar_url)
-                 VALUES ($1, $2, $3)
+                `INSERT INTO users (username, twitter_id, avatar_url, is_premium, verified_type)
+                 VALUES ($1, $2, $3, $4, $5)
                  RETURNING id`,
-                [username, twitterUser.id, twitterUser.profile_image_url]
+                [username, twitterUser.id, twitterUser.profile_image_url, isPremium, twitterUser.verified_type || null]
             );
             userId = result.rows[0].id;
+            userIsPremium = isPremium;
         }
 
         // 保存或更新 Twitter 凭证
@@ -254,7 +257,7 @@ async function handleTwitterLogin(twitterUser, accessToken, refreshToken, expire
 
         await client.query('COMMIT');
 
-        return { userId, username };
+        return { userId, username, isPremium: userIsPremium };
     } catch (err) {
         await client.query('ROLLBACK');
         throw err;
@@ -264,11 +267,11 @@ async function handleTwitterLogin(twitterUser, accessToken, refreshToken, expire
 }
 
 // 保存 Twitter 凭证（绑定模式）
-async function saveTwitterCredentials(userId, twitterUser, accessToken, refreshToken, expiresAt) {
-    // 更新用户的 twitter_id
+async function saveTwitterCredentials(userId, twitterUser, accessToken, refreshToken, expiresAt, isPremium) {
+    // 更新用户的 twitter_id 和 Premium 状态
     await pool.query(
-        'UPDATE users SET twitter_id = $1, avatar_url = COALESCE(avatar_url, $2) WHERE id = $3',
-        [twitterUser.id, twitterUser.profile_image_url, userId]
+        'UPDATE users SET twitter_id = $1, avatar_url = COALESCE(avatar_url, $2), is_premium = $3, verified_type = $4 WHERE id = $5',
+        [twitterUser.id, twitterUser.profile_image_url, isPremium, twitterUser.verified_type || null, userId]
     );
 
     // 保存凭证
@@ -291,7 +294,10 @@ async function saveTwitterCredentials(userId, twitterUser, accessToken, refreshT
 router.get('/status', authMiddleware, async (req, res) => {
     try {
         const result = await pool.query(
-            'SELECT twitter_username, token_expires_at FROM twitter_credentials WHERE user_id = $1',
+            `SELECT tc.twitter_username, tc.token_expires_at, u.is_premium, u.verified_type
+             FROM twitter_credentials tc
+             JOIN users u ON u.id = tc.user_id
+             WHERE tc.user_id = $1`,
             [req.user.userId]
         );
 
@@ -299,13 +305,15 @@ router.get('/status', authMiddleware, async (req, res) => {
             return res.json({ connected: false });
         }
 
-        const { twitter_username, token_expires_at } = result.rows[0];
+        const { twitter_username, token_expires_at, is_premium, verified_type } = result.rows[0];
         const isExpired = token_expires_at && new Date(token_expires_at) < new Date();
 
         res.json({
             connected: !isExpired,
             username: twitter_username,
-            expiresAt: token_expires_at
+            expiresAt: token_expires_at,
+            isPremium: is_premium || false,
+            verifiedType: verified_type
         });
     } catch (err) {
         console.error('获取 Twitter 状态失败:', err);
