@@ -107,7 +107,7 @@ class ContentPage {
     }
 
     /**
-     * 渲染语气选项列表（三列布局）
+     * 渲染语气选项列表（Tab 布局）
      */
     renderVoiceStyleOptions() {
         const defaultAvatar = 'data:image/svg+xml,' + encodeURIComponent(`
@@ -118,6 +118,7 @@ class ContentPage {
         `);
 
         const data = this.voiceStylesData || { popular: [], mine: [], subscribed: [] };
+        const currentTab = this.voiceStyleTab || 'popular';
 
         // 渲染单个语气项
         const renderItem = (style) => {
@@ -131,6 +132,7 @@ class ContentPage {
                             <span class="voice-name">${style.name}</span>
                             <span class="voice-role">${style.role}</span>
                         </div>
+                        ${isSelected ? '<span class="voice-check material-icons-outlined">check_circle</span>' : ''}
                     </div>
                 `;
             }
@@ -145,29 +147,22 @@ class ContentPage {
                         <span class="voice-name">${displayName}</span>
                         ${role ? `<span class="voice-role">${role}</span>` : ''}
                     </div>
+                    ${isSelected ? '<span class="voice-check material-icons-outlined">check_circle</span>' : ''}
                 </div>
             `;
         };
 
-        // 渲染列
-        const renderColumn = (title, items, emptyMsg, emptyLink, emptyLinkText) => {
-            let content = '';
+        // 渲染 Tab 内容
+        const renderTabContent = (items, emptyMsg, emptyLink, emptyLinkText) => {
             if (items.length === 0) {
-                content = `
-                    <div class="voice-column-empty">
+                return `
+                    <div class="voice-tab-empty">
                         <span>${emptyMsg}</span>
                         ${emptyLink ? `<a href="${emptyLink}" class="voice-empty-link">${emptyLinkText}</a>` : ''}
                     </div>
                 `;
-            } else {
-                content = items.map(renderItem).join('');
             }
-            return `
-                <div class="voice-column">
-                    <div class="voice-column-title">${title}</div>
-                    <div class="voice-column-items">${content}</div>
-                </div>
-            `;
+            return `<div class="voice-tab-items">${items.map(renderItem).join('')}</div>`;
         };
 
         // 默认语气项
@@ -182,11 +177,41 @@ class ContentPage {
         // 热门列表前面加上默认语气
         const popularWithDefault = [defaultItem, ...data.popular];
 
+        // 计算各 Tab 数量
+        const popularCount = popularWithDefault.length;
+        const subscribedCount = data.subscribed.length;
+        const mineCount = data.mine.length;
+
         return `
-            <div class="voice-columns-horizontal">
-                ${renderColumn('<span class="material-icons-outlined" style="font-size: 16px; vertical-align: middle;">local_fire_department</span> 热门', popularWithDefault, '暂无热门', null, null)}
-                ${renderColumn('<span class="material-icons-outlined" style="font-size: 16px; vertical-align: middle;">star</span> 订阅', data.subscribed, '还没订阅', '#voice-mimicker/market', '去市场 →')}
-                ${renderColumn('<span class="material-icons-outlined" style="font-size: 16px; vertical-align: middle;">menu_book</span> 我的', data.mine, '还没创建', '#voice-mimicker/mine', '去创建 →')}
+            <div class="voice-style-tabs">
+                <div class="voice-tabs-header">
+                    <button class="voice-tab-btn ${currentTab === 'popular' ? 'active' : ''}" data-tab="popular">
+                        <span class="material-icons-outlined">local_fire_department</span>
+                        <span>热门</span>
+                        <span class="voice-tab-count">${popularCount}</span>
+                    </button>
+                    <button class="voice-tab-btn ${currentTab === 'subscribed' ? 'active' : ''}" data-tab="subscribed">
+                        <span class="material-icons-outlined">star</span>
+                        <span>订阅</span>
+                        <span class="voice-tab-count">${subscribedCount}</span>
+                    </button>
+                    <button class="voice-tab-btn ${currentTab === 'mine' ? 'active' : ''}" data-tab="mine">
+                        <span class="material-icons-outlined">menu_book</span>
+                        <span>我的</span>
+                        <span class="voice-tab-count">${mineCount}</span>
+                    </button>
+                </div>
+                <div class="voice-tabs-content">
+                    <div class="voice-tab-panel ${currentTab === 'popular' ? 'active' : ''}" data-panel="popular">
+                        ${renderTabContent(popularWithDefault, '暂无热门', null, null)}
+                    </div>
+                    <div class="voice-tab-panel ${currentTab === 'subscribed' ? 'active' : ''}" data-panel="subscribed">
+                        ${renderTabContent(data.subscribed, '还没订阅', '#/voice-mimicker/market', '去市场 →')}
+                    </div>
+                    <div class="voice-tab-panel ${currentTab === 'mine' ? 'active' : ''}" data-panel="mine">
+                        ${renderTabContent(data.mine, '还没创建', '#/voice-mimicker/mine', '去创建 →')}
+                    </div>
+                </div>
             </div>
         `;
     }
@@ -195,13 +220,44 @@ class ContentPage {
      * 绑定语气选择事件
      */
     bindVoiceStyleEvents() {
+        // Tab 切换事件
+        const tabBtns = document.querySelectorAll('.voice-tab-btn');
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tab = btn.dataset.tab;
+                this.voiceStyleTab = tab;
+
+                // 更新 Tab 按钮状态
+                tabBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                // 更新 Tab 面板显示
+                const panels = document.querySelectorAll('.voice-tab-panel');
+                panels.forEach(p => p.classList.remove('active'));
+                const activePanel = document.querySelector(`.voice-tab-panel[data-panel="${tab}"]`);
+                if (activePanel) activePanel.classList.add('active');
+            });
+        });
+
+        // 语气项选择事件
         const items = document.querySelectorAll('.voice-style-item');
         items.forEach(item => {
             item.addEventListener('click', () => {
-                // 移除其他选中状态
-                items.forEach(i => i.classList.remove('selected'));
+                // 移除所有选中状态和勾选图标
+                items.forEach(i => {
+                    i.classList.remove('selected');
+                    const check = i.querySelector('.voice-check');
+                    if (check) check.remove();
+                });
                 // 选中当前项
                 item.classList.add('selected');
+                // 添加勾选图标
+                if (!item.querySelector('.voice-check')) {
+                    const check = document.createElement('span');
+                    check.className = 'voice-check material-icons-outlined';
+                    check.textContent = 'check_circle';
+                    item.appendChild(check);
+                }
                 // 更新选中的语气 ID
                 const id = item.dataset.id;
                 this.selectedVoiceStyleId = id ? parseInt(id) : null;

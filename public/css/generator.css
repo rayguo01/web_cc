@@ -3318,6 +3318,185 @@
 }
 
 /* ===================================
+   写作风格选择器 - Tab 布局
+   =================================== */
+.voice-style-tabs {
+    margin-top: 12px;
+    background: var(--bg-muted);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+
+.voice-tabs-header {
+    display: flex;
+    gap: 0;
+    background: rgba(255, 255, 255, 0.3);
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.voice-tab-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 12px 16px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+}
+
+.voice-tab-btn .material-icons-outlined {
+    font-size: 18px;
+}
+
+.voice-tab-btn:hover {
+    background: rgba(255, 255, 255, 0.5);
+    color: var(--text-primary);
+}
+
+.voice-tab-btn.active {
+    background: rgba(255, 255, 255, 0.6);
+    color: #f59e0b;
+    border-bottom-color: #f59e0b;
+}
+
+.voice-tab-btn.active .material-icons-outlined {
+    color: #f59e0b;
+}
+
+.voice-tab-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    background: rgba(148, 163, 184, 0.2);
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.voice-tab-btn.active .voice-tab-count {
+    background: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+}
+
+.voice-tabs-content {
+    padding: 12px;
+}
+
+.voice-tab-panel {
+    display: none;
+}
+
+.voice-tab-panel.active {
+    display: block;
+}
+
+.voice-tab-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.voice-tab-items .voice-style-item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.6);
+    padding: 10px 12px;
+    border: 2px solid rgba(148, 163, 184, 0.2);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex: 0 0 calc(25% - 8px);
+    max-width: calc(25% - 8px);
+    min-width: 0;
+}
+
+.voice-tab-items .voice-style-item:hover {
+    border-color: rgba(245, 158, 11, 0.4);
+    background: rgba(255, 255, 255, 0.8);
+}
+
+.voice-tab-items .voice-style-item.selected {
+    border-color: #f59e0b;
+    background: rgba(245, 158, 11, 0.12);
+}
+
+.voice-tab-items .voice-style-item .voice-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.voice-tab-items .voice-style-item .voice-item-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.voice-tab-items .voice-style-item .voice-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.voice-tab-items .voice-style-item .voice-role {
+    font-size: 11px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.voice-tab-items .voice-style-item .voice-check {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    font-size: 20px;
+    color: #10b981;
+    background: white;
+    border-radius: 50%;
+}
+
+.voice-tab-empty {
+    text-align: center;
+    padding: 30px 20px;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.voice-tab-empty .voice-empty-link {
+    display: inline-block;
+    margin-top: 8px;
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.voice-tab-empty .voice-empty-link:hover {
+    text-decoration: underline;
+}
+
+/* ===================================
    内容编辑器
    =================================== */
 .content-editor {
