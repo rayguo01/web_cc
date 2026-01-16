@@ -55,7 +55,7 @@ router.get('/login', (req, res) => {
         state: state,
         code_challenge: challenge,
         code_challenge_method: 'S256',
-        force_login: 'true'  // 强制显示登录界面，允许切换账号
+        prompt: 'login'  // 强制显示登录界面，允许切换账号
     });
 
     const authUrl = `${TWITTER_AUTH_URL}?${params.toString()}`;
@@ -91,7 +91,7 @@ router.get('/auth', authMiddleware, (req, res) => {
         state: state,
         code_challenge: challenge,
         code_challenge_method: 'S256',
-        force_login: 'true'  // 强制显示登录界面，允许切换账号
+        prompt: 'login'  // 强制显示登录界面，允许切换账号
     });
 
     const authUrl = `${TWITTER_AUTH_URL}?${params.toString()}`;
