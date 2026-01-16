@@ -5032,6 +5032,22 @@
     display: inline-flex;
     align-items: center;
     gap: 4px;
+    background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%);
+    color: white;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.btn-create-voice:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+.btn-create-voice .material-icons-outlined {
+    color: white;
 }
 
 /* 创建弹窗 */
