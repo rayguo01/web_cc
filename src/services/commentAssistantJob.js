@@ -70,11 +70,14 @@ class CommentAssistantJob {
                 return { skipped: true, reason: 'budget_exceeded', monthlySpent };
             }
 
-            // 4. 判断当前区域（目前固定为日区）
+            // 4. 判断当前区域（根据 UTC 时间自动切换）
+            // UTC 00:00-12:00 → 日区 (ja)，对应日本 JST 09:00-21:00
+            // UTC 12:00-24:00 → 美区 (en)，对应美东 EST 07:00-19:00
             const now = new Date();
-            const timeStr = now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-            const region = 'ja'; // 24小时都是日区
-            console.log(`[CommentAssistant] 当前区域: ${region} (固定), 执行时间: ${timeStr}`);
+            const utcHour = now.getUTCHours();
+            const region = utcHour < 12 ? 'ja' : 'en';
+            const timeStr = now.toISOString().substring(11, 19);
+            console.log(`[CommentAssistant] 当前区域: ${region} (UTC ${utcHour}时), 执行时间: ${timeStr} UTC`);
 
             // 5. 获取当前组索引并轮换
             const groupIndex = region === 'ja' ? settings.ja_group_index : settings.en_group_index;
