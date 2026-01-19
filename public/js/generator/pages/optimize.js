@@ -12,6 +12,7 @@ class OptimizePage {
         this.viralScore = null;
         this.activeTab = 'optimized'; // 当前 tab: 'optimized' | 'original'
         this.userSuggestion = ''; // 用户的优化意见
+        this.optimizeMode = 'viral'; // 优化模式: 'viral' | 'humanizer'
         // 解析后的报告数据
         this.parsedReport = {
             scoreCard: [],      // 六维评分
@@ -19,7 +20,10 @@ class OptimizePage {
             strengths: [],      // 优点
             weaknesses: [],     // 不足
             strategies: [],     // 优化策略
-            optimizationNotes: [] // 优化说明
+            optimizationNotes: [], // 优化说明
+            humanScore: null,   // 人味评分（humanizer模式）
+            humanTotalScore: 0, // 人味总分
+            aiPatternsFound: [] // 检测到的AI模式
         };
     }
 
@@ -75,11 +79,12 @@ class OptimizePage {
 
     renderOptimizeArea() {
         if (this.isLoading) {
+            const loadingText = this.optimizeMode === 'humanizer' ? '正在进行去AI味优化...' : '正在进行爆款优化...';
             return `
                 <div class="loading-container">
                     <div class="loading">
                         <div class="loading-spinner"></div>
-                        <div class="loading-text">正在进行爆款优化...</div>
+                        <div class="loading-text">${loadingText}</div>
                     </div>
                 </div>
                 <div class="log-output" id="log-output"></div>
@@ -110,9 +115,35 @@ class OptimizePage {
                     <div class="suggestion-hint">AI 会根据你的意见进行针对性优化</div>
                 </div>
 
+                <div class="optimize-mode-section" style="margin-top: 24px;">
+                    <div class="editor-label" style="margin-bottom: 12px;">
+                        <span class="material-icons-outlined">tune</span> 优化模式
+                    </div>
+                    <div class="optimize-mode-options" style="display: flex; gap: 16px; justify-content: center;">
+                        <label class="optimize-mode-card ${this.optimizeMode === 'viral' ? 'active' : ''}" style="display: flex; align-items: flex-start; gap: 12px; padding: 16px; border: 2px solid ${this.optimizeMode === 'viral' ? '#f97316' : '#e2e8f0'}; border-radius: 12px; cursor: pointer; transition: all 0.2s; background: ${this.optimizeMode === 'viral' ? 'rgba(249, 115, 22, 0.05)' : 'transparent'}; flex: 1; max-width: 280px;">
+                            <input type="radio" name="optimize-mode" value="viral" ${this.optimizeMode === 'viral' ? 'checked' : ''} style="margin-top: 2px;">
+                            <div>
+                                <div style="font-weight: 600; color: #1e293b; margin-bottom: 4px;">
+                                    <span class="material-icons-outlined" style="font-size: 16px; vertical-align: middle; color: #f97316;">local_fire_department</span> 强爆款优化
+                                </div>
+                                <div style="font-size: 12px; color: #64748b;">最大化传播潜力，优化标题、钩子、节奏</div>
+                            </div>
+                        </label>
+                        <label class="optimize-mode-card ${this.optimizeMode === 'humanizer' ? 'active' : ''}" style="display: flex; align-items: flex-start; gap: 12px; padding: 16px; border: 2px solid ${this.optimizeMode === 'humanizer' ? '#8b5cf6' : '#e2e8f0'}; border-radius: 12px; cursor: pointer; transition: all 0.2s; background: ${this.optimizeMode === 'humanizer' ? 'rgba(139, 92, 246, 0.05)' : 'transparent'}; flex: 1; max-width: 280px;">
+                            <input type="radio" name="optimize-mode" value="humanizer" ${this.optimizeMode === 'humanizer' ? 'checked' : ''} style="margin-top: 2px;">
+                            <div>
+                                <div style="font-weight: 600; color: #1e293b; margin-bottom: 4px;">
+                                    <span class="material-icons-outlined" style="font-size: 16px; vertical-align: middle; color: #8b5cf6;">person</span> 强去AI写作痕迹
+                                </div>
+                                <div style="font-size: 12px; color: #64748b;">去除AI味，让文字更自然、更像真人</div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
                 <div style="display: flex; justify-content: center; gap: 16px; margin-top: 24px;">
                     <button class="btn btn-primary btn-large" id="verify-btn">
-                        <span class="material-icons-outlined" style="font-size: 18px; vertical-align: middle;">science</span> 开始爆款优化
+                        <span class="material-icons-outlined" style="font-size: 18px; vertical-align: middle;">${this.optimizeMode === 'viral' ? 'science' : 'auto_fix_high'}</span> ${this.optimizeMode === 'viral' ? '开始爆款优化' : '开始去AI优化'}
                     </button>
                     <button class="btn btn-secondary" id="skip-optimize-btn">
                         <span class="material-icons-outlined" style="font-size: 18px; vertical-align: middle;">skip_next</span> 跳过优化
@@ -126,8 +157,14 @@ class OptimizePage {
                 <!-- 总分显示 -->
                 ${this.renderTotalScore()}
 
+                <!-- 人味评分（humanizer模式） -->
+                ${this.renderHumanScore()}
+
                 <!-- 六维评分卡 -->
                 ${this.renderScoreCard()}
+
+                <!-- 检测到的AI模式（humanizer模式） -->
+                ${this.renderAiPatterns()}
 
                 <!-- 深度分析 -->
                 ${this.renderAnalysis()}
@@ -165,6 +202,23 @@ class OptimizePage {
             </div>
 
             <div class="regenerate-section">
+                <div class="regenerate-mode-section" style="margin-bottom: 16px;">
+                    <div style="font-size: 13px; color: #64748b; margin-bottom: 8px; text-align: center;">重新优化模式：</div>
+                    <div class="optimize-mode-options" style="display: flex; gap: 12px; justify-content: center;">
+                        <label class="optimize-mode-card-small ${this.optimizeMode === 'viral' ? 'active' : ''}" style="display: flex; align-items: center; gap: 8px; padding: 10px 16px; border: 2px solid ${this.optimizeMode === 'viral' ? '#f97316' : '#e2e8f0'}; border-radius: 8px; cursor: pointer; transition: all 0.2s; background: ${this.optimizeMode === 'viral' ? 'rgba(249, 115, 22, 0.05)' : 'transparent'};">
+                            <input type="radio" name="reoptimize-mode" value="viral" ${this.optimizeMode === 'viral' ? 'checked' : ''}>
+                            <span style="font-size: 13px; font-weight: 500; color: #1e293b;">
+                                <span class="material-icons-outlined" style="font-size: 14px; vertical-align: middle; color: #f97316;">local_fire_department</span> 强爆款
+                            </span>
+                        </label>
+                        <label class="optimize-mode-card-small ${this.optimizeMode === 'humanizer' ? 'active' : ''}" style="display: flex; align-items: center; gap: 8px; padding: 10px 16px; border: 2px solid ${this.optimizeMode === 'humanizer' ? '#8b5cf6' : '#e2e8f0'}; border-radius: 8px; cursor: pointer; transition: all 0.2s; background: ${this.optimizeMode === 'humanizer' ? 'rgba(139, 92, 246, 0.05)' : 'transparent'};">
+                            <input type="radio" name="reoptimize-mode" value="humanizer" ${this.optimizeMode === 'humanizer' ? 'checked' : ''}>
+                            <span style="font-size: 13px; font-weight: 500; color: #1e293b;">
+                                <span class="material-icons-outlined" style="font-size: 14px; vertical-align: middle; color: #8b5cf6;">person</span> 去AI味
+                            </span>
+                        </label>
+                    </div>
+                </div>
                 <button class="btn btn-primary" id="reverify-btn">
                     <span class="material-icons-outlined" style="font-size: 16px; vertical-align: middle;">refresh</span> 重新优化
                 </button>
@@ -189,6 +243,72 @@ class OptimizePage {
                 <div class="score-info">
                     <div class="score-label"><span class="material-icons-outlined" style="font-size: 18px; vertical-align: middle;">${scoreIcon}</span> ${scoreLabel}</div>
                     <div class="score-desc">爆款潜力评分</div>
+                </div>
+            </div>
+        `;
+    }
+
+    renderHumanScore() {
+        const humanScore = this.parsedReport.humanScore;
+        const humanTotalScore = this.parsedReport.humanTotalScore;
+        if (!humanScore || !humanTotalScore) return '';
+
+        const scoreLevel = humanTotalScore >= 45 ? 'high' : humanTotalScore >= 35 ? 'medium' : 'low';
+        const scoreLabel = humanTotalScore >= 45 ? '已去除AI痕迹' : humanTotalScore >= 35 ? '基本自然' : '仍有AI味';
+
+        const dimensions = [
+            { key: 'directness', name: '直接性', desc: '直接陈述还是绕圈' },
+            { key: 'rhythm', name: '节奏', desc: '句子长度变化' },
+            { key: 'trust', name: '信任度', desc: '尊重读者智慧' },
+            { key: 'authenticity', name: '真实性', desc: '像真人说话' },
+            { key: 'conciseness', name: '精炼度', desc: '无冗余内容' }
+        ];
+
+        return `
+            <div class="verify-section human-score-section" style="margin-top: 16px;">
+                <div class="section-header">
+                    <span class="section-icon material-icons-outlined" style="color: #8b5cf6;">person</span>
+                    <span class="section-title">人味评分</span>
+                    <span class="human-total-score" style="margin-left: auto; font-size: 14px; font-weight: 600; color: ${scoreLevel === 'high' ? '#22c55e' : scoreLevel === 'medium' ? '#f59e0b' : '#ef4444'};">
+                        ${humanTotalScore}/50 - ${scoreLabel}
+                    </span>
+                </div>
+                <div class="human-score-grid" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-top: 12px;">
+                    ${dimensions.map(dim => {
+                        const item = humanScore[dim.key];
+                        if (!item) return '';
+                        const score = item.score || 0;
+                        const comment = item.comment || '';
+                        const itemLevel = score >= 8 ? 'high' : score >= 6 ? 'medium' : 'low';
+                        return `
+                            <div class="human-score-item" style="background: #f8fafc; padding: 12px; border-radius: 8px; text-align: center;">
+                                <div style="font-size: 11px; color: #64748b; margin-bottom: 4px;">${dim.name}</div>
+                                <div style="font-size: 20px; font-weight: 700; color: ${itemLevel === 'high' ? '#22c55e' : itemLevel === 'medium' ? '#f59e0b' : '#ef4444'};">${score}</div>
+                                <div style="font-size: 10px; color: #94a3b8; margin-top: 2px;">${dim.desc}</div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            </div>
+        `;
+    }
+
+    renderAiPatterns() {
+        const patterns = this.parsedReport.aiPatternsFound;
+        if (!patterns || !patterns.length) return '';
+
+        return `
+            <div class="verify-section ai-patterns-section" style="margin-top: 16px;">
+                <div class="section-header">
+                    <span class="section-icon material-icons-outlined" style="color: #ef4444;">bug_report</span>
+                    <span class="section-title">检测到的AI写作模式</span>
+                </div>
+                <div class="ai-patterns-list" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px;">
+                    ${patterns.map(p => `
+                        <span style="display: inline-block; padding: 6px 12px; background: #fef2f2; color: #dc2626; border-radius: 6px; font-size: 12px;">
+                            ${p}
+                        </span>
+                    `).join('')}
                 </div>
             </div>
         `;
@@ -343,6 +463,22 @@ class OptimizePage {
             });
         }
 
+        // 优化模式切换（开始前）
+        container.querySelectorAll('input[name="optimize-mode"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                this.optimizeMode = e.target.value;
+                this.updateOptimizeArea(); // 重新渲染以更新按钮文字和样式
+            });
+        });
+
+        // 重新优化模式切换
+        container.querySelectorAll('input[name="reoptimize-mode"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                this.optimizeMode = e.target.value;
+                this.updateOptimizeArea(); // 重新渲染以更新样式
+            });
+        });
+
         // 跳过优化按钮
         const skipOptimizeBtn = container.querySelector('#skip-optimize-btn');
         if (skipOptimizeBtn) {
@@ -443,7 +579,7 @@ class OptimizePage {
         this.updateOptimizeArea();
 
         try {
-            await this.generator.executeStep('optimize', { content, userSuggestion: this.userSuggestion }, {
+            await this.generator.executeStep('optimize', { content, userSuggestion: this.userSuggestion, optimizeMode: this.optimizeMode }, {
                 start: () => {
                     // 开始
                 },
@@ -485,7 +621,10 @@ class OptimizePage {
             strengths: [],
             weaknesses: [],
             strategies: [],
-            optimizationNotes: []
+            optimizationNotes: [],
+            humanScore: null,
+            humanTotalScore: 0,
+            aiPatternsFound: []
         };
 
         // 尝试解析 JSON 格式
@@ -549,7 +688,24 @@ class OptimizePage {
                 if (data.strategies.toneFix) {
                     strategies.push(`<strong>语气调整</strong>：${data.strategies.toneFix}`);
                 }
+                // humanizer模式的去AI味建议
+                if (data.strategies.humanizeFix) {
+                    strategies.push(`<strong>去AI味修改</strong>：${data.strategies.humanizeFix}`);
+                }
                 this.parsedReport.strategies = strategies;
+            }
+
+            // humanizer模式：人味评分
+            if (data.humanScore) {
+                this.parsedReport.humanScore = data.humanScore;
+            }
+            if (typeof data.humanTotalScore === 'number') {
+                this.parsedReport.humanTotalScore = data.humanTotalScore;
+            }
+
+            // humanizer模式：检测到的AI模式
+            if (data.analysis && Array.isArray(data.analysis.aiPatternsFound)) {
+                this.parsedReport.aiPatternsFound = data.analysis.aiPatternsFound;
             }
 
             // 优化版本
@@ -568,6 +724,9 @@ class OptimizePage {
             console.log('Weaknesses:', this.parsedReport.weaknesses.length);
             console.log('Strategies:', this.parsedReport.strategies.length);
             console.log('Optimized version length:', this.optimizedVersion.length);
+            console.log('Human score:', this.parsedReport.humanScore ? 'yes' : 'no');
+            console.log('Human total score:', this.parsedReport.humanTotalScore);
+            console.log('AI patterns found:', this.parsedReport.aiPatternsFound.length);
 
         } catch (e) {
             console.warn('JSON 解析失败，尝试使用旧的 Markdown 解析:', e.message);

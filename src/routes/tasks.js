@@ -623,7 +623,9 @@ router.post('/:id/execute-step', authenticate, async (req, res) => {
                 break;
 
             case 'optimize':
-                skillId = 'viral-verification';
+                // 根据 optimizeMode 选择不同的 skill
+                const optimizeMode = input?.optimizeMode || 'viral';
+                skillId = optimizeMode === 'humanizer' ? 'humanizer' : 'viral-verification';
                 // 组合内容和用户优化意见
                 const contentToOptimize = input?.content || task.content_data?.versionC;
                 const userSuggestion = input?.userSuggestion || '';
@@ -632,8 +634,10 @@ router.post('/:id/execute-step', authenticate, async (req, res) => {
                 } else {
                     userInput = contentToOptimize;
                 }
-                outputDir = path.join(__dirname, '../../outputs/viral-verified');
-                prefix = 'verified_';
+                outputDir = optimizeMode === 'humanizer'
+                    ? path.join(__dirname, '../../outputs/humanized')
+                    : path.join(__dirname, '../../outputs/viral-verified');
+                prefix = optimizeMode === 'humanizer' ? 'humanized_' : 'verified_';
                 break;
 
             case 'prompt':
@@ -672,6 +676,7 @@ router.post('/:id/execute-step', authenticate, async (req, res) => {
             case 'domain-trends': scriptName = 'domain-trends.ts'; break;
             case 'content-writer': scriptName = 'content-writer.ts'; break;
             case 'viral-verification': scriptName = 'viral-verification.ts'; break;
+            case 'humanizer': scriptName = 'humanizer.ts'; break;
             case 'gemini-image-gen': scriptName = 'gemini-image-gen.ts'; break;
             case 'prompt-generator': scriptName = 'prompt-generator.ts'; break;
             default: scriptName = `${skillId}.ts`;
