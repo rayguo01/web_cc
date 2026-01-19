@@ -33,6 +33,8 @@
         .sidebar-item { transition: all 0.2s; }
         .sidebar-item:hover { background: rgba(251, 191, 36, 0.1); }
         .sidebar-item.active { background: rgba(251, 191, 36, 0.15); border-right: 3px solid #f59e0b; }
+        .tab-btn { color: #64748b; }
+        .tab-btn.active { background: white; color: #0f172a; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
     </style>
 </head>
 <body class="bg-background-light text-slate-800 font-sans antialiased min-h-screen">
@@ -82,6 +84,10 @@
                     <a href="#users" class="sidebar-item flex items-center px-6 py-3 text-slate-700" data-page="users">
                         <span class="material-icons-outlined mr-3">people</span>
                         用户管理
+                    </a>
+                    <a href="#comment-assistant" class="sidebar-item flex items-center px-6 py-3 text-slate-700" data-page="comment-assistant">
+                        <span class="material-icons-outlined mr-3">chat</span>
+                        评论助手
                     </a>
                 </nav>
                 <div class="p-4 border-t border-slate-200/50">
@@ -197,6 +203,7 @@
                                     <th class="text-left px-6 py-3 text-sm font-medium text-slate-600">邀请码</th>
                                     <th class="text-left px-6 py-3 text-sm font-medium text-slate-600">注册时间</th>
                                     <th class="text-center px-6 py-3 text-sm font-medium text-slate-600">角色</th>
+                                    <th class="text-center px-6 py-3 text-sm font-medium text-slate-600">评论助手</th>
                                     <th class="text-center px-6 py-3 text-sm font-medium text-slate-600">操作</th>
                                 </tr>
                             </thead>
@@ -209,6 +216,20 @@
                                 <button id="user-next" class="px-3 py-1.5 text-sm border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50">下一页</button>
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                <!-- 评论助手管理 -->
+                <div id="page-comment-assistant" class="p-8 hidden">
+                    <!-- Tab 切换 -->
+                    <div class="ca-tabs flex space-x-1 mb-6 bg-slate-100 rounded-lg p-1 w-fit">
+                        <button class="tab-btn active px-4 py-2 text-sm font-medium rounded-md transition" data-tab="dashboard">仪表盘</button>
+                        <button class="tab-btn px-4 py-2 text-sm font-medium rounded-md transition" data-tab="kol">大V管理</button>
+                        <button class="tab-btn px-4 py-2 text-sm font-medium rounded-md transition" data-tab="usage">费用统计</button>
+                    </div>
+                    <!-- 内容区域 -->
+                    <div id="tab-content">
+                        <div class="text-center py-10 text-slate-500">加载中...</div>
                     </div>
                 </div>
             </main>
@@ -270,6 +291,7 @@
         </div>
     </div>
 
+    <script src="/js/generator/pages/comment-assistant.js"></script>
     <script>
         class AdminDashboard {
             constructor() {
@@ -362,6 +384,7 @@
                 if (page === 'stats') this.loadStats();
                 else if (page === 'invitations') { this.loadInvitationStats(); this.loadInvitations(); }
                 else if (page === 'users') this.loadUsers();
+                else if (page === 'comment-assistant') this.initCommentAssistant();
             }
 
             // ========== 统计概览 ==========
@@ -545,14 +568,17 @@
             async loadUsers() {
                 const search = document.getElementById('user-search').value;
                 const tbody = document.getElementById('users-body');
-                tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-8 text-center"><div class="animate-spin rounded-full h-6 w-6 border-2 border-amber-500 border-t-transparent mx-auto"></div></td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-8 text-center"><div class="animate-spin rounded-full h-6 w-6 border-2 border-amber-500 border-t-transparent mx-auto"></div></td></tr>';
 
                 try {
                     const res = await fetch(`/api/admin/users?search=${encodeURIComponent(search)}&page=${this.userPage}&limit=${this.pageSize}`, { headers: { 'Authorization': `Bearer ${this.token}` } });
                     const data = await res.json();
                     const formatDate = d => d ? new Date(d).toLocaleDateString('zh-CN') : '-';
 
-                    tbody.innerHTML = data.users.map(u => `
+                    tbody.innerHTML = data.users.map(u => {
+                        // 管理员自动有评论助手权限
+                        const hasCommentAssistant = u.is_admin || u.can_use_comment_assistant;
+                        return `
                         <tr class="border-b border-slate-100 hover:bg-slate-50/50">
                             <td class="px-6 py-3">
                                 <div class="flex items-center space-x-2">
@@ -569,6 +595,9 @@
                                 ${u.is_admin ? '<span class="px-2 py-0.5 rounded-full text-xs bg-purple-100 text-purple-700">管理员</span>' : '<span class="px-2 py-0.5 rounded-full text-xs bg-slate-100 text-slate-600">用户</span>'}
                             </td>
                             <td class="px-6 py-3 text-center">
+                                <button onclick="dashboard.toggleCommentAssistant(${u.id}, ${!u.can_use_comment_assistant})" class="px-2 py-0.5 rounded-full text-xs cursor-pointer transition ${u.can_use_comment_assistant ? 'bg-green-100 text-green-700 hover:bg-red-100 hover:text-red-700' : 'bg-slate-100 text-slate-500 hover:bg-green-100 hover:text-green-700'}" title="${u.can_use_comment_assistant ? '点击取消权限' : '点击授予权限'}">${u.can_use_comment_assistant ? '有权限' : '无权限'}</button>
+                            </td>
+                            <td class="px-6 py-3 text-center">
                                 <button onclick="dashboard.loginAsUser(${u.id}, '${u.username}')" class="p-1 text-slate-400 hover:text-amber-600" title="以该用户身份登录">
                                     <span class="material-icons-outlined text-sm">login</span>
                                 </button>
@@ -577,7 +606,7 @@
                                 </button>
                             </td>
                         </tr>
-                    `).join('') || '<tr><td colspan="5" class="px-6 py-8 text-center text-slate-400">暂无用户</td></tr>';
+                    `}).join('') || '<tr><td colspan="6" class="px-6 py-8 text-center text-slate-400">暂无用户</td></tr>';
 
                     const totalPages = Math.ceil(data.total / this.pageSize);
                     document.getElementById('user-pagination-info').textContent = `第 ${this.userPage} / ${totalPages || 1} 页，共 ${data.total} 条`;
@@ -616,6 +645,44 @@
                     });
                     this.loadUsers();
                 } catch (err) { alert('操作失败'); }
+            }
+
+            async toggleCommentAssistant(userId, canUse) {
+                try {
+                    const res = await fetch(`/api/admin/users/${userId}/set-comment-assistant-permission`, {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${this.token}`, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ canUse })
+                    });
+                    if (res.ok) {
+                        this.loadUsers();
+                    } else {
+                        const data = await res.json();
+                        alert('操作失败: ' + (data.error || '未知错误'));
+                    }
+                } catch (err) { alert('操作失败'); }
+            }
+
+            // ========== 评论助手 ==========
+            commentAssistantPage = null;
+
+            initCommentAssistant() {
+                if (!this.commentAssistantPage) {
+                    this.commentAssistantPage = new CommentAssistantPage({ adminMode: true });
+                }
+                // 绑定 Tab 切换
+                document.querySelectorAll('#page-comment-assistant .tab-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        document.querySelectorAll('#page-comment-assistant .tab-btn').forEach(b => {
+                            b.classList.toggle('active', b === btn);
+                            b.classList.toggle('bg-white', b === btn);
+                            b.classList.toggle('shadow-sm', b === btn);
+                        });
+                        this.commentAssistantPage.switchTab(btn.dataset.tab);
+                    });
+                });
+                // 默认加载仪表盘
+                this.commentAssistantPage.switchTab('dashboard');
             }
         }
 
