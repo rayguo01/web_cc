@@ -121,7 +121,6 @@ class CommentAssistantJob {
 
             // 8. 如果手动评论启用，为手动用户生成待评论记录（轮流分配，避免重复评论）
             let pendingCreated = 0;
-            const manualDetails = []; // 收集手动评论详情用于 Slack 通知
             if (manualEnabled) {
                 // 获取手动用户列表（有权限但不是自动发布账号）
                 const manualUsers = await commentAssistantDb.getManualCommentUsers(
@@ -162,13 +161,6 @@ class CommentAssistantJob {
 
                         pendingCreated++;
                         console.log(`[CommentAssistant] 分配给用户 ${user.username}: ${tweet.author} - ${tweet.id}`);
-
-                        // 收集详情用于 Slack 通知
-                        manualDetails.push({
-                            username: user.username,
-                            tweetAuthor: tweet.author,
-                            tweetPreview: tweet.content
-                        });
                     }
                 }
                 console.log(`[CommentAssistant] 共创建 ${pendingCreated} 条待评论记录`);
@@ -248,8 +240,7 @@ class CommentAssistantJob {
             await slackNotifier.sendCommentAssistantSummary({
                 region,
                 autoComments: autoCommented,
-                manualPending: pendingCreated,
-                manualDetails
+                manualPending: pendingCreated
             });
 
             return {

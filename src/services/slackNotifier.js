@@ -101,34 +101,6 @@ async function sendCommentAssistantSummary(summary) {
             ]
         });
 
-        // 手动评论详情
-        if (summary.manualDetails && summary.manualDetails.length > 0) {
-            blocks.push({
-                type: 'divider'
-            });
-            blocks.push({
-                type: 'section',
-                text: {
-                    type: 'mrkdwn',
-                    text: '*📋 手动评论分配:*'
-                }
-            });
-
-            for (const detail of summary.manualDetails) {
-                const tweetPreview = detail.tweetPreview
-                    ? (detail.tweetPreview.length > 50 ? detail.tweetPreview.substring(0, 50) + '...' : detail.tweetPreview)
-                    : '(无预览)';
-
-                blocks.push({
-                    type: 'section',
-                    text: {
-                        type: 'mrkdwn',
-                        text: `• *${detail.username}* → @${detail.tweetAuthor}\n  _"${tweetPreview}"_`
-                    }
-                });
-            }
-        }
-
         // 无内容生成
         if ((summary.autoComments || 0) === 0 && (summary.manualPending || 0) === 0) {
             blocks.push({
