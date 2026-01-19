@@ -276,9 +276,9 @@ class OptimizePage {
                 <div class="human-score-grid" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-top: 12px;">
                     ${dimensions.map(dim => {
                         const item = humanScore[dim.key];
-                        if (!item) return '';
-                        const score = item.score || 0;
-                        const comment = item.comment || '';
+                        if (item === undefined && item !== 0) return '';
+                        // 支持新格式（直接数字）和旧格式（对象）
+                        const score = typeof item === 'number' ? item : (item?.score || 0);
                         const itemLevel = score >= 8 ? 'high' : score >= 6 ? 'medium' : 'low';
                         return `
                             <div class="human-score-item" style="background: #f8fafc; padding: 12px; border-radius: 8px; text-align: center;">
@@ -703,8 +703,10 @@ class OptimizePage {
                 this.parsedReport.humanTotalScore = data.humanTotalScore;
             }
 
-            // humanizer模式：检测到的AI模式
-            if (data.analysis && Array.isArray(data.analysis.aiPatternsFound)) {
+            // humanizer模式：检测到的AI模式（支持新旧两种格式）
+            if (Array.isArray(data.aiPatternsFound)) {
+                this.parsedReport.aiPatternsFound = data.aiPatternsFound;
+            } else if (data.analysis && Array.isArray(data.analysis.aiPatternsFound)) {
                 this.parsedReport.aiPatternsFound = data.analysis.aiPatternsFound;
             }
 

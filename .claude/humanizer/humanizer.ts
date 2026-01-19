@@ -25,39 +25,22 @@ CHARACTER LIMIT RULE（极其重要）：
 - 这是硬性限制，不可超过。请在优化时精简内容，保留核心观点。
 `;
 
-// JSON Schema 定义（复用爆款6维度 + 新增人味5维度）
+// JSON Schema 定义（精简版，去掉 comment 字段减少输出 token）
 const JSON_SCHEMA = `
 {
   "scoreCard": [
-    { "factor": "好奇心缺口", "score": 0-10, "comment": "评价说明" },
-    { "factor": "情绪共鸣", "score": 0-10, "comment": "评价说明" },
-    { "factor": "价值实用性", "score": 0-10, "comment": "评价说明" },
-    { "factor": "关联性", "score": 0-10, "comment": "评价说明" },
-    { "factor": "节奏可读性", "score": 0-10, "comment": "评价说明" },
-    { "factor": "新颖性", "score": 0-10, "comment": "评价说明" }
+    { "factor": "好奇心缺口", "score": 0-10 },
+    { "factor": "情绪共鸣", "score": 0-10 },
+    { "factor": "价值实用性", "score": 0-10 },
+    { "factor": "关联性", "score": 0-10 },
+    { "factor": "节奏可读性", "score": 0-10 },
+    { "factor": "新颖性", "score": 0-10 }
   ],
-  "humanScore": {
-    "directness": { "score": 0-10, "comment": "直接性评价" },
-    "rhythm": { "score": 0-10, "comment": "节奏评价" },
-    "trust": { "score": 0-10, "comment": "信任度评价" },
-    "authenticity": { "score": 0-10, "comment": "真实性评价" },
-    "conciseness": { "score": 0-10, "comment": "精炼度评价" }
-  },
+  "humanScore": { "directness": 0-10, "rhythm": 0-10, "trust": 0-10, "authenticity": 0-10, "conciseness": 0-10 },
   "totalScore": 0-100,
   "humanTotalScore": 0-50,
-  "analysis": {
-    "strengths": ["优点1", "优点2"],
-    "weaknesses": ["不足1", "不足2"],
-    "aiPatternsFound": ["检测到的AI模式1", "检测到的AI模式2"]
-  },
-  "strategies": {
-    "titleFix": "标题修正建议",
-    "hookFix": "开头钩子建议",
-    "structureFix": "结构调整建议",
-    "toneFix": "语气调整建议",
-    "humanizeFix": "去AI味具体修改点"
-  },
-  "optimizedVersion": "完整的优化后内容，使用\\n表示换行"
+  "aiPatternsFound": ["AI模式1", "AI模式2"],
+  "optimizedVersion": "完整优化内容,换行用\\n"
 }`;
 
 const SYSTEM_PROMPT = `
