@@ -1011,9 +1011,12 @@ async function runCommentAssistant(source = 'cron') {
     }
 }
 
-// 整数半点执行：每小时的 0 分和 30 分
+// 整数半点执行：每小时的 0 分和 30 分（北京时间）
 const commentAssistantCron = cron.schedule('0,30 * * * *', () => {
     runCommentAssistant('整点定时');
+}, {
+    scheduled: true,
+    timezone: 'Asia/Shanghai'
 });
 
 // 保存引用防止被回收
