@@ -535,11 +535,15 @@
             if (urlParams.get('twitter_login') === 'success') {
                 const token = urlParams.get('token');
                 const username = urlParams.get('username');
+                const isAdmin = urlParams.get('is_admin') === 'true';
+                const canUseCommentAssistant = urlParams.get('can_use_comment_assistant') === 'true';
                 if (token) {
                     localStorage.setItem('token', token);
                     if (username) {
                         localStorage.setItem('username', username);
                     }
+                    localStorage.setItem('isAdmin', isAdmin ? 'true' : 'false');
+                    localStorage.setItem('canUseCommentAssistant', canUseCommentAssistant ? 'true' : 'false');
                     // 登录成功，跳转到主页面
                     window.location.href = '/login.html?from=mobile';
                     return;
