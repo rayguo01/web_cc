@@ -178,8 +178,8 @@ router.get('/callback', async (req, res) => {
                 { expiresIn: '7d' }
             );
 
-            // 重定向到前端，带上 token、Premium 和 Admin 状态
-            res.redirect(`/login.html?twitter_login=success&token=${encodeURIComponent(token)}&username=${encodeURIComponent(result.username)}&is_premium=${result.isPremium}&is_admin=${result.isAdmin}`);
+            // 重定向到前端，带上 token、Premium、Admin 和评论助手权限状态
+            res.redirect(`/login.html?twitter_login=success&token=${encodeURIComponent(token)}&username=${encodeURIComponent(result.username)}&is_premium=${result.isPremium}&is_admin=${result.isAdmin}&can_use_comment_assistant=${result.canUseCommentAssistant}`);
         } else {
             // 绑定模式：保存 token 到已登录用户
             await saveTwitterCredentials(stateData.userId, twitterUser, access_token, refresh_token, expiresAt, isPremium);
@@ -200,17 +200,18 @@ async function handleTwitterLogin(twitterUser, accessToken, refreshToken, expire
 
         // 查找是否已有该 Twitter 用户
         let result = await client.query(
-            'SELECT id, username, is_premium, is_admin FROM users WHERE twitter_id = $1',
+            'SELECT id, username, is_premium, is_admin, can_use_comment_assistant FROM users WHERE twitter_id = $1',
             [twitterUser.id]
         );
 
-        let userId, username, userIsPremium, userIsAdmin;
+        let userId, username, userIsPremium, userIsAdmin, userCanUseCommentAssistant;
 
         if (result.rows.length > 0) {
             // 用户已存在，更新信息
             userId = result.rows[0].id;
             username = result.rows[0].username;
             userIsAdmin = result.rows[0].is_admin || false;
+            userCanUseCommentAssistant = result.rows[0].can_use_comment_assistant || false;
 
             // 更新头像和 Premium 状态
             await client.query(
@@ -222,6 +223,7 @@ async function handleTwitterLogin(twitterUser, accessToken, refreshToken, expire
             // 创建新用户
             username = twitterUser.username;
             userIsAdmin = false; // 新用户默认非管理员
+            userCanUseCommentAssistant = false; // 新用户默认无权限
 
             // 检查用户名是否已被占用
             const existingUser = await client.query(
@@ -261,7 +263,7 @@ async function handleTwitterLogin(twitterUser, accessToken, refreshToken, expire
 
         await client.query('COMMIT');
 
-        return { userId, username, isPremium: userIsPremium, isAdmin: userIsAdmin };
+        return { userId, username, isPremium: userIsPremium, isAdmin: userIsAdmin, canUseCommentAssistant: userCanUseCommentAssistant };
     } catch (err) {
         await client.query('ROLLBACK');
         throw err;

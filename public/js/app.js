@@ -37,14 +37,17 @@ class App {
             const token = urlParams.get('token');
             const username = urlParams.get('username');
             const isAdmin = urlParams.get('is_admin') === 'true';
+            const canUseCommentAssistant = urlParams.get('can_use_comment_assistant') === 'true';
 
             if (token && username) {
                 this.token = token;
                 this.username = username;
                 this.isAdmin = isAdmin;
+                this.canUseCommentAssistant = canUseCommentAssistant;
                 localStorage.setItem('token', token);
                 localStorage.setItem('username', username);
                 localStorage.setItem('isAdmin', isAdmin ? 'true' : 'false');
+                localStorage.setItem('canUseCommentAssistant', canUseCommentAssistant ? 'true' : 'false');
 
                 // 清除 URL 参数
                 window.history.replaceState({}, document.title, '/');
