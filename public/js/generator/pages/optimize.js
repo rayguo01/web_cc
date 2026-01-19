@@ -157,14 +157,14 @@ class OptimizePage {
                 <!-- 总分显示 -->
                 ${this.renderTotalScore()}
 
-                <!-- 人味评分（humanizer模式） -->
-                ${this.renderHumanScore()}
-
                 <!-- 六维评分卡 -->
                 ${this.renderScoreCard()}
 
                 <!-- 检测到的AI模式（humanizer模式） -->
                 ${this.renderAiPatterns()}
+
+                <!-- 人味评分（humanizer模式） -->
+                ${this.renderHumanScore()}
 
                 <!-- 深度分析 -->
                 ${this.renderAnalysis()}
@@ -201,8 +201,8 @@ class OptimizePage {
                 </div>
             </div>
 
-            <div class="regenerate-section">
-                <div class="regenerate-mode-section" style="margin-bottom: 16px;">
+            <div class="regenerate-section" style="display: flex; flex-direction: column; align-items: center; gap: 16px;">
+                <div class="regenerate-mode-section">
                     <div style="font-size: 13px; color: #64748b; margin-bottom: 8px; text-align: center;">重新优化模式：</div>
                     <div class="optimize-mode-options" style="display: flex; gap: 12px; justify-content: center;">
                         <label class="optimize-mode-card-small ${this.optimizeMode === 'viral' ? 'active' : ''}" style="display: flex; align-items: center; gap: 8px; padding: 10px 16px; border: 2px solid ${this.optimizeMode === 'viral' ? '#f97316' : '#e2e8f0'}; border-radius: 8px; cursor: pointer; transition: all 0.2s; background: ${this.optimizeMode === 'viral' ? 'rgba(249, 115, 22, 0.05)' : 'transparent'};">
