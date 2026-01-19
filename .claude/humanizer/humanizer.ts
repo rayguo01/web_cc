@@ -110,20 +110,10 @@ LANGUAGE RULE：所有输出使用简体中文（专有名词除外，如 AI、T
 
 ## 输出格式（极其重要）
 
-<reasoning>
-分析过程（简短）
-</reasoning>
-
-<result>
+直接输出JSON，不要任何其他内容：
 ${JSON_SCHEMA}
-</result>
 
-注意：
-1. result内必须是合法JSON
-2. 换行用\\n，双引号用\\"
-3. 使用英文半角标点
-4. totalScore = 6维度加权百分制
-5. humanTotalScore = 5维度总和（满分50）
+注意：换行用\\n，双引号用\\"，使用英文半角标点
 `;
 
 // 存储最近一次调用的 usage 信息
