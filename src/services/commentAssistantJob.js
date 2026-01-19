@@ -101,22 +101,49 @@ class CommentAssistantJob {
                 return { completed: true, commented: 0, reason: 'no_candidates' };
             }
 
-            // 8. 选择最佳帖子（优先有媒体、评论少的）
-            const bestTweet = candidateTweets[0];
-            console.log(`[CommentAssistant] 选中帖子: @${bestTweet.author} - ${bestTweet.id} (${bestTweet.replyCount}条评论)`);
+            // 8. 尝试评论候选帖子（遇到限制时跳过）
+            let commented = false;
+            let lastError = null;
 
-            // 9. 生成评论
-            const generated = await commentGenerator.generate(bestTweet, region);
-            console.log(`[CommentAssistant] 生成评论 (${generated.style}): ${generated.content}`);
+            for (const tweet of candidateTweets.slice(0, 5)) { // 最多尝试 5 条
+                try {
+                    console.log(`[CommentAssistant] 尝试帖子: @${tweet.author} - ${tweet.id} (${tweet.replyCount}条评论)`);
 
-            // 10. 点赞 + 延迟 + 发布评论（使用设置中的评论账号）
-            await this.likeAndComment(bestTweet, generated, region, settings, settings.comment_user_id);
+                    // 生成评论
+                    const generated = await commentGenerator.generate(tweet, region);
+                    console.log(`[CommentAssistant] 生成评论 (${generated.style}): ${generated.content}`);
 
-            // 11. 更新组索引
+                    // 点赞 + 延迟 + 发布评论
+                    await this.likeAndComment(tweet, generated, region, settings, settings.comment_user_id);
+
+                    commented = true;
+                    console.log('[CommentAssistant] 任务完成');
+
+                    // 更新组索引
+                    await commentAssistantDb.updateGroupIndex(region, nextGroupIndex);
+
+                    return { completed: true, commented: 1, tweet: tweet.id };
+                } catch (error) {
+                    lastError = error;
+                    // 检查是否是回复限制错误
+                    if (error.message.includes('restricted who can reply') ||
+                        error.message.includes('not allowed to reply')) {
+                        console.log(`[CommentAssistant] 帖子 ${tweet.id} 限制回复，跳过`);
+                        continue;
+                    }
+                    // 其他错误也跳过，尝试下一条
+                    console.error(`[CommentAssistant] 帖子 ${tweet.id} 评论失败:`, error.message);
+                    continue;
+                }
+            }
+
+            // 所有候选都失败了
             await commentAssistantDb.updateGroupIndex(region, nextGroupIndex);
 
-            console.log('[CommentAssistant] 任务完成');
-            return { completed: true, commented: 1, tweet: bestTweet.id };
+            if (!commented) {
+                console.log('[CommentAssistant] 所有候选帖子都无法评论');
+                return { completed: true, commented: 0, reason: 'all_restricted', lastError: lastError?.message };
+            }
 
         } catch (error) {
             console.error('[CommentAssistant] 任务执行失败:', error);
@@ -208,18 +235,16 @@ class CommentAssistantJob {
      * 点赞并发布评论（使用指定用户的 OAuth Token）
      */
     async likeAndComment(tweet, generated, region, settings, commentUserId) {
-        // 点赞
-        try {
-            await twitterApiClient.likeTweet(tweet.id, commentUserId, region);
-            console.log(`[CommentAssistant] 已点赞帖子 ${tweet.id}`);
-        } catch (error) {
-            console.error('[CommentAssistant] 点赞失败:', error.message);
-            // 点赞失败仍继续评论
-        }
+        // 点赞功能暂时禁用（需要 Twitter API Basic 套餐）
+        // try {
+        //     await twitterApiClient.likeTweet(tweet.id, commentUserId, region);
+        //     console.log(`[CommentAssistant] 已点赞帖子 ${tweet.id}`);
+        // } catch (error) {
+        //     console.error('[CommentAssistant] 点赞失败:', error.message);
+        // }
 
-        // 随机延迟 5-10 秒
-        const delay = CONFIG.LIKE_DELAY_MS[0] +
-            Math.random() * (CONFIG.LIKE_DELAY_MS[1] - CONFIG.LIKE_DELAY_MS[0]);
+        // 随机延迟 2-5 秒（无点赞时延迟缩短）
+        const delay = 2000 + Math.random() * 3000;
         await new Promise(resolve => setTimeout(resolve, delay));
 
         // 发布评论（使用用户的 OAuth Token）
