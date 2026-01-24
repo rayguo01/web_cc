@@ -380,6 +380,11 @@ async function initDatabase() {
             UPDATE users SET is_admin = TRUE WHERE username = 'rayguo' AND (is_admin IS NULL OR is_admin = FALSE)
         `);
 
+        // 添加评论助手权限字段
+        await client.query(`
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS can_use_comment_assistant BOOLEAN DEFAULT FALSE
+        `);
+
         // ============ 评论涨粉助手表 ============
 
         // 大V列表（系统级配置）
@@ -437,6 +442,11 @@ async function initDatabase() {
         // 添加 comment_user_id 列（如果不存在）
         await client.query(`
             ALTER TABLE comment_settings ADD COLUMN IF NOT EXISTS comment_user_id INTEGER REFERENCES users(id)
+        `);
+
+        // 添加 rate_limit_until 列（429 速率限制处理）
+        await client.query(`
+            ALTER TABLE comment_settings ADD COLUMN IF NOT EXISTS rate_limit_until TIMESTAMP WITH TIME ZONE
         `);
 
         // 收件箱通知

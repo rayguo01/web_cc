@@ -111,7 +111,7 @@ router.post('/login', async (req, res) => {
     try {
         // 查找用户
         const result = await pool.query(
-            'SELECT id, password_hash, is_premium FROM users WHERE username = $1',
+            'SELECT id, password_hash, is_premium, is_admin, can_use_comment_assistant FROM users WHERE username = $1',
             [username]
         );
 
@@ -127,14 +127,23 @@ router.post('/login', async (req, res) => {
             return res.status(401).json({ error: '用户名或密码错误' });
         }
 
-        // 生成 JWT（包含 Premium 状态）
+        // 评论助手权限需要单独设置（管理员也需要）
+        const canUseCommentAssistant = user.can_use_comment_assistant || false;
+
+        // 生成 JWT（包含 Premium 状态和管理员标识）
         const token = jwt.sign(
-            { userId: user.id, username, isPremium: user.is_premium || false },
+            { userId: user.id, username, isPremium: user.is_premium || false, isAdmin: user.is_admin || false },
             process.env.JWT_SECRET,
             { expiresIn: '7d' }
         );
 
-        res.json({ token, username, isPremium: user.is_premium || false });
+        res.json({
+            token,
+            username,
+            isPremium: user.is_premium || false,
+            isAdmin: user.is_admin || false,
+            canUseCommentAssistant
+        });
     } catch (err) {
         console.error('登录失败:', err);
         res.status(500).json({ error: '登录失败' });

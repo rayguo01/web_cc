@@ -182,6 +182,27 @@ router.post('/users/:userId/set-admin', async (req, res) => {
 });
 
 /**
+ * POST /api/admin/users/:userId/set-comment-assistant-permission
+ * 设置/取消用户评论助手权限
+ */
+router.post('/users/:userId/set-comment-assistant-permission', async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const { canUse } = req.body;
+
+        await pool.query(
+            'UPDATE users SET can_use_comment_assistant = $1 WHERE id = $2',
+            [canUse === true, parseInt(userId)]
+        );
+
+        res.json({ success: true, message: canUse ? '已授权评论助手权限' : '已取消评论助手权限' });
+    } catch (error) {
+        console.error('设置评论助手权限失败:', error);
+        res.status(500).json({ error: '设置评论助手权限失败' });
+    }
+});
+
+/**
  * POST /api/admin/users/:userId/login-as
  * 以指定用户身份登录（管理员功能）
  */
@@ -253,7 +274,7 @@ router.get('/users', async (req, res) => {
         // 获取用户列表
         params.push(parseInt(limit), offset);
         const result = await pool.query(`
-            SELECT id, username, avatar_url, is_admin, invited_by_code, created_at
+            SELECT id, username, avatar_url, is_admin, can_use_comment_assistant, invited_by_code, created_at
             FROM users
             ${whereClause}
             ORDER BY created_at DESC
